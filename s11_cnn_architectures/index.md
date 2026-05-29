@@ -1,6 +1,6 @@
-# s11 经典架构演进：从 LeNet 到 ResNet
+# s11 经典架构演进：从 LeNet 到 ViT
 
-> 卷积神经网络架构 20 年进化史 —— 每个里程碑解决了什么问题
+> 卷积神经网络架构 20 年进化史 —— 从 CNN 到 Transformer，每个里程碑解决了什么问题
 
 ---
 
@@ -201,6 +201,62 @@ ConvNeXt 是一个有趣的"回旋"：它从 ResNet-50 出发，逐步引入 Swi
 | SENet | 2018 | 通道注意力：Squeeze-and-Excitation | ~2800 万 |
 | EfficientNet | 2019 | 复合缩放：深度×宽度×分辨率 | ~530 万(B0) |
 | ConvNeXt | 2022 | Transformer 设计反哺 CNN | ~2800 万 |
+
+---
+
+## 7. ViT：当 Transformer 遇见图像
+
+2020 年之前，卷积几乎是处理图像的唯一选择。人们普遍认为卷积的**局部连接**和**平移不变性**是图像理解不可或缺的归纳偏置（inductive bias）。Google 的 Vision Transformer（ViT）打破了这个假设。
+
+### 7.1 核心思想：图像 = 一序列 Patch
+
+ViT 的洞见极其简单：**把图像切成固定大小的 patch，每个 patch 当作 NLP 中的一个"词"，扔进标准 Transformer 编码器**。
+
+![ViT 架构：图像切 Patch → Linear Projection → Transformer Encoder → MLP Head 分类](../s16_attention_transformer/images/16-04-transformer-block.png)
+
+具体流程：
+
+1. **Patch Embedding**：将 $H \times W \times C$ 的图像切成 $N = HW/P^2$ 个 $P \times P \times C$ 的 patch。每个 patch 展平后用线性层映射到 $D$ 维向量
+2. **Position Embedding**：加上可学习的位置编码（1D，因为图像已变成序列）
+3. **CLS Token**：在序列开头拼接一个可学习的 `[CLS]` token（类似 BERT），它的最终输出用于分类
+4. **Transformer Encoder**：标准的多层 Transformer（与 NLP 完全相同——多头自注意力 + MLP + 残差）
+5. **MLP Head**：取 `[CLS]` token 的输出，通过一个 MLP 输出分类结果
+
+$$
+\begin{aligned}
+\mathbf{z}_0 &= [\mathbf{x}_{\text{cls}};\; \mathbf{x}_p^1\mathbf{E};\; \mathbf{x}_p^2\mathbf{E};\; \dots;\; \mathbf{x}_p^N\mathbf{E}] + \mathbf{E}_{\text{pos}} \\
+\mathbf{z}'_l &= \text{MSA}(\text{LN}(\mathbf{z}_{l-1})) + \mathbf{z}_{l-1} \\
+\mathbf{z}_l &= \text{MLP}(\text{LN}(\mathbf{z}'_l)) + \mathbf{z}'_l \\
+\mathbf{y} &= \text{LN}(\mathbf{z}_L^0)
+\end{aligned}
+$$
+
+### 7.2 ViT vs CNN：归纳偏置的权衡
+
+| | CNN | ViT |
+|------|-----|-----|
+| **局部性** | 内置（卷积核只看到局部） | 需要从数据中学习 |
+| **平移不变性** | 内置（权重共享） | 需要从数据中学习 |
+| **全局关系** | 需要堆叠多层才获得大感受野 | 第一层就能看到全局（自注意力） |
+| **数据需求** | 少量数据也能工作 | 需要大量数据（或 ImageNet-21K 预训练） |
+| **计算复杂度** | $O(k^2 \cdot C_{in} \cdot C_{out} \cdot HW)$ | $O(N^2 \cdot D)$，$N$ 为 patch 数 |
+
+**关键发现**：CNN 的归纳偏置（局部性、平移不变性）在小数据集上是优势，但在**海量数据**下反而成为限制——限制了模型学习更灵活模式的能力。ViT 用更多的数据换来了更强的表达能力。
+
+### 7.3 ViT 的进化
+
+| 模型 | 年份 | 关键创新 |
+|------|------|----------|
+| ViT | 2020 | 纯 Transformer 做图像分类，需要大规模预训练 |
+| DeiT | 2020 | 知识蒸馏训练 ViT，只用 ImageNet-1K 即可 |
+| Swin Transformer | 2021 | 引入窗口注意力和层级结构，适配检测/分割 |
+| PVT | 2021 | 金字塔结构 ViT，多尺度特征图 |
+| MAE | 2021 | 掩码自编码器——像 BERT 一样随机 mask patch 然后重建 |
+| DINO/DINOv2 | 2023 | 自监督 ViT，特征质量超越监督学习 |
+
+### 7.4 为什么 ViT 重要
+
+ViT 的意义不仅是又一个 SOTA 模型。它证明了一件事：**Transformer 是一个通用计算原语**——处理文本（GPT）、处理图像（ViT）、处理蛋白质（AlphaFold），底层用的都是同一个 self-attention 机制。这为 s22 中的多模态模型（CLIP、LLaVA）铺平了道路。
 
 > 下一节 [s12 目标检测](../s12_object_detection/) 将介绍如何在这些强大的 backbone 上加一个"检测头"，让网络不仅知道"图像里是什么"，还能回答"物体在哪里"。
 
