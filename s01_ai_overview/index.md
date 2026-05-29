@@ -242,6 +242,14 @@ AI 之所以在近十年迎来爆发，是三大因素同时成熟的结果：
 
 ---
 
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s01_ai_overview/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s01_ai_overview/exercise.py" target="_blank" download>Download</a> |
+
 ## 参考
 
 1. Rosenblatt, F. (1958). The Perceptron: A Probabilistic Model for Information Storage and Organization in the Brain.

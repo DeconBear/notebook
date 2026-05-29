@@ -246,3 +246,11 @@ One-Hot（每个词是独立符号）
 ```
 
 > 下一节 [s15 序列模型](../s15_sequence_models/) 将讨论如何**处理文本的时序结构**——RNN、LSTM、GRU 这些能读取变长序列并捕捉长距离依赖的模型，正是文本理解的关键基础设施。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s14_text_representation/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s14_text_representation/exercise.py" target="_blank" download>Download</a> |
+

@@ -283,3 +283,11 @@ $\partial f / \partial z = x + y = 5$。与我们算的 5 一致。
 | 梯度累积 | 当一个变量有多条输出路径时，梯度要**求和** |
 | 自动微分 | 框架记录前向操作图，反向时自动逐节点传梯度 |
 | 复杂度 | 前向和反向都是 $O(N)$，但反向需要额外 $O(N)$ 空间存储中间值 |
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s06_backprop_chain_rule/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s06_backprop_chain_rule/exercise.py" target="_blank" download>Download</a> |
+

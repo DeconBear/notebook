@@ -243,3 +243,11 @@ Actor-Critic 方法结合了两种方法的优点：
 | A2C | 同步多 worker 的 Actor-Critic，用 $n$ 步回报 + 优势函数 |
 
 > 下一节 [s21 RLHF：当强化学习遇见大模型](../s21_rlhf/) 将展示 PPO 和 DPO 如何被用于对齐大语言模型，这是深度强化学习在当今最重要的应用。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s20_deep_rl/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s20_deep_rl/exercise.py" target="_blank" download>Download</a> |
+

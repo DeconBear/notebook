@@ -346,3 +346,11 @@ scheduler = CosineAnnealingLR(optimizer, T_max=total_steps,
 | 梯度范数监控 | 最重要的训练诊断指标——及时发现消失、爆炸或其他异常 |
 
 > 至此，"深度学习基础"阶段（s05-s09）完成。我们从前向传播的计算图出发，理解了反向传播的链式法则，掌握了矩阵形式的完整反向传播推导，学会了从 SGD 到 Adam 的优化器演进，最后深入 Adam 的每个设计细节。这些知识构成了理解和调试任何深度学习训练流程的基础。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s09_adam_deep_dive/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s09_adam_deep_dive/exercise.py" target="_blank" download>Download</a> |
+

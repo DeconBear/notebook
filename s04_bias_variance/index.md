@@ -245,6 +245,14 @@ Bias-Variance 权衡是理解机器学习泛化性能的核心框架：
 
 ---
 
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s04_bias_variance/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s04_bias_variance/exercise.py" target="_blank" download>Download</a> |
+
 ## 参考
 
 1. Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of Statistical Learning. Springer. Chapter 7.

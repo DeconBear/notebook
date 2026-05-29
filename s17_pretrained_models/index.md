@@ -212,3 +212,11 @@ GPT-3 之后，NLP 的使用方式发生了根本变化：
 | 指令微调 | ChatGPT 的能力基础：学会遵循自然语言指令 |
 
 > 下一节 [s18 大语言模型](../s18_large_language_models/) 将讨论：为什么更大的模型会"涌现"出小模型没有的能力？Scaling Law 告诉我们什么？以及 RLHF 和 DPO 如何让大模型变得可控。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s17_pretrained_models/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s17_pretrained_models/exercise.py" target="_blank" download>Download</a> |
+

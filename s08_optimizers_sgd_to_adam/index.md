@@ -249,3 +249,11 @@ $$
 | 优化器选择 | Adam(或AdamW) 先跑通，再考虑精细调 SGD |
 
 > 下一节 [s09 Adam 深度解析与训练实战](../s09_adam_deep_dive/) 将深入 Adam 的内部机制：偏差修正的数学原理、AdamW 为什么更好、以及如何在实际训练中诊断和调试优化器。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s08_optimizers_sgd_to_adam/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s08_optimizers_sgd_to_adam/exercise.py" target="_blank" download>Download</a> |
+

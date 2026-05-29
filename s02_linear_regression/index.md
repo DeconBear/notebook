@@ -285,6 +285,14 @@ $$
 
 ---
 
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s02_linear_regression/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s02_linear_regression/exercise.py" target="_blank" download>Download</a> |
+
 ## 参考
 
 1. Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of Statistical Learning. Springer.

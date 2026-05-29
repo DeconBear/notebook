@@ -240,3 +240,11 @@ $$
 | 计算量 | $O(C_{in} C_{out} k^2 H_{out} W_{out})$，与输出分辨率成正比 |
 
 > 下一节 [s11 经典架构演进](../s11_cnn_architectures/) 将展示这些基本组件如何被组装成 LeNet、AlexNet、VGG、ResNet 等里程碑式的网络架构，以及它们各自的创新点在哪里。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s10_cnn_fundamentals/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s10_cnn_fundamentals/exercise.py" target="_blank" download>Download</a> |
+

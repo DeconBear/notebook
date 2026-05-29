@@ -267,3 +267,11 @@ $$
 | 训练目标 | $\theta^* = \arg\min_\theta L(\theta)$，通过梯度下降迭代求解 |
 
 > 下一节 [s06 反向传播与链式法则](../s06_backprop_chain_rule/) 将详细拆解：梯度如何从损失出发，沿着计算图一层层传回到每一个参数。前向传播存储的中间值，将在那里被一一"消费"。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s05_forward_computation_graph/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s05_forward_computation_graph/exercise.py" target="_blank" download>Download</a> |
+

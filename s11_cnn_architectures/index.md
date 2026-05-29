@@ -203,3 +203,11 @@ ConvNeXt 是一个有趣的"回旋"：它从 ResNet-50 出发，逐步引入 Swi
 | ConvNeXt | 2022 | Transformer 设计反哺 CNN | ~2800 万 |
 
 > 下一节 [s12 目标检测](../s12_object_detection/) 将介绍如何在这些强大的 backbone 上加一个"检测头"，让网络不仅知道"图像里是什么"，还能回答"物体在哪里"。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s11_cnn_architectures/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s11_cnn_architectures/exercise.py" target="_blank" download>Download</a> |
+

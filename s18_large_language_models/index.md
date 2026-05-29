@@ -221,3 +221,11 @@ LLM 的知识截止于训练数据。RAG 通过外部知识库来弥补这一缺
 | LoRA | 低秩适配，用极少参数实现高效的模型微调 |
 
 > s18 是 NLP 路线（s14-s18）的终点。从这里出发，你可以探索 s22（多模态）、s23（RAG 与 Agent）和 s24（部署与推理优化）。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s18_large_language_models/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s18_large_language_models/exercise.py" target="_blank" download>Download</a> |
+

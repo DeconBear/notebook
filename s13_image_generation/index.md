@@ -195,3 +195,11 @@ Stable Diffusion 将扩散模型从三个维度做了关键改进：
 | 采样速度 | GAN/VAE 快（单次前向），Diffusion 慢（迭代去噪） |
 
 > 至此，我们完成了从图像分类（s10/s11）到目标检测（s12）再到图像生成（s13）的完整旅程。这三个方向构成了计算机视觉的核心支柱：**识别、定位、创造**。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s13_image_generation/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s13_image_generation/exercise.py" target="_blank" download>Download</a> |
+

@@ -245,3 +245,11 @@ GAE 平衡了"用更多数据降低方差"和"引入偏差"之间的权衡，是
 | Bradley-Terry | 偏好建模的基础概率模型，DPO 的理论基础 |
 
 > RLHF 是强化学习在现代 AI 中最具影响力的应用。它展示了 RL 不再是"下棋和打游戏"的工具，而是构建有用、安全 AI 系统的关键基础设施。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s21_rlhf/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s21_rlhf/exercise.py" target="_blank" download>Download</a> |
+

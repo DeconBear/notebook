@@ -222,6 +222,14 @@ RAG 和 Agent 不是互斥的，而是互补的。在实际应用中，Agent 经
 
 ---
 
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s23_rag_agent/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s23_rag_agent/exercise.py" target="_blank" download>Download</a> |
+
 ## 参考
 
 1. Lewis, P., et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. *NeurIPS 2020*.

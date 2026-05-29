@@ -310,3 +310,11 @@ dW = dZ @ A_prev.T / m
 | 梯度消失/爆炸 | 深层网络中梯度的两种极端行为——初始化、激活函数和结构设计共同影响 |
 
 > 下一节 [s08 优化器：从 SGD 到 Adam](../s08_optimizers_sgd_to_adam/) 将开始讨论"有了梯度之后怎么更新"——为什么朴素 SGD 不够好，以及 Momentum、RMSProp 和 Adam 分别解决了什么问题。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s07_matrix_backprop/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s07_matrix_backprop/exercise.py" target="_blank" download>Download</a> |
+

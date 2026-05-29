@@ -269,6 +269,14 @@ BLIP-2 中提出的 **Q-Former（Querying Transformer）** 是另一种重要的
 
 ---
 
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s22_multimodal/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s22_multimodal/exercise.py" target="_blank" download>Download</a> |
+
 ## 参考
 
 1. Radford, A., Kim, J. W., Hallacy, C., et al. (2021). Learning Transferable Visual Models From Natural Language Supervision. *ICML 2021*.

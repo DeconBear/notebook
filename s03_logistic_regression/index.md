@@ -262,6 +262,14 @@ Iris 数据集包含 150 个样本，3 个类别（Setosa, Versicolor, Virginica
 
 ---
 
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s03_logistic_regression/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s03_logistic_regression/exercise.py" target="_blank" download>Download</a> |
+
 ## 参考
 
 1. Bishop, C. M. (2006). Pattern Recognition and Machine Learning. Springer. Chapter 4.

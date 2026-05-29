@@ -8,6 +8,7 @@ export default withMermaid(
   description: "图解 AI · 一行代码看懂一个概念",
   lang: 'zh-CN',
   ignoreDeadLinks: true,
+  publicDir: 'public',
   srcExclude: ['README.md', '**/image_prompts.md'],
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }]
@@ -17,6 +18,7 @@ export default withMermaid(
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: '首页', link: '/' },
+      { text: 'Code', link: '/code/s01_ai_overview/demo.py', target: '_blank' },
       { text: 'GitHub', link: 'https://github.com/shareAI-lab/learn-ai' },
     ],
 

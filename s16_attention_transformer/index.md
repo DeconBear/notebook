@@ -237,3 +237,11 @@ LayerNorm
 | 因果掩码 | 防止看到未来信息，用于自回归生成 |
 
 > 下一节 [s17 预训练范式](../s17_pretrained_models/) 将讨论：Transformer 如何催生了大规模预训练——BERT 和 GPT 分别代表了两种训练范式，以及预训练如何彻底改变了 NLP。
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s16_attention_transformer/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s16_attention_transformer/exercise.py" target="_blank" download>Download</a> |
+

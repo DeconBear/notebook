@@ -255,6 +255,14 @@ Ollama 内部使用了 llama.cpp 作为推理引擎，支持 GGUF 量化格式�
 
 ---
 
+
+## 📥 Code
+
+| File | View | Download |
+|------|------|----------|
+| demo.py | [Open](./code-demo) | <a href="../code/s24_deployment_inference/demo.py" target="_blank" download>Download</a> |
+| exercise.py | [Open](./code-exercise) | <a href="../code/s24_deployment_inference/exercise.py" target="_blank" download>Download</a> |
+
 ## 参考
 
 1. Dao, T., Fu, D., Ermon, S., et al. (2022). FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness. *NeurIPS 2022*.
