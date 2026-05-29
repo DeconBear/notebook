@@ -40,3 +40,5 @@ Thumbs.db
 bert_sentiment_checkpoints/
 data/
 **/models/
+**/nanogpt_model.pt
+**/input.txt
