@@ -21,6 +21,7 @@ s04_bias_variance/code/demo.py — 过拟合、正则化与 Bias-Variance 权衡
 ===============================================================================
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -28,8 +29,16 @@ from sklearn.preprocessing import PolynomialFeatures  # 用于生成多项式特
 from sklearn.linear_model import LinearRegression, Ridge, Lasso  # sklearn 标准实现
 from sklearn.model_selection import KFold  # K-Fold 交叉验证
 from sklearn.pipeline import make_pipeline  # 构建处理管道
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
+
+# 图片保存目录：固定为本章节的 images/ 目录（相对于本脚本的 ../images/）
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_IMAGES_DIR = os.path.join(_SCRIPT_DIR, '..', 'images')
+os.makedirs(_IMAGES_DIR, exist_ok=True)
+
+def _save_path(filename):
+    """返回本章节 images/ 目录下的图片保存路径。"""
+    return os.path.join(_IMAGES_DIR, filename)
 
 
 # ============================================================================
@@ -104,8 +113,8 @@ def fit_polynomial(X: np.ndarray, y: np.ndarray, degree: int):
         theta: np.ndarray, (degree+1,)，多项式系数 [θ₀, θ₁, ..., θ_{degree}]
     """
     Phi = polynomial_features(X, degree)  # 多项式特征矩阵 (n, d+1)
-    # 正规方程: θ = (Φ^T Φ)^(-1) Φ^T y
-    theta = np.linalg.inv(Phi.T @ Phi) @ Phi.T @ y
+    # 正规方程: θ = (Φ^T Φ)^(+) Φ^T y，使用伪逆避免奇异矩阵
+    theta = np.linalg.pinv(Phi.T @ Phi) @ Phi.T @ y
     return theta
 
 
@@ -298,8 +307,8 @@ def kfold_cross_validation(X: np.ndarray, y: np.ndarray, k: int = 5,
 
         # 训练模型
         if reg_type == 'none' or lambda_ == 0.0:
-            # 无正则化：使用正规方程
-            theta = np.linalg.inv(Phi_train.T @ Phi_train) @ Phi_train.T @ y_train
+            # 无正则化：使用正规方程（伪逆，避免奇异矩阵）
+            theta = np.linalg.pinv(Phi_train.T @ Phi_train) @ Phi_train.T @ y_train
             y_pred = Phi_val @ theta
         else:
             # 带正则化：使用梯度下降
@@ -363,21 +372,21 @@ def plot_polynomial_fits(X_train, y_train, X_true, y_true, degrees, max_degree=1
 
         # 绘制
         ax.scatter(X_train, y_train, c='steelblue', s=15, alpha=0.6,
-                   edgecolors='white', linewidth=0.3, label='训练数据')
-        ax.plot(X_true, y_pred_true, 'r-', linewidth=1.5, label=f'{deg}次多项式')
+                   edgecolors='white', linewidth=0.3, label='Training Data')
+        ax.plot(X_true, y_pred_true, 'r-', linewidth=1.5, label=f'deg={deg}')
 
         # 判断拟合质量并设置标题颜色
         if train_mse > 0.15:  # 欠拟合
-            quality = '欠拟合'
+            quality = 'Underfitting'
             color = 'red'
         elif deg > 12 and test_mse > 3 * train_mse:  # 过拟合
-            quality = '过拟合'
+            quality = 'Overfitting'
             color = 'orange'
         else:
-            quality = '良好'
+            quality = 'Good Fit'
             color = 'green'
 
-        ax.set_title(f'{deg}次: 训练={train_mse:.3f}, 测试={test_mse:.3f} ({quality})',
+        ax.set_title(f'deg={deg}: Train={train_mse:.3f}, Test={test_mse:.3f} ({quality})',
                      fontsize=8, color=color)
         ax.grid(True, alpha=0.2)
 
@@ -385,11 +394,11 @@ def plot_polynomial_fits(X_train, y_train, X_true, y_true, degrees, max_degree=1
     for idx in range(len(degrees), len(axes)):
         axes[idx].set_visible(False)
 
-    plt.suptitle('不同次数多项式的拟合效果对比', fontsize=16, y=1.02)
+    plt.suptitle('Polynomial Fit Comparison at Different Degrees', fontsize=16, y=1.02)
     plt.tight_layout()
-    plt.savefig('polynomial_fits_comparison.png', dpi=150, bbox_inches='tight')
+    plt.savefig(_save_path('polynomial_fits_comparison.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("多项式拟合对比图已保存为 polynomial_fits_comparison.png")
+    print(f"多项式拟合对比图已保存为 {_save_path('polynomial_fits_comparison.png')}")
 
 
 def plot_bias_variance_curve(X_train, y_train, X_val, y_val, max_degree=15):
@@ -416,8 +425,8 @@ def plot_bias_variance_curve(X_train, y_train, X_val, y_val, max_degree=15):
         Phi_train = polynomial_features(X_train, deg)
         Phi_val = polynomial_features(X_val, deg)
 
-        # 拟合模型
-        theta = np.linalg.inv(Phi_train.T @ Phi_train) @ Phi_train.T @ y_train
+        # 拟合模型（伪逆，避免奇异矩阵）
+        theta = np.linalg.pinv(Phi_train.T @ Phi_train) @ Phi_train.T @ y_train
 
         # 计算训练和验证误差
         y_pred_train = Phi_train @ theta
@@ -428,15 +437,15 @@ def plot_bias_variance_curve(X_train, y_train, X_val, y_val, max_degree=15):
     # 绘制
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(degrees, train_errors, 'b-o', markersize=6, linewidth=1.5,
-            label='训练误差 (Training Error)')
+            label='Training Error')
     ax.plot(degrees, val_errors, 'r-s', markersize=6, linewidth=1.5,
-            label='验证误差 (Validation Error)')
+            label='Validation Error')
 
     # 标注最佳模型复杂度（验证误差最小的点）
     best_deg = degrees[np.argmin(val_errors)]
     best_val_error = min(val_errors)
     ax.axvline(x=best_deg, color='green', linestyle='--', alpha=0.7, linewidth=1.5)
-    ax.annotate(f'最优复杂度: {best_deg}次\n验证误差={best_val_error:.4f}',
+    ax.annotate(f'Best Complexity: deg={best_deg}\nValidation Error={best_val_error:.3f}',
                 xy=(best_deg, best_val_error),
                 xytext=(best_deg + 2, best_val_error + 0.05),
                 arrowprops=dict(arrowstyle='->', color='green', lw=2),
@@ -445,24 +454,24 @@ def plot_bias_variance_curve(X_train, y_train, X_val, y_val, max_degree=15):
 
     # 标注区域
     ax.axvspan(1, best_deg - 1, alpha=0.1, color='orange')
-    ax.text(2, max(train_errors) * 0.95, '欠拟合区域', fontsize=11,
+    ax.text(2, max(train_errors) * 0.95, 'Underfitting Region', fontsize=11,
             color='orange', ha='center')
     ax.axvspan(best_deg + 1, max_degree, alpha=0.1, color='red')
-    ax.text(max_degree - 1, max(val_errors) * 0.95, '过拟合区域', fontsize=11,
+    ax.text(max_degree - 1, max(val_errors) * 0.95, 'Overfitting Region', fontsize=11,
             color='red', ha='center')
 
-    ax.set_xlabel('多项式次数（模型复杂度）', fontsize=13)
-    ax.set_ylabel('MSE 误差', fontsize=13)
-    ax.set_title('Bias-Variance 权衡：训练误差 vs 验证误差', fontsize=14)
+    ax.set_xlabel('Polynomial Degree (Model Complexity)', fontsize=13)
+    ax.set_ylabel('MSE Error', fontsize=13)
+    ax.set_title('Bias-Variance Trade-off: Training Error vs Validation Error', fontsize=14)
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
     # 使用对数刻度使小值差异更明显
     ax.set_yscale('log')
 
     plt.tight_layout()
-    plt.savefig('bias_variance_curve.png', dpi=150, bbox_inches='tight')
+    plt.savefig(_save_path('bias_variance_curve.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("Bias-Variance 曲线已保存为 bias_variance_curve.png")
+    print(f"Bias-Variance 曲线已保存为 {_save_path('bias_variance_curve.png')}")
 
 
 def plot_regularization_effect(X_train, y_train, X_val, y_val, degree=15):
@@ -489,7 +498,7 @@ def plot_regularization_effect(X_train, y_train, X_val, y_val, degree=15):
 
     # 配置四种情况
     configs = [
-        ('无正则化', 'none', 0.0, 'gray'),
+        ('No Regularization', 'none', 0.0, 'gray'),
         ('L2 (Ridge)', 'l2', 0.01, 'blue'),
         ('L1 (Lasso)', 'l1', 0.01, 'green'),
         ('L2 (Ridge, λ=0.1)', 'l2', 0.1, 'red'),
@@ -502,8 +511,8 @@ def plot_regularization_effect(X_train, y_train, X_val, y_val, degree=15):
         ax = axes[idx]
 
         if reg_type == 'none':
-            # 无正则化：用正规方程直接解
-            theta = np.linalg.inv(Phi_train.T @ Phi_train) @ Phi_train.T @ y_train
+            # 无正则化：用正规方程直接解（伪逆，避免奇异矩阵）
+            theta = np.linalg.pinv(Phi_train.T @ Phi_train) @ Phi_train.T @ y_train
             y_pred_train = Phi_train @ theta
             y_pred_val = Phi_val @ theta
             train_mse = np.mean((y_pred_train - y_train) ** 2)
@@ -529,18 +538,18 @@ def plot_regularization_effect(X_train, y_train, X_val, y_val, degree=15):
                    edgecolors='white', linewidth=0.3)
         ax.plot(X_dense, y_pred_dense, color=color, linewidth=2, label=f'{label}')
         ax.plot(X_dense, np.sin(2 * np.pi * X_dense), 'k--', linewidth=1,
-                alpha=0.5, label='真实函数 sin(2πx)')
+                alpha=0.5, label='True Function sin(2*pi*x)')
 
-        ax.set_title(f'{label}: 训练MSE={train_mse:.4f}, 验证MSE={val_mse:.4f}',
+        ax.set_title(f'{label}: Train MSE={train_mse:.3f}, Val MSE={val_mse:.3f}',
                      fontsize=11)
         ax.legend(fontsize=8)
         ax.grid(True, alpha=0.2)
 
-    plt.suptitle(f'正则化对 {degree} 次多项式拟合的影响', fontsize=14)
+    plt.suptitle(f'Effect of Regularization on Degree-{degree} Polynomial Fit', fontsize=14)
     plt.tight_layout()
-    plt.savefig('regularization_comparison.png', dpi=150, bbox_inches='tight')
+    plt.savefig(_save_path('regularization_comparison.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("正则化对比图已保存为 regularization_comparison.png")
+    print(f"正则化对比图已保存为 {_save_path('regularization_comparison.png')}")
 
 
 def plot_coefficient_paths(X_train, y_train, degree=15):
@@ -579,11 +588,11 @@ def plot_coefficient_paths(X_train, y_train, degree=15):
                     alpha=0.7, label=f'w{d+1}' if d < 5 else '')
 
         ax.set_xscale('log')  # λ 轴使用对数刻度
-        ax.set_xlabel('正则化强度 λ', fontsize=12)
-        ax.set_ylabel('系数值', fontsize=12)
+        ax.set_xlabel('Regularization Strength lambda', fontsize=12)
+        ax.set_ylabel('Coefficient Value', fontsize=12)
         ax.set_title(
-            f'{"L2 (Ridge)" if reg_type == "l2" else "L1 (Lasso)"} — '
-            f'系数随 λ 的变化', fontsize=13
+            f'{"L2 (Ridge)" if reg_type == "l2" else "L1 (Lasso)"} - '
+            f'Coefficient vs lambda', fontsize=13
         )
         ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.5)
         ax.grid(True, alpha=0.3)
@@ -591,11 +600,11 @@ def plot_coefficient_paths(X_train, y_train, degree=15):
         if reg_type == 'l2':
             ax.legend(fontsize=8, loc='upper right', ncol=2)
 
-    plt.suptitle('正则化路径：系数如何随 λ 增大而被压缩', fontsize=14)
+    plt.suptitle('Regularization Path: How Coefficients Shrink as lambda Increases', fontsize=14)
     plt.tight_layout()
-    plt.savefig('coefficient_paths.png', dpi=150, bbox_inches='tight')
+    plt.savefig(_save_path('coefficient_paths.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("系数路径图已保存为 coefficient_paths.png")
+    print(f"系数路径图已保存为 {_save_path('coefficient_paths.png')}")
 
 
 def plot_cv_results(X_train, y_train, max_degree=15):
@@ -633,25 +642,25 @@ def plot_cv_results(X_train, y_train, max_degree=15):
     cv_means = np.array(cv_means)
     cv_stds = np.array(cv_stds)
     ax.plot(degrees, cv_means, 'b-o', markersize=6, linewidth=1.5,
-            label='5-Fold CV 平均误差')
+            label='5-Fold CV Mean Error')
     ax.fill_between(degrees, cv_means - cv_stds, cv_means + cv_stds,
-                     alpha=0.2, color='blue', label='±1 标准差')
+                     alpha=0.2, color='blue', label='±1 Std Dev')
 
     # 标注最优次数
     ax.axvline(x=best_deg, color='green', linestyle='--', alpha=0.7, linewidth=1.5)
     ax.scatter([best_deg], [min(cv_means)], c='red', s=150, zorder=5, marker='*',
-               label=f'最优: {best_deg}次')
+               label=f'Best: deg={best_deg}')
 
-    ax.set_xlabel('多项式次数', fontsize=13)
-    ax.set_ylabel('交叉验证 MSE', fontsize=13)
-    ax.set_title('K-Fold 交叉验证选择最优模型复杂度', fontsize=14)
+    ax.set_xlabel('Polynomial Degree', fontsize=13)
+    ax.set_ylabel('Cross-Validation MSE', fontsize=13)
+    ax.set_title('K-Fold Cross-Validation for Model Complexity Selection', fontsize=14)
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig('cross_validation_selection.png', dpi=150, bbox_inches='tight')
+    plt.savefig(_save_path('cross_validation_selection.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("交叉验证选择图已保存为 cross_validation_selection.png")
+    print(f"交叉验证选择图已保存为 {_save_path('cross_validation_selection.png')}")
 
 
 # ============================================================================

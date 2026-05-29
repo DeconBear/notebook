@@ -22,11 +22,20 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
+# GPU 自动检测
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+print(f"使用设备: {DEVICE}")
+if DEVICE.type == 'cpu':
+    print("（未检测到 GPU，使用 CPU 运行。如有 GPU，请安装 CUDA 版 PyTorch 以获得加速）")
+
 import matplotlib.pyplot as plt
 import matplotlib
-# 设置中文字体
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
+
+import os
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================
 # 第一部分：从零实现 RNN、LSTM、GRU 细胞
@@ -310,7 +319,7 @@ def train_char_lm(model: CharRNNLM, dataset: CharSeqDataset, epochs: int = 30, l
     返回：
         loss_history: 每个 epoch 的平均损失
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = DEVICE
     model = model.to(device)
     dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -388,6 +397,15 @@ dataset = CharSeqDataset(TEXT_CORPUS, seq_length=30)
 print(f"[字符LM] 词汇表大小: {dataset.vocab_size}, 训练样本数: {len(dataset)}")
 print()
 
+# CPU 模式下大幅减少训练轮数以加快演示速度
+_CHAR_LM_CPU_EPOCHS = 5
+_CHAR_LM_GPU_EPOCHS = 50
+_SENT_CPU_EPOCHS = 5
+_SENT_GPU_EPOCHS = 40
+_IS_CPU = DEVICE.type == 'cpu'
+if _IS_CPU:
+    print("CPU 模式：使用轻量参数快速演示（少量 epoch）。GPU 模式下将使用完整训练配置。")
+
 # 训练三种模型并记录损失,用于对比
 loss_histories = {}
 models_trained = {}
@@ -395,10 +413,11 @@ cell_types = ['rnn', 'lstm', 'gru']
 
 print("[字符LM 训练] 对比 RNN / LSTM / GRU")
 print("=" * 60)
+char_lm_epochs = _CHAR_LM_CPU_EPOCHS if _IS_CPU else _CHAR_LM_GPU_EPOCHS
 for ct in cell_types:
     print(f"\n--- 训练 {ct.upper()} ---")
     model = CharRNNLM(dataset.vocab_size, embed_dim=32, hidden_size=64, cell_type=ct)
-    history = train_char_lm(model, dataset, epochs=50, lr=0.005)
+    history = train_char_lm(model, dataset, epochs=char_lm_epochs, lr=0.005)
     loss_histories[ct] = history
     models_trained[ct] = model
 
@@ -409,11 +428,11 @@ for ct in cell_types:
     plt.plot(loss_histories[ct], color=colors[ct], linewidth=1.5, label=ct.upper())
 plt.xlabel("Epoch", fontsize=12)
 plt.ylabel("Loss", fontsize=12)
-plt.title("RNN vs LSTM vs GRU 字符语言模型训练损失对比", fontsize=13, fontweight='bold')
+plt.title("RNN vs LSTM vs GRU Character-Level Language Model Training Loss", fontsize=13, fontweight='bold')
 plt.legend(fontsize=11)
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig("images/rnn_lstm_gru_loss_comparison.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'rnn_lstm_gru_loss_comparison.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("\n[可视化] 训练损失对比图已保存至 images/rnn_lstm_gru_loss_comparison.png")
 
@@ -528,7 +547,7 @@ def train_sentiment_model(
     model: SentimentRNN, train_loader: DataLoader, epochs: int = 50, lr: float = 0.01
 ):
     """训练情感分类模型"""
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = DEVICE
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = nn.BCEWithLogitsLoss()
@@ -560,11 +579,12 @@ print("=" * 60)
 review_dataset = ReviewDataset(review_data, char2idx_cls, max_len=30)
 review_loader = DataLoader(review_dataset, batch_size=4, shuffle=True)
 
+sent_epochs = _SENT_CPU_EPOCHS if _IS_CPU else _SENT_GPU_EPOCHS
 cls_histories = {}
 for ct in cell_types:
     print(f"\n--- 训练 {ct.upper()} 分类器 ---")
     cls_model = SentimentRNN(V_cls, embed_dim=16, hidden_size=32, cell_type=ct)
-    history = train_sentiment_model(cls_model, review_loader, epochs=40, lr=0.01)
+    history = train_sentiment_model(cls_model, review_loader, epochs=sent_epochs, lr=0.01)
     cls_histories[ct] = history
     final_acc = history[-1]['acc']
     print(f"  最终准确率: {final_acc:.2%}")
@@ -575,12 +595,12 @@ for ct in cell_types:
     accs = [h['acc'] for h in cls_histories[ct]]
     plt.plot(accs, color=colors[ct], linewidth=1.5, label=f"{ct.upper()} (最终: {accs[-1]:.2%})")
 plt.xlabel("Epoch", fontsize=12)
-plt.ylabel("准确率", fontsize=12)
-plt.title("RNN vs LSTM vs GRU 情感分类准确率对比", fontsize=13, fontweight='bold')
+plt.ylabel("Accuracy", fontsize=12)
+plt.title("RNN vs LSTM vs GRU Sentiment Classification Accuracy", fontsize=13, fontweight='bold')
 plt.legend(fontsize=10)
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig("images/rnn_lstm_gru_classification_accuracy.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'rnn_lstm_gru_classification_accuracy.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("\n[可视化] 分类准确率对比图已保存至 images/rnn_lstm_gru_classification_accuracy.png")
 

@@ -26,8 +26,9 @@ s02_linear_regression/code/exercise.py — 线性回归练习
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
-matplotlib.rcParams['axes.unicode_minus'] = False
+# 中文字体配置
+matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False  # 修复负号显示
 
 
 def generate_regression_data(n_samples=100, noise_std=3.0, random_seed=42):

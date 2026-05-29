@@ -27,6 +27,11 @@ import numpy as np
 
 warnings.filterwarnings("ignore")
 
+# 图片保存目录：固定为本章节的 images/ 目录（相对于本脚本的 ../images/）
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_IMAGES_DIR = os.path.join(_SCRIPT_DIR, '..', 'images')
+os.makedirs(_IMAGES_DIR, exist_ok=True)
+
 # ============================================================================
 # 第 0 部分：环境检测与配置
 # ============================================================================
@@ -60,13 +65,20 @@ def check_environment():
         print("  ✗ ChromaDB 不可用 — 使用内存字典回退方案")
         print("    安装: pip install chromadb")
 
+    # ====== 可选：使用 LLM API ======
+    # 如需使用真实 LLM API，请设置环境变量：
+    #   export OPENAI_API_KEY=your-key
+    #   export OPENAI_BASE_URL=https://api.openai.com/v1
+    # 然后将 USE_API = False 改为 True
+    USE_API = False
+
     # 检测 OpenAI
-    HAS_OPENAI = os.environ.get("OPENAI_API_KEY") is not None
+    HAS_OPENAI = USE_API and os.environ.get("OPENAI_API_KEY") is not None
     if HAS_OPENAI:
         print("  ✓ OpenAI API key 已配置 — 使用 GPT 生成回答")
     else:
         print("  ✗ 未检测到 OPENAI_API_KEY — LLM 将使用模拟输出")
-        print("    设置环境变量: set OPENAI_API_KEY=your-key")
+        print("    设置环境变量: export OPENAI_API_KEY=your-key")
 
 
 # ============================================================================

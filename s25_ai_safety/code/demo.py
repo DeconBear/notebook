@@ -25,6 +25,11 @@ import numpy as np
 
 warnings.filterwarnings("ignore")
 
+# 图片保存目录：固定为本章节的 images/ 目录（相对于本脚本的 ../images/）
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_IMAGES_DIR = os.path.join(_SCRIPT_DIR, '..', 'images')
+os.makedirs(_IMAGES_DIR, exist_ok=True)
+
 # ============================================================================
 # 第 1 部分：幻觉检测与缓解
 # ============================================================================

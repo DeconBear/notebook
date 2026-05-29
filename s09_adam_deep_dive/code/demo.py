@@ -16,8 +16,15 @@ s09 Adam 深度解析与训练实战 — 演示代码
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['axes.unicode_minus'] = False
 from typing import Dict, List, Tuple, Optional
+import os
 import time
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -695,7 +702,7 @@ def compare_without_bias_correction(
     n_epochs = 5  # 只在少数 epoch 上比较（偏差修正主要在早期起作用）
 
     results = {}
-    for use_bc, label in [(True, "有偏差修正"), (False, "无偏差修正")]:
+    for use_bc, label in [(True, "With Bias Correction"), (False, "Without Bias Correction")]:
         model = MLP([784, 128, 64, 10], seed=42)
         opt = AdamOptimizer(lr=0.001, use_bias_correction=use_bc)
         print(f"\n  训练 {label} 的 Adam...")
@@ -707,10 +714,10 @@ def compare_without_bias_correction(
 
     # 对比早期损失
     print(f"\n  早期损失对比（前 {n_epochs} 个 epoch）:")
-    print(f"  {'Epoch':<8} {'有偏差修正':<16} {'无偏差修正':<16} {'差异'}")
+    print(f"  {'Epoch':<8} {'With Bias Correction':<22} {'Without Bias Correction':<22} {'Diff'}")
     for ep in range(n_epochs):
-        loss_with = results["有偏差修正"]["train_loss"][ep]
-        loss_without = results["无偏差修正"]["train_loss"][ep]
+        loss_with = results["With Bias Correction"]["train_loss"][ep]
+        loss_without = results["Without Bias Correction"]["train_loss"][ep]
         diff_pct = (loss_without - loss_with) / loss_with * 100  # 无修正相对有修正的偏差
         print(f"  {ep+1:<8} {loss_with:<16.4f} {loss_without:<16.4f} {diff_pct:+.1f}%")
 
@@ -752,7 +759,7 @@ def plot_comparison_results(
                 alpha=0.8, label=name)
     ax.set_xlabel('Epoch', fontsize=11)
     ax.set_ylabel('Training Loss', fontsize=11)
-    ax.set_title('训练损失曲线', fontsize=13, fontweight='bold')
+    ax.set_title('Training Loss Curve', fontsize=13, fontweight='bold')
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3)
 
@@ -764,7 +771,7 @@ def plot_comparison_results(
                 alpha=0.8, label=name)
     ax.set_xlabel('Epoch', fontsize=11)
     ax.set_ylabel('Validation Accuracy', fontsize=11)
-    ax.set_title('验证准确率曲线', fontsize=13, fontweight='bold')
+    ax.set_title('Validation Accuracy Curve', fontsize=13, fontweight='bold')
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3)
 
@@ -776,7 +783,7 @@ def plot_comparison_results(
                 alpha=0.8, label=name)
     ax.set_xlabel('Epoch', fontsize=11)
     ax.set_ylabel('Gradient L2 Norm', fontsize=11)
-    ax.set_title('梯度范数监控', fontsize=13, fontweight='bold')
+    ax.set_title('Gradient Norm Monitoring', fontsize=13, fontweight='bold')
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3)
     ax.set_yscale('log')
@@ -789,14 +796,15 @@ def plot_comparison_results(
                 alpha=0.8, label=name)
     ax.set_xlabel('Epoch', fontsize=11)
     ax.set_ylabel('Learning Rate', fontsize=11)
-    ax.set_title('学习率调度 (Warmup + Cosine)', fontsize=13, fontweight='bold')
+    ax.set_title('Learning Rate Schedule (Warmup + Cosine)', fontsize=13, fontweight='bold')
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig(f'images/{filename}', dpi=150, bbox_inches='tight')
+    out = os.path.join(_IMAGES, filename)
+    plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"\n[可视化] 优化器对比图已保存至 images/{filename}")
+    print(f"\n[可视化] 优化器对比图已保存至 {out}")
 
 
 def plot_bias_correction_comparison(
@@ -812,7 +820,7 @@ def plot_bias_correction_comparison(
     """
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-    colors_bc = {"有偏差修正": "#2ECC71", "无偏差修正": "#E74C3C"}
+    colors_bc = {"With Bias Correction": "#2ECC71", "Without Bias Correction": "#E74C3C"}
 
     # 左图：训练损失
     ax = axes[0]
@@ -821,7 +829,7 @@ def plot_bias_correction_comparison(
                 linewidth=2, markersize=6, alpha=0.8, label=label)
     ax.set_xlabel('Epoch', fontsize=11)
     ax.set_ylabel('Training Loss', fontsize=11)
-    ax.set_title('偏差修正对训练损失的影响 (早期)', fontsize=13, fontweight='bold')
+    ax.set_title('Effect of Bias Correction on Training Loss (Early Stage)', fontsize=13, fontweight='bold')
     ax.legend(fontsize=10)
     ax.grid(True, alpha=0.3)
 
@@ -832,14 +840,15 @@ def plot_bias_correction_comparison(
                 linewidth=2, markersize=6, alpha=0.8, label=label)
     ax.set_xlabel('Epoch', fontsize=11)
     ax.set_ylabel('Validation Accuracy', fontsize=11)
-    ax.set_title('偏差修正对验证准确率的影响 (早期)', fontsize=13, fontweight='bold')
+    ax.set_title('Effect of Bias Correction on Validation Accuracy (Early Stage)', fontsize=13, fontweight='bold')
     ax.legend(fontsize=10)
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig(f'images/{filename}', dpi=150, bbox_inches='tight')
+    out = os.path.join(_IMAGES, filename)
+    plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"[可视化] 偏差修正对比图已保存至 images/{filename}")
+    print(f"[可视化] 偏差修正对比图已保存至 {out}")
 
 
 # ============================================================================
@@ -964,19 +973,20 @@ def main():
     # 裁剪效果图
     fig, ax = plt.subplots(1, 1, figsize=(8, 5))
     ax.plot(history_no_clip["grad_norms"], 'ro-', linewidth=2,
-            markersize=8, alpha=0.8, label='无裁剪 (可能爆炸)')
+            markersize=8, alpha=0.8, label='No Clip (may explode)')
     ax.plot(history_with_clip["grad_norms"], 'go-', linewidth=2,
-            markersize=8, alpha=0.8, label='有裁剪 (max_norm=1.0)')
-    ax.axhline(y=1.0, color='gray', linestyle='--', alpha=0.5, label='裁剪阈值')
+            markersize=8, alpha=0.8, label='With Clip (max_norm=1.0)')
+    ax.axhline(y=1.0, color='gray', linestyle='--', alpha=0.5, label='Clip Threshold')
     ax.set_xlabel('Epoch', fontsize=11)
     ax.set_ylabel('Gradient L2 Norm', fontsize=11)
-    ax.set_title('梯度裁剪的效果 (大学习率 lr=0.1)', fontsize=13, fontweight='bold')
+    ax.set_title('Effect of Gradient Clipping (High LR lr=0.1)', fontsize=13, fontweight='bold')
     ax.legend(fontsize=10)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig('images/gradient_clipping_effect.png', dpi=150, bbox_inches='tight')
+    out = os.path.join(_IMAGES, 'gradient_clipping_effect.png')
+    plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"[可视化] 梯度裁剪效果图已保存至 images/gradient_clipping_effect.png")
+    print(f"[可视化] 梯度裁剪效果图已保存至 {out}")
 
     # ---- 7. 总结 ----
     print("\n" + "=" * 70)

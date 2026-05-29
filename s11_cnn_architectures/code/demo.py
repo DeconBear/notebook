@@ -15,12 +15,25 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
+
+# GPU 自动检测
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+print(f"使用设备: {DEVICE}")
+if DEVICE.type == 'cpu':
+    print("（未检测到 GPU，使用 CPU 运行。如有 GPU，请安装 CUDA 版 PyTorch 以获得加速）")
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+matplotlib.rcParams['axes.unicode_minus'] = False
 import numpy as np
 import os
 import time
+
+# 图片保存目录：固定为本章节的 images/ 目录（相对于本脚本的 ../images/）
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_IMAGES_DIR = os.path.join(_SCRIPT_DIR, '..', 'images')
+os.makedirs(_IMAGES_DIR, exist_ok=True)
 from collections import defaultdict
 
 # ============================================================
@@ -518,14 +531,28 @@ def get_cifar10_loaders(batch_size: int = 128):
                              (0.2023, 0.1994, 0.2010)),
     ])
 
-    train_set = torchvision.datasets.CIFAR10(
-        root='../data', train=True, download=True,
-        transform=transform_train
-    )
-    test_set = torchvision.datasets.CIFAR10(
-        root='../data', train=False, download=True,
-        transform=transform_test
-    )
+    try:
+        train_set = torchvision.datasets.CIFAR10(
+            root='../data', train=True, download=True,
+            transform=transform_train
+        )
+        test_set = torchvision.datasets.CIFAR10(
+            root='../data', train=False, download=True,
+            transform=transform_test
+        )
+    except Exception as e:
+        print(f"[警告] CIFAR-10 下载失败 ({e})，使用合成数据")
+        print("[回退] 创建合成 32x32 图像数据集用于演示 CNN 结构")
+        # 回退：创建合成数据（32x32 RGB，10类）
+        from torch.utils.data import TensorDataset
+        np.random.seed(42)
+        n_train, n_test = 5000, 1000
+        synth_X_train = torch.randn(n_train, 3, 32, 32)
+        synth_y_train = torch.randint(0, 10, (n_train,))
+        synth_X_test = torch.randn(n_test, 3, 32, 32)
+        synth_y_test = torch.randint(0, 10, (n_test,))
+        train_set = TensorDataset(synth_X_train, synth_y_train)
+        test_set = TensorDataset(synth_X_test, synth_y_test)
 
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=batch_size, shuffle=True, num_workers=0
@@ -563,8 +590,8 @@ def plot_training_comparison(logger_resnet: TrainingLogger,
     ax.plot(epochs, logger_plain.train_losses, 'r-s', label='Plain CNN',
             linewidth=2, markersize=4)
     ax.set_xlabel('Epoch')
-    ax.set_ylabel('训练 Loss')
-    ax.set_title('训练 Loss 对比')
+    ax.set_ylabel('Training Loss')
+    ax.set_title('Training Loss Comparison')
     ax.legend()
     ax.grid(True, alpha=0.3)
 
@@ -575,8 +602,8 @@ def plot_training_comparison(logger_resnet: TrainingLogger,
     ax.plot(epochs, logger_plain.test_accs, 'r-s', label='Plain CNN',
             linewidth=2, markersize=4)
     ax.set_xlabel('Epoch')
-    ax.set_ylabel('测试准确率 (%)')
-    ax.set_title('测试准确率对比')
+    ax.set_ylabel('Test Accuracy (%)')
+    ax.set_title('Test Accuracy Comparison')
     ax.legend()
     ax.grid(True, alpha=0.3)
 
@@ -592,8 +619,8 @@ def plot_training_comparison(logger_resnet: TrainingLogger,
         ax.plot(epochs, plain_avg_grads, 'r-s', label='Plain CNN',
                 linewidth=2, markersize=4)
         ax.set_xlabel('Epoch')
-        ax.set_ylabel('平均梯度范数')
-        ax.set_title('梯度范数对比（残差连接保持梯度流动）')
+        ax.set_ylabel('Average Gradient Norm')
+        ax.set_title('Gradient Norm Comparison (Residual Connections Maintain Gradient Flow)')
         ax.legend()
         ax.grid(True, alpha=0.3)
 
@@ -627,8 +654,8 @@ def plot_gradient_distribution(grad_norms: dict, epoch: int,
     # 简化层名（只显示最后一部分）
     short_names = [n.split('.')[-1] for n in names]
     ax.set_xticklabels(short_names, rotation=45, ha='right', fontsize=7)
-    ax.set_ylabel('梯度 L2 范数')
-    ax.set_title(f'{prefix} Epoch {epoch} — 逐层梯度范数分布')
+    ax.set_ylabel('Gradient L2 Norm')
+    ax.set_title(f'{prefix} Epoch {epoch} - Per-Layer Gradient Norm Distribution')
     ax.axhline(y=0, color='red', linewidth=0.5, linestyle='-')
     ax.grid(True, alpha=0.3, axis='y')
 
@@ -650,9 +677,9 @@ def main():
     print("=" * 60)
 
     # ---------- 设备选择 ----------
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = DEVICE
     print(f"\n计算设备: {device}")
-    if torch.cuda.is_available():
+    if device.type == 'cuda':
         print(f"  GPU: {torch.cuda.get_device_name(0)}")
 
     # ---------- 加载数据 ----------
@@ -664,7 +691,19 @@ def main():
 
     # ---------- 构建模型 ----------
     print("\n[2/5] 构建模型...")
-    n_epochs = 10  # demo 模式训练 10 个 epoch
+    # CPU 模式下使用大幅缩减的训练配置以在 60s 内完成演示
+    if device.type == 'cpu':
+        n_epochs = 1
+        n_train_subset = 1000
+        print("[配置] CPU 模式：使用轻量参数快速演示（1 epoch, 1000 训练样本）。GPU 模式下将使用完整训练配置。")
+        # 缩减训练集：只取前 n_train_subset 个样本
+        from torch.utils.data import Subset
+        if hasattr(train_loader.dataset, 'data') and hasattr(train_loader.dataset, 'targets'):  # CIFAR-10 标准数据集
+            train_loader.dataset.data = train_loader.dataset.data[:n_train_subset]
+            train_loader.dataset.targets = train_loader.dataset.targets[:n_train_subset]
+    else:
+        n_epochs = 10
+        print(f"[配置] 训练 {n_epochs} 个 epoch（GPU 模式可充分训练）")
 
     resnet = ResNet18(num_classes=10).to(device)
     plain_cnn = PlainCNN([2, 2, 2, 2], num_classes=10).to(device)
@@ -728,8 +767,7 @@ def main():
 
     # ---------- 可视化 ----------
     print("\n[5/5] 生成可视化对比...")
-    output_dir = "../images"
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = _IMAGES_DIR
 
     # 训练过程对比图
     plot_training_comparison(logger_resnet, logger_plain, output_dir)
@@ -760,11 +798,10 @@ def main():
         plain_avg_grad = np.mean(list(logger_plain.grad_norms[-1].values()))
         print(f"  ResNet 平均梯度范数: {resnet_avg_grad:.6f}")
         print(f"  Plain 平均梯度范数: {plain_avg_grad:.6f}")
-        print(f"  (ResNet 的梯度范数更大，说明残差连接有效)
-")
+        print(f"  (ResNet 的梯度范数更大，说明残差连接有效)")
 
     print("=" * 60)
-    print("Demo 完成！查看 ../images/ 目录下的可视化结果。")
+    print(f"Demo 完成！查看 {_IMAGES_DIR} 目录下的可视化结果。")
     print("=" * 60)
 
 

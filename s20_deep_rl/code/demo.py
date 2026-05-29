@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
 """
 s20 深度强化学习：DQN 与 Policy Gradient — 演示代码
 ======================================================
@@ -21,23 +22,43 @@ s20 深度强化学习：DQN 与 Policy Gradient — 演示代码
 
 import numpy as np
 import matplotlib.pyplot as plt
+# 中文字体配置
+import matplotlib
+matplotlib.rcParams['axes.unicode_minus'] = False
 from collections import deque, namedtuple
 from typing import List, Tuple, Deque, Optional
 import time
 
 # 尝试导入 gymnasium (>=0.26)，如果失败则尝试导入 gym
+GYM_AVAILABLE = False
 try:
     import gymnasium as gym                                     # 新版 Gym API
     GYM_NEW = True
+    GYM_AVAILABLE = True
 except ImportError:
-    import gym                                                  # 旧版 Gym API
-    GYM_NEW = False
+    try:
+        import gym                                              # 旧版 Gym API
+        GYM_NEW = False
+        GYM_AVAILABLE = True
+    except ImportError:
+        print("[警告] gymnasium 和 gym 均未安装，跳过 RL 环境演示")
+        print("  安装: pip install gymnasium")
 
 import torch                                                    # PyTorch 深度学习框架
 import torch.nn as nn                                           # 神经网络模块
 import torch.nn.functional as F                                 # 激活函数等
 import torch.optim as optim                                     # 优化器
 
+# GPU 自动检测
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+print(f"使用设备: {DEVICE}")
+if DEVICE.type == 'cpu':
+    print("（未检测到 GPU，使用 CPU 运行。如有 GPU，请安装 CUDA 版 PyTorch 以获得加速）")
+
+import os
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================================
 # 第一部分：工具函数
@@ -745,7 +766,7 @@ def train_reinforce(
 def plot_training_comparison(
     dqn_rewards: List[float],
     reinforce_rewards: List[float],
-    title: str = "DQN vs REINFORCE — CartPole-v1 训练对比",
+    title: str = "DQN vs REINFORCE — CartPole-v1 Training Comparison",
 ):
     """
     绘制 DQN 和 REINFORCE 的训练奖励对比曲线。
@@ -762,54 +783,54 @@ def plot_training_comparison(
     dqn_eps = np.arange(len(dqn_rewards))
     rf_eps = np.arange(len(reinforce_rewards))
 
-    ax.plot(dqn_eps, dqn_rewards, alpha=0.3, color='#2E86AB',    # DQN 原始奖励
+    ax.plot(dqn_eps, dqn_rewards, alpha=0.3, color='#2E86AB',    # DQN raw reward
             linewidth=0.5)
-    ax.plot(rf_eps, reinforce_rewards, alpha=0.3, color='#F18F01',  # REINFORCE 原始奖励
+    ax.plot(rf_eps, reinforce_rewards, alpha=0.3, color='#F18F01',  # REINFORCE raw reward
             linewidth=0.5)
 
-    # 滑动平均
+    # Moving average
     window = 50
     if len(dqn_rewards) >= window:
         dqn_smooth = np.convolve(dqn_rewards,
                                 np.ones(window) / window, mode='valid')
         ax.plot(np.arange(window-1, len(dqn_rewards)), dqn_smooth,
-               'b-', linewidth=2, label=f'DQN (滑动平均)')
+               'b-', linewidth=2, label=f'DQN (Moving Avg)')
 
     if len(reinforce_rewards) >= window:
         rf_smooth = np.convolve(reinforce_rewards,
                                np.ones(window) / window, mode='valid')
         ax.plot(np.arange(window-1, len(reinforce_rewards)), rf_smooth,
-               'orange', linewidth=2, label=f'REINFORCE (滑动平均)')
+               'orange', linewidth=2, label=f'REINFORCE (Moving Avg)')
 
-    # 标记 CartPole 的最高分 500 (环境自动截断)
+    # Mark CartPole max score 500 (env auto-truncates)
     ax.axhline(y=500, color='green', linestyle='--', alpha=0.5,
-              label='最高分 (500)')
+              label='Max Score (500)')
 
     ax.set_xlabel('Episode', fontsize=10)
-    ax.set_ylabel('总奖励', fontsize=10)
-    ax.set_title('训练奖励 (原始 + 滑动平均)', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Total Reward', fontsize=10)
+    ax.set_title('Training Reward (Raw + Moving Avg)', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
-    # ---- 子图 2: 累计平均 ----
+    # ---- Subplot 2: Cumulative average ----
     ax2 = axes[1]
     dqn_cumavg = np.cumsum(dqn_rewards) / (np.arange(len(dqn_rewards)) + 1)
     rf_cumavg = np.cumsum(reinforce_rewards) / (np.arange(len(reinforce_rewards)) + 1)
 
     ax2.plot(dqn_eps, dqn_cumavg, 'b-', linewidth=2,
-            label=f'DQN 累计平均')
+            label=f'DQN Cum. Avg')
     ax2.plot(rf_eps, rf_cumavg, 'orange', linewidth=2,
-            label=f'REINFORCE 累计平均')
+            label=f'REINFORCE Cum. Avg')
 
     ax2.set_xlabel('Episode', fontsize=10)
-    ax2.set_ylabel('累计平均奖励', fontsize=10)
-    ax2.set_title('累计平均奖励', fontsize=12, fontweight='bold')
+    ax2.set_ylabel('Cumulative Avg Reward', fontsize=10)
+    ax2.set_title('Cumulative Average Reward', fontsize=12, fontweight='bold')
     ax2.legend(fontsize=8)
     ax2.grid(True, alpha=0.3)
 
     fig.suptitle(title, fontsize=14, fontweight='bold', y=1.02)
     plt.tight_layout()
-    plt.savefig('images/dqn_vs_reinforce.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'dqn_vs_reinforce.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] DQN vs REINFORCE 对比图已保存至 images/dqn_vs_reinforce.png")
 
@@ -828,15 +849,15 @@ def plot_dqn_loss(loss_history: List[float]):
         smooth = np.convolve(loss_history,
                            np.ones(100) / 100, mode='valid')
         ax.plot(np.arange(99, len(loss_history)), smooth,
-               'r-', linewidth=2, label='滑动平均 (窗口=100)')
+               'r-', linewidth=2, label='Moving Avg (window=100)')
 
-    ax.set_xlabel('训练步数', fontsize=10)
-    ax.set_ylabel('损失 (MSE)', fontsize=10)
-    ax.set_title('DQN 训练损失曲线', fontsize=12, fontweight='bold')
+    ax.set_xlabel('Training Steps', fontsize=10)
+    ax.set_ylabel('Loss (MSE)', fontsize=10)
+    ax.set_title('DQN Training Loss Curve', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig('images/dqn_loss_curve.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'dqn_loss_curve.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] DQN 损失曲线已保存至 images/dqn_loss_curve.png")
 
@@ -876,18 +897,18 @@ def plot_reinforce_policy(
 
     # 绘制热力图
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-    im = ax.contourf(AA, VV, probs, levels=20, cmap='RdYlBu',   # 红=动作1, 蓝=动作0
+    im = ax.contourf(AA, VV, probs, levels=20, cmap='RdYlBu',   # red=action1, blue=action0
                     alpha=0.8)
-    # 添加 0.5 概率等值线（决策边界）
-    ax.contour(AA, VV, probs, levels=[0.5], colors='k',         # 黑色线 = 决策边界
+    # Add 0.5 probability contour (decision boundary)
+    ax.contour(AA, VV, probs, levels=[0.5], colors='k',         # black line = decision boundary
               linewidths=2, linestyles='--')
-    plt.colorbar(im, ax=ax, label='P(动作=1 | 状态)')
+    plt.colorbar(im, ax=ax, label='P(action=1 | state)')
 
-    ax.set_xlabel('杆角度 (rad)', fontsize=10)
-    ax.set_ylabel('杆角速度 (rad/s)', fontsize=10)
+    ax.set_xlabel('Pole Angle (rad)', fontsize=10)
+    ax.set_ylabel('Pole Angular Velocity (rad/s)', fontsize=10)
     ax.set_title(title, fontsize=12, fontweight='bold')
     plt.tight_layout()
-    plt.savefig('images/reinforce_policy_heatmap.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'reinforce_policy_heatmap.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] REINFORCE 策略热力图已保存至 images/reinforce_policy_heatmap.png")
 
@@ -904,6 +925,11 @@ def main():
     print("    s20 深度强化学习: DQN 与 Policy Gradient — 完整演示")
     print("=" * 70)
 
+    if not GYM_AVAILABLE:
+        print("[跳过] Gym 环境不可用，无法运行 RL 训练演示。")
+        print("安装: pip install gymnasium")
+        return
+
     set_seed(42)                                                 # 固定随机种子
 
     # ---- 创建环境 ----
@@ -919,7 +945,7 @@ def main():
 
     # ---- 训练参数 ----
     N_EPISODES = 500                                             # 训练 episode 数
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'      # 自动检测设备
+    device = DEVICE      # 使用全局设备配置
     print(f"  设备: {device}")
 
     # ========================================================================

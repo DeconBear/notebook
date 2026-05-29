@@ -22,6 +22,10 @@ import numpy as np
 
 warnings.filterwarnings("ignore")
 
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
+
 # ============================================================================
 # 第 1 部分：KV Cache 演示
 # ============================================================================
@@ -225,6 +229,7 @@ def demo_kv_cache():
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
+        matplotlib.rcParams['axes.unicode_minus'] = False
 
         seq_lens = [r[0] for r in results]
         times_no = [r[1] for r in results]
@@ -234,32 +239,31 @@ def demo_kv_cache():
 
         # 左图：时间对比
         ax1.plot(seq_lens, times_no, 'o-', color='#E74C3C', linewidth=2,
-                 markersize=6, label='无 KV Cache (O(n²))')
+                 markersize=6, label='Without KV Cache (O(n²))')
         ax1.plot(seq_lens, times_cache, 's-', color='#27AE60', linewidth=2,
-                 markersize=6, label='有 KV Cache (O(n))')
-        ax1.set_xlabel('序列长度 (tokens)', fontsize=11)
-        ax1.set_ylabel('推理时间 (秒)', fontsize=11)
-        ax1.set_title('推理时间对比', fontsize=13, fontweight='bold')
+                 markersize=6, label='With KV Cache (O(n))')
+        ax1.set_xlabel('Sequence Length (tokens)', fontsize=11)
+        ax1.set_ylabel('Inference Time (s)', fontsize=11)
+        ax1.set_title('Inference Time Comparison', fontsize=13, fontweight='bold')
         ax1.legend(fontsize=10)
         ax1.grid(True, alpha=0.3)
 
-        # 右图：计算复杂度对比
+        # Right: Compute complexity comparison
         comp_no = [r[4] for r in results]
         comp_cache = [r[5] for r in results]
         ax2.plot(seq_lens, comp_no, 'o-', color='#E74C3C', linewidth=2,
-                 markersize=6, label='无缓存 (O(n²))')
+                 markersize=6, label='Without Cache (O(n²))')
         ax2.plot(seq_lens, comp_cache, 's-', color='#27AE60', linewidth=2,
-                 markersize=6, label='有缓存 (O(n))')
-        ax2.set_xlabel('序列长度 (tokens)', fontsize=11)
-        ax2.set_ylabel('计算次数 (K/V 投影)', fontsize=11)
-        ax2.set_title('计算复杂度对比', fontsize=13, fontweight='bold')
+                 markersize=6, label='With Cache (O(n))')
+        ax2.set_xlabel('Sequence Length (tokens)', fontsize=11)
+        ax2.set_ylabel('Compute Count (K/V Projections)', fontsize=11)
+        ax2.set_title('Compute Complexity Comparison', fontsize=13, fontweight='bold')
         ax2.legend(fontsize=10)
         ax2.grid(True, alpha=0.3)
 
-        plt.suptitle('KV Cache 加速效果分析', fontsize=15, fontweight='bold')
+        plt.suptitle('KV Cache Speedup Analysis', fontsize=15, fontweight='bold')
         plt.tight_layout()
-        os.makedirs("images", exist_ok=True)
-        plt.savefig("images/kv_cache_comparison.png", dpi=150, bbox_inches='tight')
+        plt.savefig(os.path.join(_IMAGES, "kv_cache_comparison.png"), dpi=150, bbox_inches='tight')
         plt.close()
         print(f"\n  [可视化] KV Cache 对比图已保存到 images/kv_cache_comparison.png")
     except ImportError:
@@ -451,42 +455,43 @@ def demo_quantization():
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
+        matplotlib.rcParams['axes.unicode_minus'] = False
 
         fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
-        # 图 1: 原始权重分布
+        # Fig 1: Original weight distribution
         ax = axes[0, 0]
         ax.hist(weights_fp32.flatten(), bins=100, color='#3498DB', alpha=0.7,
                 edgecolor='white')
-        ax.set_title('原始 FP32 权重分布', fontsize=12)
-        ax.set_xlabel('权重值')
-        ax.set_ylabel('频次')
+        ax.set_title('Original FP32 Weight Distribution', fontsize=12)
+        ax.set_xlabel('Weight Value')
+        ax.set_ylabel('Frequency')
         ax.axvline(x=0, color='red', linestyle='--', alpha=0.5)
 
-        # 图 2: 反量化权重 vs 原始权重散点图
+        # Fig 2: Dequantized weight vs original weight scatter
         ax = axes[0, 1]
         ax.scatter(weights_fp32.flatten()[::100], w_deq_pc.flatten()[::100],
                    alpha=0.3, s=3, c='#E74C3C')
         ax.plot([weights_fp32.min(), weights_fp32.max()],
                 [weights_fp32.min(), weights_fp32.max()], 'b--', linewidth=1)
-        ax.set_xlabel('原始 FP32 权重')
-        ax.set_ylabel('反量化 INT8 权重')
-        ax.set_title(f'量化保真度 (逐通道, MAE={error_pc.mean():.5f})', fontsize=12)
+        ax.set_xlabel('Original FP32 Weight')
+        ax.set_ylabel('Dequantized INT8 Weight')
+        ax.set_title(f'Quantization Fidelity (Per-Channel, MAE={error_pc.mean():.5f})', fontsize=12)
 
-        # 图 3: 逐通道 vs 整体量化误差对比
+        # Fig 3: Per-channel vs Per-tensor quantization error
         ax = axes[1, 0]
         ch_errors_pc = np.abs(weights_fp32 - w_deq_pc).mean(axis=1)
         ch_errors_pt = np.abs(weights_fp32 - w_deq_pt).mean(axis=1)
-        ax.plot(ch_errors_pc[:50], label='逐通道量化 (Per-Channel)', color='#27AE60')
-        ax.plot(ch_errors_pt[:50], label='整体量化 (Per-Tensor)', color='#F39C12')
-        ax.set_xlabel('通道索引 (前50个)')
-        ax.set_ylabel('平均绝对误差')
-        ax.set_title('逐通道量化显著减少了通道间的误差差异', fontsize=11)
+        ax.plot(ch_errors_pc[:50], label='Per-Channel Quantization', color='#27AE60')
+        ax.plot(ch_errors_pt[:50], label='Per-Tensor Quantization', color='#F39C12')
+        ax.set_xlabel('Channel Index (first 50)')
+        ax.set_ylabel('Mean Absolute Error')
+        ax.set_title('Per-Channel Quantization Reduces Inter-Channel Error', fontsize=11)
         ax.legend(fontsize=9)
 
-        # 图 4: 内存对比柱状图
+        # Fig 4: Memory comparison bar chart
         ax = axes[1, 1]
-        methods = ['FP32', 'INT8\n(w/o scales)', 'INT8\n(with scales)', 'INT4\n(理论)']
+        methods = ['FP32', 'INT8\n(w/o scales)', 'INT8\n(with scales)', 'INT4\n(theoretical)']
         sizes_mb = [
             size_fp32 / (1024*1024),
             size_int8 / (1024*1024),
@@ -495,8 +500,8 @@ def demo_quantization():
         ]
         colors = ['#3498DB', '#27AE60', '#2ECC71', '#8E44AD']
         bars = ax.bar(methods, sizes_mb, color=colors, edgecolor='white', linewidth=1.5)
-        ax.set_ylabel('内存占用 (MB)', fontsize=11)
-        ax.set_title(f'权重存储对比 ({out_features}×{in_features} 矩阵)', fontsize=12)
+        ax.set_ylabel('Memory Usage (MB)', fontsize=11)
+        ax.set_title(f'Weight Storage Comparison ({out_features}×{in_features} matrix)', fontsize=12)
         # 在柱子上标注数值
         for bar, size in zip(bars, sizes_mb):
             ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
@@ -505,10 +510,9 @@ def demo_quantization():
                     f'{size/sizes_mb[0]:.1%}', ha='center', va='center',
                     fontsize=9, color='white', fontweight='bold')
 
-        plt.suptitle('模型量化演示 — FP32 → INT8', fontsize=15, fontweight='bold')
+        plt.suptitle('Model Quantization Demo -- FP32 -> INT8', fontsize=15, fontweight='bold')
         plt.tight_layout()
-        os.makedirs("images", exist_ok=True)
-        plt.savefig("images/quantization_demo.png", dpi=150, bbox_inches='tight')
+        plt.savefig(os.path.join(_IMAGES, "quantization_demo.png"), dpi=150, bbox_inches='tight')
         plt.close()
         print(f"\n  [可视化] 量化演示图已保存到 images/quantization_demo.png")
     except ImportError:

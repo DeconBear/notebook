@@ -24,11 +24,21 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
+# GPU 自动检测
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+print(f"使用设备: {DEVICE}")
+if DEVICE.type == 'cpu':
+    print("（未检测到 GPU，使用 CPU 运行。如有 GPU，请安装 CUDA 版 PyTorch 以获得加速）")
+
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
 import seaborn as sns
+
+import os
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================
 # 第一部分：从零实现 Attention 核心组件
@@ -118,10 +128,7 @@ class MultiHeadSelfAttention(nn.Module):
         V = V.view(batch_size, seq_len, self.num_heads, self.d_k).transpose(1, 2)
         # 现在形状: (batch, num_heads, seq_len, d_k)
 
-        # 缩放点积注意力
-        if mask is not None:
-            # 扩展 mask 以匹配多头维度
-            mask = mask.unsqueeze(1)  # (batch, 1, seq_len, seq_len)
+        # 缩放点积注意力（mask 已在 MiniGPT.forward 中塑形为 (1, 1, seq_len, seq_len)，可直接广播）
         attn_output = scaled_dot_product_attention(Q, K, V, mask)
         # attn_output: (batch, num_heads, seq_len, d_k)
 
@@ -136,7 +143,7 @@ class MultiHeadSelfAttention(nn.Module):
         with torch.no_grad():
             scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_k)
             if mask is not None:
-                scores = scores.masked_fill(mask.unsqueeze(1), float('-inf'))
+                scores = scores.masked_fill(mask, float('-inf'))
             attn_weights = F.softmax(scores, dim=-1)  # (batch, num_heads, seq_len, seq_len)
 
         return output, attn_weights
@@ -293,8 +300,8 @@ class MiniGPT(nn.Module):
             attn_maps: 各层的注意力权重列表（可选）
         """
         batch_size, seq_len = x.shape
-        # 获取因果掩码
-        mask = self.causal_mask[:seq_len, :seq_len]  # (seq_len, seq_len)
+        # 获取因果掩码 — 塑形为 (1, 1, seq_len, seq_len) 以便与 (batch, num_heads, seq_len, seq_len) 广播
+        mask = self.causal_mask[:seq_len, :seq_len].view(1, 1, seq_len, seq_len)
         # 词嵌入 + 位置编码
         x_emb = self.token_embed(x) * math.sqrt(self.d_model)  # 缩放嵌入
         x_emb = self.pos_encoding(x_emb)
@@ -408,7 +415,7 @@ model = MiniGPT(
     dropout=0.1,
 )
 print(f"[模型] 参数量: {sum(p.numel() for p in model.parameters()):,}")
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = DEVICE
 model = model.to(device)
 print(f"[设备] {device}")
 
@@ -441,10 +448,10 @@ plt.figure(figsize=(8, 4))
 plt.plot(loss_history, color='#1E88E5', linewidth=1.5)
 plt.xlabel("Epoch", fontsize=12)
 plt.ylabel("Loss", fontsize=12)
-plt.title("Mini-GPT 字符语言模型训练损失", fontsize=13, fontweight='bold')
+plt.title("Mini-GPT Character Language Model Training Loss", fontsize=13, fontweight='bold')
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig("images/minigpt_loss_curve.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'minigpt_loss_curve.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[可视化] 训练损失图已保存")
 
@@ -476,10 +483,10 @@ for layer_idx, attn in enumerate(attn_maps):
     ax.set_xticklabels(list(sample_text), fontsize=9, rotation=45)
     ax.set_yticks(range(len(sample_text)))
     ax.set_yticklabels(list(sample_text), fontsize=9)
-    ax.set_title(f"第 {layer_idx+1} 层 平均注意力", fontsize=11)
-plt.suptitle("Mini-GPT 各层注意力权重热力图（因果掩码下三角区域）", fontsize=13, fontweight='bold')
+    ax.set_title(f"Layer {layer_idx+1} Average Attention", fontsize=11)
+plt.suptitle("Mini-GPT Attention Weight Heatmaps by Layer (Causal Mask Lower Triangle)", fontsize=13, fontweight='bold')
 plt.tight_layout()
-plt.savefig("images/attention_heatmap.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'attention_heatmap.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[可视化] 注意力热力图已保存至 images/attention_heatmap.png")
 
@@ -493,10 +500,10 @@ for head_idx in range(min(4, last_attn.shape[0])):
     ax.set_xticklabels(list(sample_text), fontsize=8, rotation=45)
     ax.set_yticks(range(len(sample_text)))
     ax.set_yticklabels(list(sample_text), fontsize=8)
-    ax.set_title(f"注意力头 {head_idx+1}", fontsize=11)
-plt.suptitle("最后一层 4 个注意力头的不同关注模式", fontsize=13, fontweight='bold')
+    ax.set_title(f"Attention Head {head_idx+1}", fontsize=11)
+plt.suptitle("Last Layer: 4 Attention Heads Showing Different Focus Patterns", fontsize=13, fontweight='bold')
 plt.tight_layout()
-plt.savefig("images/multihead_attention_patterns.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'multihead_attention_patterns.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[可视化] 多头注意力模式图已保存")
 
@@ -554,27 +561,27 @@ for d_k in d_k_values:
 
 x = np.arange(len(d_k_values))
 w = 0.35
-axes[0].bar(x - w/2, entropy_no_list, w, label='无缩放', color='#E53935', alpha=0.8)
-axes[0].bar(x + w/2, entropy_scaled_list, w, label='有缩放 √d_k', color='#1E88E5', alpha=0.8)
+axes[0].bar(x - w/2, entropy_no_list, w, label='No Scaling', color='#E53935', alpha=0.8)
+axes[0].bar(x + w/2, entropy_scaled_list, w, label='With Scaling 1/sqrt(d_k)', color='#1E88E5', alpha=0.8)
 axes[0].set_xticks(x)
 axes[0].set_xticklabels([f"d_k={v}" for v in d_k_values])
-axes[0].set_ylabel("softmax 平均熵", fontsize=11)
-axes[0].set_title("熵（越高越均匀）", fontsize=12)
+axes[0].set_ylabel("Softmax Average Entropy", fontsize=11)
+axes[0].set_title("Entropy (Higher = More Uniform)", fontsize=12)
 axes[0].legend()
 axes[0].grid(True, alpha=0.3, axis='y')
 
-axes[1].bar(x - w/2, max_no_list, w, label='无缩放', color='#E53935', alpha=0.8)
-axes[1].bar(x + w/2, max_scaled_list, w, label='有缩放 √d_k', color='#1E88E5', alpha=0.8)
+axes[1].bar(x - w/2, max_no_list, w, label='No Scaling', color='#E53935', alpha=0.8)
+axes[1].bar(x + w/2, max_scaled_list, w, label='With Scaling 1/sqrt(d_k)', color='#1E88E5', alpha=0.8)
 axes[1].set_xticks(x)
 axes[1].set_xticklabels([f"d_k={v}" for v in d_k_values])
-axes[1].set_ylabel("平均最大注意力权重", fontsize=11)
-axes[1].set_title("最大注意力（越低越不饱和）", fontsize=12)
+axes[1].set_ylabel("Average Max Attention Weight", fontsize=11)
+axes[1].set_title("Max Attention (Lower = Less Saturated)", fontsize=12)
 axes[1].legend()
 axes[1].grid(True, alpha=0.3, axis='y')
 
-plt.suptitle("√d_k 缩放对 softmax 饱和的影响：不缩放时小 d_k 更均匀，大 d_k 极度集中", fontsize=13, fontweight='bold')
+plt.suptitle("Effect of 1/sqrt(d_k) Scaling on Softmax Saturation: Without Scaling, Small d_k is More Uniform, Large d_k is Extremely Concentrated", fontsize=13, fontweight='bold')
 plt.tight_layout()
-plt.savefig("images/dk_scaling_effect.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'dk_scaling_effect.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("\n[可视化] √d_k 缩放效果对比图已保存")
 

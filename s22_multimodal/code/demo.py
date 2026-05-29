@@ -21,6 +21,10 @@ from typing import List, Tuple, Dict, Optional
 # 抑制非关键警告
 warnings.filterwarnings("ignore")
 
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
+
 # ============================================================================
 # 第 1 部分：环境检测与模型加载
 # ============================================================================
@@ -36,21 +40,21 @@ def check_environment() -> Tuple[bool, str]:
     返回:
         (是否就绪, 设备类型字符串)
     """
-    device = "cpu"
     try:
         import torch
-        # 检查是否有 GPU 可用
-        if torch.cuda.is_available():
-            device = "cuda"
+        # GPU 自动检测
+        device_obj = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+        device = device_obj.type
+        print(f"[环境] 使用设备: {device_obj}")
+        if device_obj.type == 'cuda':
             print(f"[环境] 检测到 CUDA GPU: {torch.cuda.get_device_name(0)}")
-        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-            device = "mps"  # macOS Apple Silicon GPU
+        elif device_obj.type == 'mps':
             print("[环境] 检测到 Apple Silicon MPS 加速")
         else:
             print("[环境] 未检测到 GPU，使用 CPU（推理速度较慢但可用）")
     except ImportError:
         print("[警告] 未安装 PyTorch，请执行: pip install torch torchvision")
-        return False, device
+        return False, "cpu"
 
     try:
         import transformers
@@ -81,6 +85,11 @@ def load_clip_model(device: str = "cpu"):
     global CLIP_AVAILABLE
     print(f"\n[模型加载] 正在加载 CLIP ViT-B/32 模型（约 600MB，首次运行需下载）...")
 
+    # CPU 模式下设置较短的下载超时，避免长时间等待
+    if device == "cpu":
+        os.environ.setdefault("HF_HUB_DOWNLOAD_TIMEOUT", "30")
+        print("[配置] CPU 模式：下载超时设为 30 秒。如网络较慢，模型下载可能跳过，但不影响纯数学演示。")
+
     try:
         from transformers import CLIPProcessor, CLIPModel, CLIPTokenizer
 
@@ -103,12 +112,11 @@ def load_clip_model(device: str = "cpu"):
         return model, processor, tokenizer
 
     except Exception as e:
-        print(f"\n  [错误] CLIP 模型加载失败: {e}")
-        print(f"  可能的原因：")
-        print(f"    1. 网络连接问题（无法从 HuggingFace 下载模型）")
-        print(f"    2. 磁盘空间不足（模型约 600MB）")
-        print(f"    3. transformers 库版本过旧")
-        print(f"  可以手动指定本地模型路径或使用代理。")
+        print(f"\n  [跳过] CLIP 模型加载失败: {type(e).__name__}")
+        if device == "cpu":
+            print(f"  (CPU 模式下网络下载可能较慢，已跳过。可提前下载模型到本地以启用视觉演示)")
+        else:
+            print(f"  可能的原因：网络连接、磁盘空间、或 transformers 版本问题")
         return None, None, None
 
 
@@ -128,7 +136,7 @@ def download_sample_images() -> List[str]:
     from PIL import Image
 
     # 创建图片存储目录
-    os.makedirs("images/samples", exist_ok=True)
+    os.makedirs(os.path.join(_IMAGES, "samples"), exist_ok=True)
     image_paths = []
 
     # 演示图片：从网络下载或生成简单的纯色分类图片
@@ -140,7 +148,7 @@ def download_sample_images() -> List[str]:
     ]
 
     for name, url in sample_sources:
-        save_path = f"images/samples/{name}.jpg"
+        save_path = os.path.join(_IMAGES, "samples", f"{name}.jpg")
         image_paths.append(save_path)
 
         # 如果文件已存在，跳过下载
@@ -452,23 +460,24 @@ def demo_embedding_space(model, processor, tokenizer, device: str):
     import matplotlib
     matplotlib.use('Agg')  # 非交互式后端
     import matplotlib.pyplot as plt
+    matplotlib.rcParams['axes.unicode_minus'] = False
 
     # ---- 定义类别和对应的图文样本 ----
     # 使用多个类别的图片和文本描述
     categories = {
-        "狗 (Dog)": {
+        "Dog": {
             "images": ["images/samples/golden_retriever.jpg"],
             "texts": ["a dog", "a golden retriever", "a cute puppy"]
         },
-        "猫 (Cat)": {
+        "Cat": {
             "images": ["images/samples/orange_cat.jpg"],
             "texts": ["a cat", "an orange cat", "a feline"]
         },
-        "汽车 (Car)": {
+        "Car": {
             "images": ["images/samples/red_car.jpg"],
             "texts": ["a car", "a red vehicle", "an automobile"]
         },
-        "食物 (Food)": {
+        "Food": {
             "images": ["images/samples/pizza.jpg"],
             "texts": ["pizza", "Italian food", "a delicious meal"]
         },
@@ -492,7 +501,7 @@ def demo_embedding_space(model, processor, tokenizer, device: str):
                 image_emb = image_emb / image_emb.norm(dim=-1, keepdim=True)
                 all_embeddings.append(image_emb.cpu().numpy()[0])
                 all_labels.append(category_name)
-                all_types.append("图像 (Image)")
+                all_types.append("Image")
 
         # --- 提取文本嵌入 ---
         for text in data["texts"]:
@@ -505,7 +514,7 @@ def demo_embedding_space(model, processor, tokenizer, device: str):
                 text_emb = text_emb / text_emb.norm(dim=-1, keepdim=True)
                 all_embeddings.append(text_emb.cpu().numpy()[0])
                 all_labels.append(category_name)
-                all_types.append("文本 (Text)")
+                all_types.append("Text")
 
     if len(all_embeddings) < 3:
         print("  样本不足，跳过可视化")
@@ -529,18 +538,18 @@ def demo_embedding_space(model, processor, tokenizer, device: str):
 
     # 为每个类别分配颜色
     category_colors = {
-        "狗 (Dog)": "#E74C3C",     # 红色
-        "猫 (Cat)": "#F39C12",     # 橙色
-        "汽车 (Car)": "#3498DB",   # 蓝色
-        "食物 (Food)": "#27AE60",  # 绿色
+        "Dog": "#E74C3C",     # red
+        "Cat": "#F39C12",     # orange
+        "Car": "#3498DB",     # blue
+        "Food": "#27AE60",   # green
     }
 
-    # 为每个类别分配不同的标记
-    markers = {"图像 (Image)": "o", "文本 (Text)": "s"}
+    # Assign different markers for each modality
+    markers = {"Image": "o", "Text": "s"}
 
     for category in category_colors:
         mask = [l == category for l in all_labels]
-        for vtype in ["图像 (Image)", "文本 (Text)"]:
+        for vtype in ["Image", "Text"]:
             vmask = [t == vtype for t in all_types]
             idxs = [i for i in range(len(all_labels))
                     if mask[i] and vmask[i]]
@@ -551,7 +560,7 @@ def demo_embedding_space(model, processor, tokenizer, device: str):
                 points[:, 0], points[:, 1],
                 c=category_colors[category],
                 marker=markers[vtype],
-                s=120 if vtype == "图像 (Image)" else 80,  # 图像标记稍大
+                s=120 if vtype == "Image" else 80,  # 图像标记稍大
                 edgecolors='white',
                 linewidth=1.5,
                 alpha=0.85,
@@ -561,9 +570,9 @@ def demo_embedding_space(model, processor, tokenizer, device: str):
 
     # 为每个类别的图像-文本对画连接线（如果有匹配对）
     for category in category_colors:
-        img_mask = [(l == category) and (t == "图像 (Image)")
+        img_mask = [(l == category) and (t == "Image")
                     for l, t in zip(all_labels, all_types)]
-        txt_mask = [(l == category) and (t == "文本 (Text)")
+        txt_mask = [(l == category) and (t == "Text")
                      for l, t in zip(all_labels, all_types)]
         img_idxs = [i for i, m in enumerate(img_mask) if m]
         txt_idxs = [i for i, m in enumerate(txt_mask) if m]
@@ -580,15 +589,15 @@ def demo_embedding_space(model, processor, tokenizer, device: str):
     # 标注关键点
     for i, (x, y) in enumerate(embeddings_2d):
         # 只为文本类别做简单标注
-        if all_types[i] == "文本 (Text)":
+        if all_types[i] == "Text":
             ax.annotate(
                 "", xy=(x, y), xytext=(x + 0.1, y + 0.1),
                 fontsize=6, alpha=0.7, ha='center'
             )
 
-    ax.set_xlabel("主成分 1 (PC1)", fontsize=12)
-    ax.set_ylabel("主成分 2 (PC2)", fontsize=12)
-    ax.set_title("CLIP 嵌入空间的 PCA 可视化 — 图文语义聚类", fontsize=14, fontweight='bold')
+    ax.set_xlabel("Principal Component 1 (PC1)", fontsize=12)
+    ax.set_ylabel("Principal Component 2 (PC2)", fontsize=12)
+    ax.set_title("PCA Visualization of CLIP Embedding Space — Image-Text Semantic Clustering", fontsize=14, fontweight='bold')
 
     # 图例：去重
     handles, labels = ax.get_legend_handles_labels()
@@ -602,8 +611,7 @@ def demo_embedding_space(model, processor, tokenizer, device: str):
     ax.axvline(x=0, color='gray', linestyle='-', alpha=0.2)
 
     plt.tight_layout()
-    os.makedirs("images", exist_ok=True)
-    plt.savefig("images/embedding_space_pca.png", dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, "embedding_space_pca.png"), dpi=150, bbox_inches='tight')
     plt.close()
     print(f"\n  [可视化] 嵌入空间 PCA 图已保存到 images/embedding_space_pca.png")
 

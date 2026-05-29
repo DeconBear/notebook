@@ -25,11 +25,20 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
+# GPU 自动检测
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+print(f"使用设备: {DEVICE}")
+if DEVICE.type == 'cpu':
+    print("（未检测到 GPU，使用 CPU 运行。如有 GPU，请安装 CUDA 版 PyTorch 以获得加速）")
+
 import matplotlib.pyplot as plt
 import matplotlib
-# 设置中文字体，确保图表中的中文正常显示
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
-matplotlib.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+import os
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================
 # 第一部分：中文语料库
@@ -175,12 +184,12 @@ ax.set_xticks(range(len(CORPUS)))
 ax.set_xticklabels([f"D{i+1}" for i in range(len(CORPUS))], rotation=45, fontsize=8)
 ax.set_yticks(range(len(top_words_viz)))
 ax.set_yticklabels(top_words_viz, fontsize=8)
-ax.set_xlabel("文档编号", fontsize=12)
-ax.set_ylabel("关键词", fontsize=12)
-ax.set_title("TF-IDF 热力图：文档 × 关键词（高亮=该词在该文档中越重要）", fontsize=13, fontweight='bold')
-plt.colorbar(im, ax=ax, shrink=0.8, label='TF-IDF 得分')
+ax.set_xlabel("Document ID", fontsize=12)
+ax.set_ylabel("Keywords", fontsize=12)
+ax.set_title("TF-IDF Heatmap: Documents x Keywords (Brighter = More Important)", fontsize=13, fontweight='bold')
+plt.colorbar(im, ax=ax, shrink=0.8, label='TF-IDF Score')
 plt.tight_layout()
-plt.savefig("images/tfidf_heatmap_demo.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'tfidf_heatmap_demo.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[TF-IDF 可视化] 热力图已保存至 images/tfidf_heatmap_demo.png")
 print()
@@ -334,7 +343,7 @@ def train_skipgram(
         loss_history: 每个 epoch 的平均损失列表
     """
     if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = DEVICE
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     loss_history = []
@@ -380,10 +389,10 @@ plt.figure(figsize=(8, 4))
 plt.plot(loss_history, color='#2196F3', linewidth=1.5)
 plt.xlabel("Epoch", fontsize=12)
 plt.ylabel("Loss", fontsize=12)
-plt.title("Skip-gram 负采样训练损失曲线", fontsize=13, fontweight='bold')
+plt.title("Skip-gram Negative Sampling Training Loss Curve", fontsize=13, fontweight='bold')
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig("images/skipgram_loss_curve.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'skipgram_loss_curve.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[可视化] 训练损失曲线已保存至 images/skipgram_loss_curve.png")
 
@@ -413,11 +422,11 @@ for i, word in enumerate(top_words):
     plt.annotate(word, (vectors_2d[i, 0], vectors_2d[i, 1]),
                  fontsize=9, alpha=0.85,
                  bbox=dict(boxstyle='round,pad=0.2', facecolor='yellow', alpha=0.3))
-plt.xlabel("t-SNE 维度 1", fontsize=12)
-plt.ylabel("t-SNE 维度 2", fontsize=12)
-plt.title("word2vec 词向量 t-SNE 可视化 (高频 Top-100 词)", fontsize=14, fontweight='bold')
+plt.xlabel("t-SNE Dimension 1", fontsize=12)
+plt.ylabel("t-SNE Dimension 2", fontsize=12)
+plt.title("word2vec Embedding t-SNE Visualization (Top-100 Frequent Words)", fontsize=14, fontweight='bold')
 plt.tight_layout()
-plt.savefig("images/word2vec_tsne.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'word2vec_tsne.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[t-SNE] 可视化已保存至 images/word2vec_tsne.png")
 print()

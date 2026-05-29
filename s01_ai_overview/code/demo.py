@@ -20,12 +20,16 @@ s01_ai_overview/code/demo.py — 感知机从零实现
 ===============================================================================
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-# 设置中文字体支持
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
-matplotlib.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# 图片保存目录：固定为本章节的 images/ 目录（相对于本脚本的 ../images/）
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_IMAGES_DIR = os.path.join(_SCRIPT_DIR, '..', 'images')
+os.makedirs(_IMAGES_DIR, exist_ok=True)
 
 
 # ============================================================================
@@ -230,10 +234,10 @@ def plot_decision_boundary(perceptron: Perceptron, X: np.ndarray, y: np.ndarray)
 
     # 绘制正类样本（y=+1），用红色圆点
     ax.scatter(X[y == 1, 0], X[y == 1, 1], c='red', marker='o',
-               edgecolors='k', s=60, label='类别 +1', alpha=0.7)
+               edgecolors='k', s=60, label='Class +1', alpha=0.7)
     # 绘制负类样本（y=-1），用蓝色三角
     ax.scatter(X[y == -1, 0], X[y == -1, 1], c='blue', marker='s',
-               edgecolors='k', s=60, label='类别 -1', alpha=0.7)
+               edgecolors='k', s=60, label='Class -1', alpha=0.7)
 
     # 获取当前坐标轴范围，用于绘制决策边界线
     x_min, x_max = ax.get_xlim()
@@ -250,7 +254,7 @@ def plot_decision_boundary(perceptron: Perceptron, X: np.ndarray, y: np.ndarray)
     x1_line = np.linspace(x_min, x_max, 100)  # 100 个等间距点
     x2_line = slope * x1_line + intercept  # 对应的 x2 坐标
 
-    ax.plot(x1_line, x2_line, 'g-', linewidth=2, label='决策边界 w·x+b=0')
+    ax.plot(x1_line, x2_line, 'g-', linewidth=2, label='Decision Boundary w*x+b=0')
 
     # 绘制法向量 w 的箭头（垂直于决策边界，指向正类方向）
     # 取决策边界上的一点作为箭头起点
@@ -259,12 +263,12 @@ def plot_decision_boundary(perceptron: Perceptron, X: np.ndarray, y: np.ndarray)
     ax.arrow(center_x1, center_x2,
              perceptron.w[0] * 0.5, perceptron.w[1] * 0.5,
              head_width=0.15, head_length=0.15, fc='purple', ec='purple',
-             label='权重向量 w')
+             label='Weight Vector w')
 
-    ax.set_xlabel('特征 x1', fontsize=12)  # x 轴标签
-    ax.set_ylabel('特征 x2', fontsize=12)  # y 轴标签
-    ax.set_title('感知机决策边界', fontsize=14)  # 子图标题
-    ax.legend(loc='upper left', fontsize=10)  # 显示图例
+    ax.set_xlabel('Feature x1', fontsize=12)  # x 轴标签
+    ax.set_ylabel('Feature x2', fontsize=12)  # y 轴标签
+    ax.set_title('Perceptron Decision Boundary', fontsize=14)  # 子图标题
+    ax.legend(loc='upper left', fontsize=8)  # 显示图例
     ax.grid(True, alpha=0.3)  # 添加半透明网格
     ax.set_aspect('equal')  # 设置等比例坐标轴
 
@@ -272,15 +276,15 @@ def plot_decision_boundary(perceptron: Perceptron, X: np.ndarray, y: np.ndarray)
     ax = axes[1]
     ax.plot(range(1, len(perceptron.losses) + 1), perceptron.losses,
             'b-o', markersize=4, linewidth=1.5)  # 蓝色圆点线
-    ax.set_xlabel('Epoch（训练轮数）', fontsize=12)  # x 轴标签
-    ax.set_ylabel('误分类样本数', fontsize=12)  # y 轴标签
-    ax.set_title('训练过程中的误分类数变化', fontsize=14)  # 子图标题
+    ax.set_xlabel('Epoch', fontsize=12)  # x 轴标签
+    ax.set_ylabel('Misclassified Samples', fontsize=12)  # y 轴标签
+    ax.set_title('Misclassifications During Training', fontsize=14)  # 子图标题
     ax.grid(True, alpha=0.3)  # 添加半透明网格
 
     plt.tight_layout()  # 自动调整子图间距
-    plt.savefig('perceptron_results.png', dpi=150, bbox_inches='tight')  # 保存图片
+    plt.savefig(os.path.join(_IMAGES_DIR, 'perceptron_results.png'), dpi=150, bbox_inches='tight')  # 保存图片
     plt.show()  # 显示图片
-    print("\n图片已保存为 perceptron_results.png")
+    print(f"\n图片已保存为 {os.path.join(_IMAGES_DIR, 'perceptron_results.png')}")
 
 
 # ============================================================================

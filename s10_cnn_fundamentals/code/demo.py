@@ -14,7 +14,13 @@ from typing import Tuple, Optional
 import matplotlib
 matplotlib.use('Agg')  # 非交互式后端，避免 GUI 依赖
 import matplotlib.pyplot as plt
+matplotlib.rcParams['axes.unicode_minus'] = False
 import os
+
+# 图片保存目录：固定为本章节的 images/ 目录（相对于本脚本的 ../images/）
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_IMAGES_DIR = os.path.join(_SCRIPT_DIR, '..', 'images')
+os.makedirs(_IMAGES_DIR, exist_ok=True)
 
 # ============================================================
 # 第 1 部分：加载 MNIST 数据
@@ -590,11 +596,11 @@ def visualize_kernels(conv_layer: Conv2d, save_path: str):
             ax.set_xticks([])
             ax.set_yticks([])
             if ic == 0:
-                ax.set_title(f"通道{oc}", fontsize=8)
+                ax.set_title(f"ch{oc}", fontsize=8)
             if oc == 0:
-                ax.set_ylabel(f"输入{ic}", fontsize=8)
+                ax.set_ylabel(f"in{ic}", fontsize=8)
 
-    plt.suptitle(f"卷积核可视化 (C_in={C_in}, C_out={C_out})", fontsize=12)
+    plt.suptitle(f"Kernel Visualization (C_in={C_in}, C_out={C_out})", fontsize=12)
     plt.tight_layout()
     plt.savefig(save_path, dpi=100, bbox_inches="tight")
     plt.close()
@@ -632,7 +638,7 @@ def visualize_feature_maps(feature_maps: dict, save_prefix: str, sample_idx: int
             row, col = c // ncols, c % ncols
             axes[row, col].axis("off")
 
-        plt.suptitle(f"{layer_name} 特征图 (样本 {sample_idx})", fontsize=11)
+        plt.suptitle(f"{layer_name} Feature Map (sample {sample_idx})", fontsize=11)
         plt.tight_layout()
         fname = f"{save_prefix}_feat_{layer_name}.png"
         plt.savefig(fname, dpi=100, bbox_inches="tight")
@@ -758,18 +764,32 @@ def train_and_demo():
             # 增量更新 conv2 权重
             x_cols2 = model.conv2.cache["x_cols"]  # (N, C_in*k*k, H_out*W_out)
             d_out_cols2 = d_relu2.reshape(N, 16, -1)  # (N, 16, H_out*W_out)
-            dW_col2 = d_out_cols2 @ x_cols2.transpose(0, 2, 1).reshape(-1, x_cols2.shape[1])
-            # 简化处理
+            # dW = d_out_cols2 @ x_cols2.T as batch matmul, then sum over N
+            # d_out_cols2: (N, C_out, H_out*W_out), x_cols2: (N, C_in*k*k, H_out*W_out)
+            # x_cols2.T over the last two dims: (N, H_out*W_out, C_in*k*k)
+            # batch matmul: (N, C_out, H_out*W_out) @ (N, H_out*W_out, C_in*k*k) -> (N, C_out, C_in*k*k)
+            dW_col2 = (d_out_cols2 @ x_cols2.transpose(0, 2, 1)).sum(axis=0)  # (C_out, C_in*k*k)
             dW_conv2 = dW_col2.reshape(model.conv2.W.shape) / N
             model.conv2.W -= lr * 0.1 * dW_conv2  # 小学习率更新
 
             # 同样近似更新 conv1
             if model.conv1.cache.get("x_cols") is not None:
-                d_pool1 = np.repeat(np.repeat(d_relu2, 2, axis=2), 2, axis=3)[:, :, :28, :28]
-                d_relu1 = d_pool1 * model.relu1.cache["mask"]
+                # Proper conv2 backward to compute d_pool1 (dX of conv2)
+                # d_out_cols2: (N, 16, 196), need dX = W^T @ d_out via im2col
+                # batch matmul: (N, 196, 16) @ (16, 72) = (N, 196, 72) -> transpose -> (N, 72, 196)
+                W_col2 = model.conv2.W.reshape(model.conv2.out_channels, -1)
+                dX_cols2 = d_out_cols2.transpose(0, 2, 1) @ W_col2  # (N, 196, 72)
+                dX_cols2 = dX_cols2.transpose(0, 2, 1)  # (N, 72, 196)
+                d_pool1 = Im2Col.col2im(dX_cols2, (N, 8, 14, 14),
+                                        model.conv2.kernel_size, model.conv2.kernel_size,
+                                        model.conv2.stride, model.conv2.padding)
+                # d_pool1.shape: (N, 8, 14, 14) — now correct channel count
+                # Naive unpool pool1
+                d_relu1 = np.repeat(np.repeat(d_pool1, 2, axis=2), 2, axis=3)[:, :, :28, :28]
+                d_relu1 *= model.relu1.cache["mask"]
                 x_cols1 = model.conv1.cache["x_cols"]
                 d_out_cols1 = d_relu1.reshape(N, 8, -1)
-                dW_col1 = d_out_cols1 @ x_cols1.transpose(0, 2, 1).reshape(-1, x_cols1.shape[1])
+                dW_col1 = (d_out_cols1 @ x_cols1.transpose(0, 2, 1)).sum(axis=0)
                 dW_conv1 = dW_col1.reshape(model.conv1.W.shape) / N
                 model.conv1.W -= lr * 0.01 * dW_conv1  # 更小的学习率
 
@@ -785,13 +805,12 @@ def train_and_demo():
 
     # ---------- 5. 可视化 ----------
     print("\n[5/6] 生成可视化...")
-    output_dir = "../images"
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = _IMAGES_DIR
 
     # 5a. 可视化第一个输入图像
     fig, ax = plt.subplots(figsize=(4, 4))
     ax.imshow(X_test[0, 0], cmap="gray")
-    ax.set_title(f"输入图像 — 真实标签: {y_test[0]}", fontsize=12)
+    ax.set_title(f"Input Image - True Label: {y_test[0]}", fontsize=12)
     ax.axis("off")
     out_path = os.path.join(output_dir, "demo_input.png")
     plt.savefig(out_path, dpi=100, bbox_inches="tight")
@@ -826,7 +845,7 @@ def train_and_demo():
     print(f"  等效 3层 MLP:      ~{fc_params:,} 个参数")
     print(f"  参数减少:          {fc_params / model.total_params:.1f} 倍")
     print("=" * 60)
-    print("\nDemo 完成！查看 ../images/ 目录下的可视化结果。")
+    print(f"\nDemo 完成！查看 {_IMAGES_DIR} 目录下的可视化结果。")
 
 
 if __name__ == "__main__":

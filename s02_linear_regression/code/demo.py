@@ -19,13 +19,18 @@ s02_linear_regression/code/demo.py — 线性回归从零实现
 ===============================================================================
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D  # 用于绘制 3D 损失曲面
 from sklearn.linear_model import LinearRegression as SklearnLR  # sklearn 的线性回归
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
+
+# 图片保存目录：固定为本章节的 images/ 目录（相对于本脚本的 ../images/）
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_IMAGES_DIR = os.path.join(_SCRIPT_DIR, '..', 'images')
+os.makedirs(_IMAGES_DIR, exist_ok=True)
 
 
 # ============================================================================
@@ -285,24 +290,24 @@ def plot_results(X, y, model_gd, w_ne, b_ne, w_sk, b_sk):
 
     # ---- 子图 1: 数据散点和拟合直线 ----
     ax1 = fig.add_subplot(2, 2, 1)
-    ax1.scatter(X, y, c='steelblue', alpha=0.7, s=40, label='训练数据',
+    ax1.scatter(X, y, c='steelblue', alpha=0.7, s=40, label='Training Data',
                 edgecolors='white', linewidth=0.5)
 
     # 生成一条平滑的 x 序列用于画拟合直线
     X_line = np.linspace(X.min(), X.max(), 200)
     # 梯度下降法拟合的直线（红色）
     ax1.plot(X_line, model_gd.predict(X_line), 'r-', linewidth=2,
-             label=f'梯度下降: ŷ = {model_gd.w:.2f}x + {model_gd.b:.2f}')
+             label=f'Gradient Descent: y = {model_gd.w:.2f}x + {model_gd.b:.2f}')
     # 正规方程拟合的直线（绿色虚线）
     ax1.plot(X_line, w_ne * X_line + b_ne, 'g--', linewidth=2,
-             label=f'正规方程: ŷ = {w_ne:.2f}x + {b_ne:.2f}')
+             label=f'Normal Equation: y = {w_ne:.2f}x + {b_ne:.2f}')
     # sklearn 拟合的直线（蓝色点划线）
     ax1.plot(X_line, w_sk * X_line + b_sk, 'b-.', linewidth=1.5, alpha=0.6,
-             label=f'sklearn: ŷ = {w_sk:.2f}x + {b_sk:.2f}')
+             label=f'sklearn: y = {w_sk:.2f}x + {b_sk:.2f}')
 
-    ax1.set_xlabel('特征 x', fontsize=12)
-    ax1.set_ylabel('目标值 y', fontsize=12)
-    ax1.set_title('线性回归：数据与拟合直线', fontsize=14)
+    ax1.set_xlabel('Feature x', fontsize=12)
+    ax1.set_ylabel('Target y', fontsize=12)
+    ax1.set_title('Linear Regression: Data and Fitted Lines', fontsize=14)
     ax1.legend(fontsize=9, loc='upper left')
     ax1.grid(True, alpha=0.3)
 
@@ -310,16 +315,16 @@ def plot_results(X, y, model_gd, w_ne, b_ne, w_sk, b_sk):
     ax2 = fig.add_subplot(2, 2, 2)
     epochs = range(1, len(model_gd.loss_history) + 1)
     ax2.plot(epochs, model_gd.loss_history, 'b-', linewidth=1.5)
-    ax2.set_xlabel('Epoch（训练轮数）', fontsize=12)
-    ax2.set_ylabel('MSE 损失', fontsize=12)
-    ax2.set_title('梯度下降训练过程中的损失变化', fontsize=14)
+    ax2.set_xlabel('Epoch', fontsize=12)
+    ax2.set_ylabel('MSE Loss', fontsize=12)
+    ax2.set_title('Loss During Gradient Descent Training', fontsize=14)
     ax2.grid(True, alpha=0.3)
     # 用对数刻度显示 y 轴（因为损失在早期下降很快，后期趋于平稳）
     ax2.set_yscale('log')
-    ax2.annotate(f'初始损失: {model_gd.loss_history[0]:.2f}',
+    ax2.annotate(f'Initial Loss: {model_gd.loss_history[0]:.2f}',
                  xy=(1, model_gd.loss_history[0]),
                  fontsize=9, color='red')
-    ax2.annotate(f'最终损失: {model_gd.loss_history[-1]:.4f}',
+    ax2.annotate(f'Final Loss: {model_gd.loss_history[-1]:.3f}',
                  xy=(len(epochs), model_gd.loss_history[-1]),
                  fontsize=9, color='green')
 
@@ -347,29 +352,29 @@ def plot_results(X, y, model_gd, w_ne, b_ne, w_sk, b_sk):
     # 绘制梯度下降的优化轨迹
     params_arr = np.array(model_gd.params_history)
     ax3.plot(params_arr[:, 0], params_arr[:, 1], 'r.-', markersize=2, linewidth=1,
-             label='梯度下降轨迹')
+             label='GD Trajectory')
 
     # 标记起点和终点
     ax3.scatter(params_arr[0, 0], params_arr[0, 1], c='blue', s=100, marker='o',
-                zorder=5, label=f'起点 (w={params_arr[0,0]:.2f}, b={params_arr[0,1]:.2f})')
+                zorder=5, label=f'Start (w={params_arr[0,0]:.2f}, b={params_arr[0,1]:.2f})')
     ax3.scatter(params_arr[-1, 0], params_arr[-1, 1], c='red', s=100, marker='*',
-                zorder=5, label=f'终点 (w={params_arr[-1,0]:.2f}, b={params_arr[-1,1]:.2f})')
+                zorder=5, label=f'End (w={params_arr[-1,0]:.2f}, b={params_arr[-1,1]:.2f})')
 
-    ax3.set_xlabel('权重 w', fontsize=12)
-    ax3.set_ylabel('偏置 b', fontsize=12)
-    ax3.set_title('损失函数等高线与梯度下降轨迹', fontsize=14)
+    ax3.set_xlabel('Weight w', fontsize=12)
+    ax3.set_ylabel('Bias b', fontsize=12)
+    ax3.set_title('Loss Contour and Gradient Descent Trajectory', fontsize=14)
     ax3.legend(fontsize=8, loc='upper right')
 
     # ---- 子图 4: 方法对比条形图 ----
     ax4 = fig.add_subplot(2, 2, 4)
-    methods = ['梯度下降', '正规方程', 'sklearn']
+    methods = ['Gradient Descent', 'Normal Equation', 'sklearn']
     w_values = [model_gd.w, w_ne, w_sk]
     b_values = [model_gd.b, b_ne, b_sk]
     x_pos = np.arange(len(methods))
     width = 0.35
 
-    bars1 = ax4.bar(x_pos - width/2, w_values, width, label='权重 w', color='steelblue', alpha=0.8)
-    bars2 = ax4.bar(x_pos + width/2, b_values, width, label='偏置 b', color='coral', alpha=0.8)
+    bars1 = ax4.bar(x_pos - width/2, w_values, width, label='Weight w', color='steelblue', alpha=0.8)
+    bars2 = ax4.bar(x_pos + width/2, b_values, width, label='Bias b', color='coral', alpha=0.8)
 
     # 在每个柱状图上方标注数值
     for bar in bars1:
@@ -381,16 +386,16 @@ def plot_results(X, y, model_gd, w_ne, b_ne, w_sk, b_sk):
 
     ax4.set_xticks(x_pos)
     ax4.set_xticklabels(methods, fontsize=11)
-    ax4.set_ylabel('参数值', fontsize=12)
-    ax4.set_title('三种方法求解的参数对比', fontsize=14)
+    ax4.set_ylabel('Parameter Value', fontsize=12)
+    ax4.set_title('Parameter Comparison Across Three Methods', fontsize=14)
     ax4.legend(fontsize=10)
-    ax4.axhline(y=2.0, color='gray', linestyle='--', alpha=0.5, label='真实 w=2.0')
-    ax4.axhline(y=5.0, color='gray', linestyle=':', alpha=0.5, label='真实 b=5.0')
+    ax4.axhline(y=2.0, color='gray', linestyle='--', alpha=0.5, label='True w=2.0')
+    ax4.axhline(y=5.0, color='gray', linestyle=':', alpha=0.5, label='True b=5.0')
 
     plt.tight_layout()
-    plt.savefig('linear_regression_results.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES_DIR, 'linear_regression_results.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("\n图片已保存为 linear_regression_results.png")
+    print(f"\n图片已保存为 {os.path.join(_IMAGES_DIR, 'linear_regression_results.png')}")
 
 
 def compare_learning_rates(X, y):
@@ -413,19 +418,22 @@ def compare_learning_rates(X, y):
         model.fit(X, y, verbose=False)
         epochs = range(1, len(model.loss_history) + 1)
         ax.plot(epochs, model.loss_history, color=color, linewidth=1.5,
-                label=f'η = {lr} (最终 loss = {model.loss_history[-1]:.4f})')
+                label=f'lr={lr} (loss={model.loss_history[-1]:.2e})')
 
-    ax.set_xlabel('Epoch（训练轮数）', fontsize=12)
-    ax.set_ylabel('MSE 损失', fontsize=12)
-    ax.set_title('不同学习率对梯度下降收敛速度的影响', fontsize=14)
-    ax.legend(fontsize=10)
+    ax.set_xlabel('Epoch', fontsize=12)
+    ax.set_ylabel('MSE Loss', fontsize=12)
+    ax.set_title('Effect of Learning Rate on Convergence Speed', fontsize=14)
+    ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
-    ax.set_yscale('log')  # 对数刻度使曲线差异更明显
+    ax.set_yscale('log')
+    from matplotlib.ticker import ScalarFormatter
+    ax.yaxis.set_major_formatter(ScalarFormatter())
+    ax.ticklabel_format(axis='y', style='sci', scilimits=(-2, 3))
 
     plt.tight_layout()
-    plt.savefig('learning_rate_comparison.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES_DIR, 'learning_rate_comparison.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("图片已保存为 learning_rate_comparison.png")
+    print(f"图片已保存为 {os.path.join(_IMAGES_DIR, 'learning_rate_comparison.png')}")
 
 
 # ============================================================================

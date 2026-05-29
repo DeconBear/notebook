@@ -29,6 +29,9 @@ s21 RLHF：当强化学习遇见大模型 — 演示代码 (Toy/Simulated 版本
 
 import numpy as np
 import matplotlib.pyplot as plt
+# 中文字体配置
+import matplotlib
+matplotlib.rcParams['axes.unicode_minus'] = False
 from collections import deque
 from typing import List, Tuple, Dict, Optional, Deque
 import time
@@ -39,6 +42,16 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
 
+# GPU 自动检测
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+print(f"使用设备: {DEVICE}")
+if DEVICE.type == 'cpu':
+    print("（未检测到 GPU，使用 CPU 运行。如有 GPU，请安装 CUDA 版 PyTorch 以获得加速）")
+
+import os
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================================
 # 第一部分：环境设置与工具函数
@@ -1079,119 +1092,119 @@ def train_dpo(
 # 第八部分：可视化
 # ============================================================================
 
-def plot_ppo_training(history: Dict, title: str = "PPO 训练曲线"):
-    """绘制 PPO 训练过程中的关键指标。"""
+def plot_ppo_training(history: Dict, title: str = "PPO Training Curves"):
+    """Plot key metrics during PPO training."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-    # ---- RM 分数 ----
+    # ---- RM Score ----
     ax = axes[0, 0]
     scores = np.array(history['rm_scores'])
-    ax.plot(scores, 'b-', linewidth=1, alpha=0.5, label='RM 分数')
+    ax.plot(scores, 'b-', linewidth=1, alpha=0.5, label='RM Score')
     if len(scores) >= 20:
         smooth = np.convolve(scores, np.ones(20)/20, mode='valid')
         ax.plot(np.arange(19, len(scores)), smooth, 'r-', linewidth=2,
-               label='滑动平均 (窗口=20)')
+               label='Moving Avg (window=20)')
     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
     ax.set_xlabel('Episode', fontsize=10)
-    ax.set_ylabel('RM 分数', fontsize=10)
-    ax.set_title('奖励模型分数', fontsize=12, fontweight='bold')
+    ax.set_ylabel('RM Score', fontsize=10)
+    ax.set_title('Reward Model Score', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
-    # ---- KL 散度 ----
+    # ---- KL Divergence ----
     ax = axes[0, 1]
     kl_vals = np.array(history['kl_divergence'])
-    ax.plot(kl_vals, 'g-', linewidth=1.5, label='KL(π_θ || π_ref)')
+    ax.plot(kl_vals, 'g-', linewidth=1.5, label='KL(pi_theta || pi_ref)')
     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.3)
     ax.set_xlabel('Episode', fontsize=10)
-    ax.set_ylabel('KL 散度', fontsize=10)
-    ax.set_title('KL 散度 (策略偏离程度)', fontsize=12, fontweight='bold')
+    ax.set_ylabel('KL Divergence', fontsize=10)
+    ax.set_title('KL Divergence (Policy Deviation)', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
-    # ---- 策略熵 ----
+    # ---- Policy Entropy ----
     ax = axes[1, 0]
     ent_vals = np.array(history['entropy'])
-    ax.plot(ent_vals, 'orange', linewidth=1.5, label='策略熵 H(π)')
+    ax.plot(ent_vals, 'orange', linewidth=1.5, label='Policy Entropy H(pi)')
     ax.set_xlabel('Episode', fontsize=10)
-    ax.set_ylabel('熵 (nats)', fontsize=10)
-    ax.set_title('策略熵 (探索程度)', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Entropy (nats)', fontsize=10)
+    ax.set_title('Policy Entropy (Exploration Level)', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
-    # ---- PPO 损失 ----
+    # ---- PPO Loss ----
     ax = axes[1, 1]
     loss_vals = np.array(history['policy_loss'])
     ax.plot(loss_vals, 'purple', linewidth=1, alpha=0.6)
     if len(loss_vals) >= 20:
         smooth = np.convolve(loss_vals, np.ones(20)/20, mode='valid')
         ax.plot(np.arange(19, len(loss_vals)), smooth, 'r-', linewidth=2,
-               label='滑动平均')
+               label='Moving Avg')
     ax.set_xlabel('Episode', fontsize=10)
-    ax.set_ylabel('PPO 损失', fontsize=10)
-    ax.set_title('PPO 策略损失 (含 KL 惩罚)', fontsize=12, fontweight='bold')
+    ax.set_ylabel('PPO Loss', fontsize=10)
+    ax.set_title('PPO Policy Loss (with KL Penalty)', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
     fig.suptitle(title, fontsize=14, fontweight='bold', y=1.01)
     plt.tight_layout()
-    plt.savefig('images/ppo_training_curves.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'ppo_training_curves.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] PPO 训练曲线已保存至 images/ppo_training_curves.png")
 
 
-def plot_dpo_training(history: Dict, title: str = "DPO 训练曲线"):
-    """绘制 DPO 训练过程中的关键指标。"""
+def plot_dpo_training(history: Dict, title: str = "DPO Training Curves"):
+    """Plot key metrics during DPO training."""
     fig, axes = plt.subplots(1, 3, figsize=(16, 5))
 
-    # ---- DPO 损失 ----
+    # ---- DPO Loss ----
     ax = axes[0]
     losses = np.array(history['loss'])
     ax.plot(losses, 'b-', linewidth=0.8, alpha=0.5)
     if len(losses) >= 20:
         smooth = np.convolve(losses, np.ones(20)/20, mode='valid')
         ax.plot(np.arange(19, len(losses)), smooth, 'r-', linewidth=2,
-               label='滑动平均')
-    ax.set_xlabel('训练步数', fontsize=10)
-    ax.set_ylabel('DPO 损失', fontsize=10)
-    ax.set_title('DPO 训练损失 L_DPO', fontsize=12, fontweight='bold')
+               label='Moving Avg')
+    ax.set_xlabel('Training Steps', fontsize=10)
+    ax.set_ylabel('DPO Loss', fontsize=10)
+    ax.set_title('DPO Training Loss L_DPO', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
-    # ---- RM 分数对比 ----
+    # ---- RM Score Comparison ----
     ax = axes[1]
     w_scores = np.array(history['rm_scores_win'])
     l_scores = np.array(history['rm_scores_lose'])
-    ax.plot(w_scores, 'g-', linewidth=1, alpha=0.5, label='y_w (偏好回复)')
-    ax.plot(l_scores, 'r-', linewidth=1, alpha=0.5, label='y_l (不偏好回复)')
+    ax.plot(w_scores, 'g-', linewidth=1, alpha=0.5, label='y_w (Preferred)')
+    ax.plot(l_scores, 'r-', linewidth=1, alpha=0.5, label='y_l (Dispreferred)')
     if len(w_scores) >= 20:
         w_smooth = np.convolve(w_scores, np.ones(20)/20, mode='valid')
         l_smooth = np.convolve(l_scores, np.ones(20)/20, mode='valid')
         ax.plot(np.arange(19, len(w_scores)), w_smooth, 'g-', linewidth=2)
         ax.plot(np.arange(19, len(l_scores)), l_smooth, 'r-', linewidth=2)
-    ax.set_xlabel('训练步数', fontsize=10)
-    ax.set_ylabel('RM 分数', fontsize=10)
-    ax.set_title('偏好 vs 非偏好回复的 RM 分数', fontsize=12, fontweight='bold')
+    ax.set_xlabel('Training Steps', fontsize=10)
+    ax.set_ylabel('RM Score', fontsize=10)
+    ax.set_title('Preferred vs Dispreferred Response RM Score', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
-    # ---- 偏好差距 (margin) ----
+    # ---- Preference Margin ----
     ax = axes[2]
     margin = w_scores - l_scores
-    ax.plot(margin, 'purple', linewidth=1.5, label='y_w - y_l 分数差')
+    ax.plot(margin, 'purple', linewidth=1.5, label='y_w - y_l Score Margin')
     if len(margin) >= 20:
         m_smooth = np.convolve(margin, np.ones(20)/20, mode='valid')
         ax.plot(np.arange(19, len(margin)), m_smooth, 'r-', linewidth=2)
     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
-    ax.set_xlabel('训练步数', fontsize=10)
-    ax.set_ylabel('分数差', fontsize=10)
-    ax.set_title('偏好差距 (margin)', fontsize=12, fontweight='bold')
+    ax.set_xlabel('Training Steps', fontsize=10)
+    ax.set_ylabel('Score Margin', fontsize=10)
+    ax.set_title('Preference Margin', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
     fig.suptitle(title, fontsize=14, fontweight='bold', y=1.01)
     plt.tight_layout()
-    plt.savefig('images/dpo_training_curves.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'dpo_training_curves.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] DPO 训练曲线已保存至 images/dpo_training_curves.png")
 
@@ -1199,12 +1212,12 @@ def plot_dpo_training(history: Dict, title: str = "DPO 训练曲线"):
 def plot_comparison(
     ppo_history: Dict,
     dpo_history: Dict,
-    title: str = "PPO vs DPO — 训练对比",
+    title: str = "PPO vs DPO — Training Comparison",
 ):
-    """对比 PPO 和 DPO 的关键指标。"""
+    """Compare key metrics between PPO and DPO."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-    # ---- 子图 1: 训练时间 ----
+    # ---- Subplot 1: Training Time ----
     ax = axes[0, 0]
     methods = ['PPO', 'DPO']
     times = [ppo_history['training_time'], dpo_history['training_time']]
@@ -1212,10 +1225,10 @@ def plot_comparison(
     for bar, t in zip(bars, times):
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
                f'{t:.1f}s', ha='center', fontsize=11, fontweight='bold')
-    ax.set_ylabel('训练时间 (秒)', fontsize=10)
-    ax.set_title('训练时间对比', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Training Time (s)', fontsize=10)
+    ax.set_title('Training Time Comparison', fontsize=12, fontweight='bold')
 
-    # ---- 子图 2: 最终 RM 分数 ----
+    # ---- Subplot 2: Final RM Score ----
     ax = axes[0, 1]
     if ppo_history['rm_scores']:
         ppo_final = np.mean(ppo_history['rm_scores'][-20:])
@@ -1229,10 +1242,10 @@ def plot_comparison(
     for bar, val in zip(bars, [ppo_final, dpo_final]):
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1,
                f'{val:.2f}', ha='center', fontsize=11, fontweight='bold')
-    ax.set_ylabel('最终 RM 分数 (近 20 步平均)', fontsize=10)
-    ax.set_title('最终性能对比', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Final RM Score (avg last 20)', fontsize=10)
+    ax.set_title('Final Performance Comparison', fontsize=12, fontweight='bold')
 
-    # ---- 子图 3: PPO RM 分数曲线 ----
+    # ---- Subplot 3: PPO RM Score Curve ----
     ax = axes[1, 0]
     scores = np.array(ppo_history['rm_scores'])
     ax.plot(scores, 'b-', linewidth=1, alpha=0.5)
@@ -1241,12 +1254,12 @@ def plot_comparison(
         ax.plot(np.arange(19, len(scores)), smooth, 'b-', linewidth=2,
                label='PPO')
     ax.set_xlabel('Episode', fontsize=10)
-    ax.set_ylabel('RM 分数', fontsize=10)
-    ax.set_title('PPO — RM 分数变化', fontsize=12, fontweight='bold')
+    ax.set_ylabel('RM Score', fontsize=10)
+    ax.set_title('PPO — RM Score Trend', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
-    # ---- 子图 4: DPO margin 曲线 ----
+    # ---- Subplot 4: DPO Margin Curve ----
     ax = axes[1, 1]
     w = np.array(dpo_history['rm_scores_win'])
     l = np.array(dpo_history['rm_scores_lose'])
@@ -1257,15 +1270,15 @@ def plot_comparison(
         ax.plot(np.arange(19, len(margin)), m_smooth, 'orange',
                linewidth=2, label='DPO')
     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
-    ax.set_xlabel('训练步数', fontsize=10)
-    ax.set_ylabel('偏好差距', fontsize=10)
-    ax.set_title('DPO — 偏好差距变化', fontsize=12, fontweight='bold')
+    ax.set_xlabel('Training Steps', fontsize=10)
+    ax.set_ylabel('Preference Margin', fontsize=10)
+    ax.set_title('DPO — Preference Margin Trend', fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
     fig.suptitle(title, fontsize=14, fontweight='bold', y=1.01)
     plt.tight_layout()
-    plt.savefig('images/ppo_vs_dpo_comparison.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'ppo_vs_dpo_comparison.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] PPO vs DPO 对比图已保存至 images/ppo_vs_dpo_comparison.png")
 
@@ -1273,7 +1286,7 @@ def plot_comparison(
 def plot_sample_outputs(
     policy: ToyLanguageModel,
     prompts: List[str],
-    title: str = "对齐前后的样本输出对比",
+    title: str = "Sample Outputs Before vs After Alignment",
     n_samples: int = 3,
 ):
     """
@@ -1303,12 +1316,12 @@ def plot_sample_outputs(
                ha='center', va='center', fontsize=10,
                fontfamily='monospace',
                transform=ax.transAxes)
-        ax.set_title(f'样本 {i+1}', fontsize=11, fontweight='bold')
+        ax.set_title(f'Sample {i+1}', fontsize=11, fontweight='bold')
         ax.axis('off')
 
     fig.suptitle(title, fontsize=13, fontweight='bold', y=1.02)
     plt.tight_layout()
-    plt.savefig('images/sample_outputs.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'sample_outputs.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] 样本输出已保存至 images/sample_outputs.png")
 
@@ -1333,7 +1346,7 @@ def main():
     print("    本 demo 在小规模合成数据上展示 PPO 和 DPO 的核心机制。\n")
 
     set_seed(42)
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = DEVICE
     print(f"  设备: {device}")
 
     # ---- 准备数据 ----
@@ -1360,7 +1373,16 @@ def main():
     print("\n" + "=" * 50)
     print("【阶段 1】预训练 (模拟 SFT)")
     print("=" * 50)
-    policy, sft_losses = pretrain_policy(policy, train_data, n_epochs=100, device=device)
+    if device.type == 'cpu':
+        n_sft_epochs = 20
+        n_ppo_episodes = 50
+        n_dpo_steps = 50
+        print("[配置] CPU 模式：使用轻量参数快速演示（SFT 20 epochs, PPO 50 episodes, DPO 50 steps）。GPU 模式下将使用完整训练配置。")
+    else:
+        n_sft_epochs = 100
+        n_ppo_episodes = 200
+        n_dpo_steps = 200
+    policy, sft_losses = pretrain_policy(policy, train_data, n_epochs=n_sft_epochs, device=device)
 
     # 复制预训练权重到参考模型（冻结参考模型）
     ref_model.load_state_dict(
@@ -1404,7 +1426,7 @@ def main():
         value_network=value_net,
         reward_model=rm,
         prompts=train_data[:50],                                 # 使用部分 prompt
-        n_episodes=200,
+        n_episodes=n_ppo_episodes,
         kl_coef=0.1,
         device=device,
         verbose=True,
@@ -1441,7 +1463,7 @@ def main():
         ref_model=ref_model,
         reward_model=rm,
         prompts=train_data[:50],
-        n_steps=200,
+        n_steps=n_dpo_steps,
         beta=0.1,
         lr=1e-4,
         device=device,
@@ -1470,7 +1492,7 @@ def main():
     plot_ppo_training(ppo_history)
     plot_dpo_training(dpo_history)
     plot_comparison(ppo_history, dpo_history)
-    plot_sample_outputs(policy_ppo, train_data, "PPO 对齐后的样本输出")
+    plot_sample_outputs(policy_ppo, train_data, "Sample Outputs After PPO Alignment")
 
     # ========================================================================
     # 最终总结

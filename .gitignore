@@ -35,3 +35,8 @@ Thumbs.db
 # Python
 *.egg-info/
 .eggs/
+
+# Training artifacts
+bert_sentiment_checkpoints/
+data/
+**/models/

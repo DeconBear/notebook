@@ -10,9 +10,15 @@ s08 优化器：从 SGD 到 Adam — 演示代码
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['axes.unicode_minus'] = False
 from matplotlib.patches import FancyBboxPatch
 from typing import Tuple, List, Dict, Callable
+import os
 
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================================
 # 第一部分：定义损失函数（狭长峡谷形 2D 二次型）
@@ -320,7 +326,7 @@ def plot_contour_comparison(
 
     # 标记最优点
     optimum = landscape.optimum
-    ax.plot(optimum[0], optimum[1], 'r*', markersize=15, label='θ* (最优解)', zorder=10)
+    ax.plot(optimum[0], optimum[1], 'r*', markersize=15, label='θ* (Optimum)', zorder=10)
 
     # 绘制每条优化器轨迹
     colors = {'SGD': '#E74C3C', 'Momentum': '#2ECC71',
@@ -340,9 +346,9 @@ def plot_contour_comparison(
         ax.plot(traj[-1, 0], traj[-1, 1], marker=marker, color=color,
                 markersize=12, markeredgecolor='black', markeredgewidth=1.5)
 
-    ax.set_xlabel('θ₁ (平缓方向)', fontsize=13)
-    ax.set_ylabel('θ₂ (陡峭方向)', fontsize=13)
-    ax.set_title(f'优化器轨迹对比\nL(θ) = 0.5·({landscape.a}·θ₁² + {landscape.b}·θ₂²)',
+    ax.set_xlabel('θ₁ (Flat Direction)', fontsize=13)
+    ax.set_ylabel('θ₂ (Steep Direction)', fontsize=13)
+    ax.set_title(f'Optimizer Trajectory Comparison\nL(theta) = 0.5*({landscape.a}*theta1^2 + {landscape.b}*theta2^2)',
                  fontsize=14, fontweight='bold')
     ax.legend(loc='upper right', fontsize=10, framealpha=0.9)
     ax.set_xlim(-4, 4)
@@ -351,13 +357,14 @@ def plot_contour_comparison(
     ax.grid(True, alpha=0.2)
 
     # 添加文字注释
-    ax.text(-3.5, 3.5, f'条件数 κ = {landscape.a/landscape.b:.0f}',
+    ax.text(-3.5, 3.5, f'Condition Number κ = {landscape.a/landscape.b:.0f}',
             fontsize=11, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
 
     plt.tight_layout()
-    plt.savefig(f'images/{filename}', dpi=150, bbox_inches='tight')
+    out = os.path.join(_IMAGES, filename)
+    plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"[可视化] 优化器轨迹对比图已保存至 images/{filename}")
+    print(f"[可视化] 优化器轨迹对比图已保存至 {out}")
 
 
 def plot_loss_curves(
@@ -380,9 +387,9 @@ def plot_loss_curves(
         color = colors.get(name, 'gray')
         ax.plot(losses, '-', color=color, linewidth=2, alpha=0.8, label=name)
 
-    ax.set_xlabel('迭代步数 (Iteration)', fontsize=13)
-    ax.set_ylabel('损失值 L(θ)', fontsize=13)
-    ax.set_title('损失下降曲线对比', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Iteration', fontsize=13)
+    ax.set_ylabel('Loss L(θ)', fontsize=13)
+    ax.set_title('Loss Curve Comparison', fontsize=14, fontweight='bold')
     ax.set_yscale('log')  # 对数刻度
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
@@ -398,9 +405,10 @@ def plot_loss_curves(
                     arrowprops=dict(arrowstyle='->', color=colors.get(name, 'gray')))
 
     plt.tight_layout()
-    plt.savefig(f'images/{filename}', dpi=150, bbox_inches='tight')
+    out = os.path.join(_IMAGES, filename)
+    plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"[可视化] 损失曲线对比图已保存至 images/{filename}")
+    print(f"[可视化] 损失曲线对比图已保存至 {out}")
 
 
 def plot_hyperparameter_playground(
@@ -465,7 +473,7 @@ def plot_hyperparameter_playground(
             ax.plot(traj[-1, 0], traj[-1, 1], 's', color=color, markersize=8,
                     markeredgecolor='black', markeredgewidth=1)
 
-        ax.set_title(f'学习率 α = {lr}', fontsize=13, fontweight='bold')
+        ax.set_title(f'Learning Rate α = {lr}', fontsize=13, fontweight='bold')
         ax.set_xlim(-4, 4)
         ax.set_ylim(-4, 4)
         ax.set_aspect('equal')
@@ -473,12 +481,13 @@ def plot_hyperparameter_playground(
         if idx == 0:
             ax.legend(loc='upper right', fontsize=8)
 
-    plt.suptitle('超参数游乐场：不同学习率对优化器的影响',
+    plt.suptitle('Hyperparameter Playground: Effect of Learning Rate on Optimizers',
                  fontsize=16, fontweight='bold', y=1.01)
     plt.tight_layout()
-    plt.savefig(f'images/{filename}', dpi=150, bbox_inches='tight')
+    out = os.path.join(_IMAGES, filename)
+    plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"[可视化] 超参数游乐场已保存至 images/{filename}")
+    print(f"[可视化] 超参数游乐场已保存至 {out}")
 
 
 # ============================================================================
@@ -581,16 +590,17 @@ def main():
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
     ax.plot(loss_sgd_noisy, 'r-', linewidth=1.5, alpha=0.7, label='SGD + Noise')
     ax.plot(loss_adam_noisy, 'b-', linewidth=1.5, alpha=0.7, label='Adam + Noise')
-    ax.set_xlabel('迭代步数', fontsize=12)
-    ax.set_ylabel('损失值', fontsize=12)
-    ax.set_title('梯度噪声下的鲁棒性对比 (σ=1.0)', fontsize=13, fontweight='bold')
+    ax.set_xlabel('Iteration', fontsize=12)
+    ax.set_ylabel('Loss', fontsize=12)
+    ax.set_title('Robustness Comparison Under Gradient Noise (sigma=1.0)', fontsize=13, fontweight='bold')
     ax.set_yscale('log')
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig('images/noise_robustness.png', dpi=150, bbox_inches='tight')
+    out = os.path.join(_IMAGES, 'noise_robustness.png')
+    plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"[可视化] 噪声鲁棒性对比图已保存至 images/noise_robustness.png")
+    print(f"[可视化] 噪声鲁棒性对比图已保存至 {out}")
 
     # ---- 7. 总结 ----
     print("\n" + "=" * 70)

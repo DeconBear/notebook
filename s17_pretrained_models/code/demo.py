@@ -21,6 +21,12 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
+# GPU 自动检测
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+print(f"使用设备: {DEVICE}")
+if DEVICE.type == 'cpu':
+    print("（未检测到 GPU，使用 CPU 运行。如有 GPU，请安装 CUDA 版 PyTorch 以获得加速）")
+
 from transformers import (
     AutoTokenizer,
     AutoModelForSequenceClassification,
@@ -33,11 +39,14 @@ from transformers import (
 
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
 
-# 设置模型下载目录
 import os
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
+
+# 设置模型下载目录
 os.environ.setdefault('HF_HOME', os.path.join(os.path.dirname(__file__), '..', 'models'))
 
 # ============================================================
@@ -123,21 +132,67 @@ print("=" * 60)
 print("[BERT 文本分类] 加载 bert-base-chinese 模型...")
 print("=" * 60)
 
-# 使用较小的模型以加速演示
-model_name = "uer/roberta-base-finetuned-chinanews-chinese"  # 小型中文模型
-# 如果加载失败，使用 bert-base-chinese
+# 使用最小的可用模型以加速演示（CPU 友好）
+model_name = "prajjwal1/bert-tiny"  # 最小 BERT 变体（约 4MB，2层，128维）
+_HAS_REAL_MODEL = False
+
 try:
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    # 使用 AutoModelForSequenceClassification，num_labels=2 表示二分类
     bert_cls = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
+    bert_cls = bert_cls.to(DEVICE)
+    _HAS_REAL_MODEL = True
     print(f"[模型] 成功加载: {model_name}")
 except Exception as e:
     print(f"[警告] 加载 {model_name} 失败: {e}")
-    print("[备用] 改用 bert-base-chinese...")
-    model_name = "bert-base-chinese"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    bert_cls = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
-    print(f"[模型] 成功加载: {model_name}")
+    # 尝试备用：bert-base-chinese
+    try:
+        model_name = "bert-base-chinese"
+        print("[备用] 尝试加载 bert-base-chinese...")
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        bert_cls = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
+        bert_cls = bert_cls.to(DEVICE)
+        _HAS_REAL_MODEL = True
+        print(f"[模型] 成功加载: {model_name}")
+    except Exception as e2:
+        print(f"[警告] 所有模型下载均失败 ({e2})")
+        print("[回退] 使用本地简化模型进行演示...")
+        # 回退：创建一个微型随机 BERT 风格模型
+        class TinyFallbackClassifier(nn.Module):
+            def __init__(self, vocab_size=1000, num_labels=2):
+                super().__init__()
+                self.embedding = nn.Embedding(vocab_size, 32)
+                self.encoder = nn.TransformerEncoder(
+                    nn.TransformerEncoderLayer(d_model=32, nhead=2, dim_feedforward=64, batch_first=True),
+                    num_layers=2
+                )
+                self.classifier = nn.Linear(32, num_labels)
+                self.config = type('obj', (object,), {'hidden_size': 32})()
+                self.device = DEVICE
+
+            def forward(self, input_ids, attention_mask=None, labels=None, **kwargs):
+                x = self.embedding(input_ids)
+                x = self.encoder(x)
+                x = x.mean(dim=1)
+                logits = self.classifier(x)
+                loss = F.cross_entropy(logits, labels) if labels is not None else None
+                return type('obj', (object,), {'loss': loss, 'logits': logits})()
+
+        try:
+            tokenizer = AutoTokenizer.from_pretrained("bert-base-chinese")
+        except Exception:
+            tokenizer = None
+        if tokenizer is None:
+            # 无 tokenizer 可用，创建一个最简的字符级编码器
+            class SimpleCharTokenizer:
+                def __init__(self):
+                    self.vocab = {c: i for i, c in enumerate('abcdefghijklmnopqrstuvwxyz0123456789')}
+                def __call__(self, text, truncation=True, padding='max_length', max_length=128, return_tensors='pt', **kwargs):
+                    ids = [self.vocab.get(c, 0) for c in text.lower()[:max_length]]
+                    ids = ids + [0] * (max_length - len(ids))
+                    return {'input_ids': torch.tensor([ids]), 'attention_mask': torch.tensor([[1]*len(ids)])}
+            tokenizer = SimpleCharTokenizer()
+        bert_cls = TinyFallbackClassifier().to(DEVICE)
+        print(f"[回退] 使用 TinyFallbackClassifier（仅用于演示流程，不是真实 BERT）")
 
 print(f"[模型] 参数量: {sum(p.numel() for p in bert_cls.parameters()):,}")
 print(f"[数据] 训练样本: {len(train_data)}, 验证样本: {len(eval_data)}")
@@ -152,7 +207,7 @@ training_args = TrainingArguments(
     num_train_epochs=4,                         # 微调 epoch 数（预训练模型只需少量 epoch）
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
-    evaluation_strategy="epoch",                # 每个 epoch 评估一次
+    eval_strategy="epoch",                # 每个 epoch 评估一次
     save_strategy="epoch",
     logging_strategy="steps",
     logging_steps=5,
@@ -170,20 +225,47 @@ def compute_metrics(eval_pred):
     return {"accuracy": accuracy}
 
 
-trainer = Trainer(
-    model=bert_cls,
-    args=training_args,
-    train_dataset=train_dataset,
-    eval_dataset=eval_dataset,
-    compute_metrics=compute_metrics,
-)
+if _HAS_REAL_MODEL:
+    trainer = Trainer(
+        model=bert_cls,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        compute_metrics=compute_metrics,
+    )
 
-print("\n[微调] 开始训练...（使用预训练 BERT + 少量情感标注数据）")
-trainer.train()
+    print("\n[微调] 开始训练...（使用预训练 BERT + 少量情感标注数据）")
+    trainer.train()
 
-# 评估
-eval_results = trainer.evaluate()
-print(f"\n[评估] 验证集准确率: {eval_results.get('eval_accuracy', 'N/A'):.4f}")
+    # 评估
+    eval_results = trainer.evaluate()
+    print(f"\n[评估] 验证集准确率: {eval_results.get('eval_accuracy', 'N/A'):.4f}")
+else:
+    print("\n[微调] 跳过（使用回退模型，无需训练）")
+    # 使用回退模型进行简单训练
+    if DEVICE.type == 'cpu':
+        n_fallback_epochs = 1
+        n_fallback_samples = 8  # CPU 模式：仅用 8 条样本快速演示
+        train_dataset_small = SentimentDataset(train_data[:n_fallback_samples], tokenizer)
+        print("[配置] CPU 模式：使用轻量参数快速演示（回退模型 1 epoch, 8 样本）。GPU 模式下将使用完整训练配置。")
+    else:
+        n_fallback_epochs = 3
+        train_dataset_small = train_dataset
+    bert_cls.train()
+    import torch.optim as optim
+    optimizer_ft = optim.Adam(bert_cls.parameters(), lr=0.01)
+    for epoch in range(n_fallback_epochs):
+        total_loss = 0.0
+        for batch in DataLoader(train_dataset_small, batch_size=4, shuffle=True):
+            input_ids = batch['input_ids'].to(DEVICE)
+            labels = batch['labels'].to(DEVICE)
+            optimizer_ft.zero_grad()
+            out = bert_cls(input_ids, labels=labels)
+            out.loss.backward()
+            optimizer_ft.step()
+            total_loss += out.loss.item()
+        print(f"  Epoch {epoch+1}: loss={total_loss/len(train_dataset_small)*4:.4f}")
+    print("[回退训练] 完成（此训练无法达到预训练BERT的效果，仅用于演示流程）")
 
 # 预测新样本
 print("\n[预测] 对新样本进行情感分类:")
@@ -218,6 +300,7 @@ print("[模型] 加载 bert-base-chinese MLM...")
 try:
     mlm_tokenizer = AutoTokenizer.from_pretrained("bert-base-chinese")
     mlm_model = AutoModelForMaskedLM.from_pretrained("bert-base-chinese")
+    mlm_model = mlm_model.to(DEVICE)
     print("[模型] 加载成功")
 except Exception as e:
     print(f"[警告] 加载失败: {e}, 跳过 MLM 演示")
@@ -229,7 +312,7 @@ if mlm_model is not None:
         "fill-mask",
         model=mlm_model,
         tokenizer=mlm_tokenizer,
-        device=0 if torch.cuda.is_available() else -1,
+        device=0 if DEVICE.type == 'cuda' else -1,
     )
 
     # 测试 MLM：在不同上下文中预测 [MASK] 的词
@@ -264,6 +347,7 @@ print(f"[模型] 加载 {gpt_model_name}...")
 try:
     gpt_tokenizer = AutoTokenizer.from_pretrained(gpt_model_name)
     gpt_model = AutoModelForCausalLM.from_pretrained(gpt_model_name)
+    gpt_model = gpt_model.to(DEVICE)
     # 设置 pad_token
     if gpt_tokenizer.pad_token is None:
         gpt_tokenizer.pad_token = gpt_tokenizer.eos_token
@@ -279,6 +363,7 @@ try:
 
     for prompt in prompts:
         inputs = gpt_tokenizer(prompt, return_tensors='pt')
+        inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
         # 生成文本
         outputs = gpt_model.generate(
             **inputs,
@@ -340,7 +425,7 @@ if mlm_model is not None:
                 v1 = last_hidden[0, apple_positions[0]]
                 v2 = last_hidden[0, apple_positions[1]]
                 sim = F.cosine_similarity(v1.unsqueeze(0), v2.unsqueeze(0)).item()
-                print(f"  句子内"苹果"相似度: {sim:.4f}")
+                print(f'  句子内"苹果"相似度: {sim:.4f}')
     print("\n  关键观察：同一句中两个'苹果'的上下文嵌入高度相似")
     print("  （因为它们都在'水果'上下文中）")
 

@@ -16,12 +16,25 @@ import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
+
+# GPU 自动检测
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+print(f"使用设备: {DEVICE}")
+if DEVICE.type == 'cpu':
+    print("（未检测到 GPU，使用 CPU 运行。如有 GPU，请安装 CUDA 版 PyTorch 以获得加速）")
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+matplotlib.rcParams['axes.unicode_minus'] = False
 import numpy as np
 import os
 import time
+
+# 图片保存目录：固定为本章节的 images/ 目录（相对于本脚本的 ../images/）
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_IMAGES_DIR = os.path.join(_SCRIPT_DIR, '..', 'images')
+os.makedirs(_IMAGES_DIR, exist_ok=True)
 
 
 # ============================================================
@@ -44,10 +57,19 @@ def load_mnist(batch_size: int = 128) -> DataLoader:
         transforms.Normalize((0.5,), (0.5,)),
     ])
 
-    train_set = torchvision.datasets.MNIST(
-        root='../data', train=True, download=True,
-        transform=transform
-    )
+    try:
+        train_set = torchvision.datasets.MNIST(
+            root='../data', train=True, download=True,
+            transform=transform
+        )
+    except Exception as e:
+        print(f"[警告] MNIST 下载失败 ({e})，使用合成数据")
+        # 回退：合成 28x28 单通道图像
+        from torch.utils.data import TensorDataset
+        np.random.seed(42)
+        synth_X = torch.rand(10000, 1, 28, 28) * 2 - 1  # [-1, 1]
+        synth_y = torch.randint(0, 10, (10000,))
+        train_set = TensorDataset(synth_X, synth_y)
 
     train_loader = DataLoader(
         train_set, batch_size=batch_size, shuffle=True,
@@ -70,8 +92,10 @@ def to_image(tensor: torch.Tensor) -> np.ndarray:
     img = (tensor.detach().cpu().numpy() + 1) / 2.0
     img = np.clip(img, 0, 1)
 
-    if img.ndim == 3 and img.shape[0] == 1:
-        img = img[0]  # 去掉通道维度 → (H, W)
+    if img.ndim == 4 and img.shape[1] == 1:
+        img = img[:, 0, :, :]  # (N, 1, H, W) → (N, H, W)
+    elif img.ndim == 3 and img.shape[0] == 1:
+        img = img[0]  # (1, H, W) → (H, W)
     return img
 
 
@@ -406,7 +430,11 @@ def vae_loss(x_recon: torch.Tensor, x: torch.Tensor,
         (total_loss, recon_loss, kl_loss)
     """
     # ---------- 重构损失：二元交叉熵（适用于 [0,1] 范围的图像）----------
-    recon_loss = F.binary_cross_entropy(x_recon, x.view(x.size(0), -1),
+    # MNIST 图像经过 Normalize((0.5,),(0.5,)) 后值域为 [-1, 1]，
+    # 而 VAE 解码器的 Sigmoid 输出为 [0, 1]，BCE 要求 target ∈ [0,1]，
+    # 因此需要将目标图像从 [-1, 1] 反归一化回 [0, 1]
+    x_target = (x.view(x.size(0), -1) + 1) / 2.0  # [-1, 1] → [0, 1]
+    recon_loss = F.binary_cross_entropy(x_recon, x_target,
                                          reduction='sum') / x.size(0)
 
     # ---------- KL 散度（解析解）----------
@@ -511,7 +539,7 @@ def visualize_generated_samples(generator, device, latent_dim,
             ax.imshow(samples[i], cmap='gray')
         ax.axis('off')
 
-    plt.suptitle('GAN 生成的数字', fontsize=14)
+    plt.suptitle('GAN Generated Digits', fontsize=14)
     plt.tight_layout()
     plt.savefig(save_path, dpi=120, bbox_inches='tight')
     plt.close()
@@ -546,14 +574,14 @@ def visualize_vae_reconstructions(model, test_loader, device,
         axes[0, i].imshow(originals[i], cmap='gray')
         axes[0, i].axis('off')
         if i == 0:
-            axes[0, i].set_ylabel('原始', fontsize=10)
+            axes[0, i].set_ylabel('Original', fontsize=10)
 
         axes[1, i].imshow(recons[i], cmap='gray')
         axes[1, i].axis('off')
         if i == 0:
-            axes[1, i].set_ylabel('重建', fontsize=10)
+            axes[1, i].set_ylabel('Reconstructed', fontsize=10)
 
-    plt.suptitle('VAE 重建结果（上: 原始, 下: 重建）', fontsize=14)
+    plt.suptitle('VAE Reconstruction (Top: Original, Bottom: Reconstructed)', fontsize=14)
     plt.tight_layout()
     plt.savefig(save_path, dpi=120, bbox_inches='tight')
     plt.close()
@@ -605,10 +633,10 @@ def visualize_vae_latent_space(model, test_loader, device,
     fig, ax = plt.subplots(figsize=(8, 6))
     scatter = ax.scatter(latent_2d[:, 0], latent_2d[:, 1],
                           c=labels, cmap='tab10', alpha=0.6, s=10)
-    plt.colorbar(scatter, ticks=range(10), label='数字类别')
-    ax.set_title('VAE 潜空间的 t-SNE 投影', fontsize=14)
-    ax.set_xlabel('t-SNE 维度 1')
-    ax.set_ylabel('t-SNE 维度 2')
+    plt.colorbar(scatter, ticks=range(10), label='Digit Class')
+    ax.set_title('t-SNE Projection of VAE Latent Space', fontsize=14)
+    ax.set_xlabel('t-SNE Dimension 1')
+    ax.set_ylabel('t-SNE Dimension 2')
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
@@ -634,7 +662,7 @@ def plot_training_curves(gan_history: dict, vae_history: dict,
     ax.plot(epochs, gan_history["d_loss"], 'r-', label='D Loss', linewidth=1.5)
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Loss')
-    ax.set_title('GAN 训练曲线')
+    ax.set_title('GAN Training Curves')
     ax.legend()
     ax.grid(True, alpha=0.3)
 
@@ -646,7 +674,7 @@ def plot_training_curves(gan_history: dict, vae_history: dict,
     ax.plot(epochs, vae_history["kl_loss"], 'green', label='KL', linewidth=1)
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Loss')
-    ax.set_title('VAE 训练曲线')
+    ax.set_title('VAE Training Curves')
     ax.legend()
     ax.grid(True, alpha=0.3)
 
@@ -654,17 +682,17 @@ def plot_training_curves(gan_history: dict, vae_history: dict,
     ax = axes[2]
     ax.axis('off')
     comparison_text = (
-        "GAN vs VAE 对比\n\n"
+        "GAN vs VAE Comparison\n\n"
         "GAN:\n"
-        "  - 图像较锐利（通过对抗训练优化视觉质量）\n"
-        "  - 无显式潜空间结构\n"
-        "  - 训练不稳定（需要平衡 G 和 D）\n"
-        "  - 可能出现模式坍塌\n\n"
+        "  - Sharper images (adversarial training optimizes visual quality)\n"
+        "  - No explicit latent space structure\n"
+        "  - Unstable training (needs to balance G and D)\n"
+        "  - May suffer from mode collapse\n\n"
         "VAE:\n"
-        "  - 图像较模糊（逐像素 MSE/BCE 平均效应）\n"
-        "  - 潜空间平滑有结构（可做插值）\n"
-        "  - 训练稳定（明确的优化目标）\n"
-        "  - 覆盖数据分布更全面"
+        "  - Blurrier images (pixel-wise MSE/BCE averaging effect)\n"
+        "  - Smooth structured latent space (enables interpolation)\n"
+        "  - Stable training (explicit optimization objective)\n"
+        "  - Better coverage of data distribution"
     )
     ax.text(0.05, 0.95, comparison_text, transform=ax.transAxes,
             fontsize=9, verticalalignment='top', fontfamily='monospace',
@@ -689,7 +717,7 @@ def main():
     print("=" * 60)
 
     # ---------- 设备选择 ----------
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = DEVICE
     print(f"\n计算设备: {device}")
 
     # ---------- 加载数据 ----------
@@ -698,19 +726,38 @@ def main():
     train_loader = load_mnist(batch_size)
 
     # 测试集（VAE 重建可视化用）
-    test_set = torchvision.datasets.MNIST(
-        root='../data', train=False, download=True,
-        transform=transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,)),
-        ])
-    )
+    try:
+        test_set = torchvision.datasets.MNIST(
+            root='../data', train=False, download=True,
+            transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,)),
+            ])
+        )
+    except Exception as e:
+        print(f"[警告] MNIST 测试集下载失败 ({e})，使用合成数据")
+        from torch.utils.data import TensorDataset
+        synth_X = torch.rand(1000, 1, 28, 28) * 2 - 1
+        synth_y = torch.randint(0, 10, (1000,))
+        test_set = TensorDataset(synth_X, synth_y)
     test_loader = DataLoader(test_set, batch_size=16, shuffle=True, num_workers=0)
 
     # ---------- 训练 GAN ----------
     print("\n[2/5] 训练 GAN...")
+    if device.type == 'cpu':
+        n_gan_epochs = 2
+        n_train_subset = 1000
+        print("[配置] CPU 模式：使用轻量参数快速演示（GAN 2 epochs, 1000 样本）。GPU 模式下将使用完整训练配置。")
+        # 缩减训练集（仅当数据集有 .data 属性时，如标准 MNIST）
+        if hasattr(train_loader.dataset, 'data'):
+            train_loader.dataset.data = train_loader.dataset.data[:n_train_subset]
+            if hasattr(train_loader.dataset, 'targets'):
+                train_loader.dataset.targets = train_loader.dataset.targets[:n_train_subset]
+    else:
+        n_gan_epochs = 30
+        print(f"[配置] 训练 {n_gan_epochs} 个 epoch")
     gan_history, generator, discriminator = train_gan(
-        train_loader, device, n_epochs=30, latent_dim=128
+        train_loader, device, n_epochs=n_gan_epochs, latent_dim=128
     )
 
     # ---------- 训练 VAE ----------
@@ -720,14 +767,23 @@ def main():
     # VAE 使用 [0,1] 范围的图像（Sigmoid 输出），需要重新处理
     # 简化处理：VAE 内部接受 [-1,1] 输入但输出 Sigmoid [0,1]，损失用 BCE
 
+    if device.type == 'cpu':
+        n_vae_epochs = 2
+        if hasattr(train_loader_vae.dataset, 'data'):
+            train_loader_vae.dataset.data = train_loader_vae.dataset.data[:n_train_subset]
+            if hasattr(train_loader_vae.dataset, 'targets'):
+                train_loader_vae.dataset.targets = train_loader_vae.dataset.targets[:n_train_subset]
+        print(f"[配置] VAE 训练 {n_vae_epochs} 个 epoch（CPU 模式时长较短）")
+    else:
+        n_vae_epochs = 30
+        print(f"[配置] VAE 训练 {n_vae_epochs} 个 epoch")
     vae_history, vae_model = train_vae(
-        train_loader_vae, device, n_epochs=30, latent_dim=20
+        train_loader_vae, device, n_epochs=n_vae_epochs, latent_dim=20
     )
 
     # ---------- 可视化 ----------
     print("\n[4/5] 生成可视化...")
-    output_dir = "../images"
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = _IMAGES_DIR
 
     # GAN 生成的样本
     visualize_generated_samples(generator, device, latent_dim=128,
@@ -757,7 +813,7 @@ def main():
     print(f"  KL 散度: {vae_history['kl_loss'][-1]:.4f}")
     print(f"  (KL 散度越小，潜空间越接近标准正态分布)")
     print("=" * 60)
-    print("\nDemo 完成！查看 ../images/ 目录下的可视化结果。")
+    print(f"\nDemo 完成！查看 {_IMAGES_DIR} 目录下的可视化结果。")
     print("=" * 60)
 
 

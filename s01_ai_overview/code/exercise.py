@@ -29,8 +29,9 @@ s01_ai_overview/code/exercise.py — 感知机练习
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
-matplotlib.rcParams['axes.unicode_minus'] = False
+# 中文字体配置
+matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False  # 修复负号显示
 
 
 def generate_linearly_separable_data(n_samples=100, random_seed=42):

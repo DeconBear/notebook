@@ -23,10 +23,28 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+# GPU 自动检测
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+print(f"使用设备: {DEVICE}")
+if DEVICE.type == 'cpu':
+    print("（未检测到 GPU，使用 CPU 运行。如有 GPU，请安装 CUDA 版 PyTorch 以获得加速）")
+
+# ====== 可选：使用 LLM API ======
+# 如需使用真实 LLM API，请设置环境变量：
+#   export OPENAI_API_KEY=your-key
+#   export OPENAI_BASE_URL=https://api.openai.com/v1
+# 然后将 USE_API = False 改为 True
+USE_API = False
+
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
+# 中文字体配置
 matplotlib.rcParams['axes.unicode_minus'] = False
+
+import os
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================
 # 第一部分：Scaling Law 可视化
@@ -79,11 +97,11 @@ ax1.scatter([1.17e8, 1.5e9, 1.75e11], [kaplan_loss(1.17e8, D_fixed), kaplan_loss
 ax1.annotate('GPT-1\n117M', (1.5e8, kaplan_loss(1.17e8, D_fixed) + 0.1), fontsize=8, color='red')
 ax1.annotate('GPT-2\n1.5B', (2e9, kaplan_loss(1.5e9, D_fixed) + 0.08), fontsize=8, color='red')
 ax1.annotate('GPT-3\n175B', (2e11, kaplan_loss(1.75e11, D_fixed) + 0.08), fontsize=8, color='red')
-ax1.set_xlabel("模型参数量 N", fontsize=11)
-ax1.set_ylabel("测试损失 L", fontsize=11)
+ax1.set_xlabel("Model Parameters N", fontsize=11)
+ax1.set_ylabel("Test Loss L", fontsize=11)
 ax1.set_title("L(N) ∝ N^(-α), α≈0.076", fontsize=12)
 ax1.grid(True, alpha=0.3, which='both')
-ax1.axhline(y=1.0, color='gray', linestyle='--', alpha=0.5, label='不可约减损失 c')
+ax1.axhline(y=1.0, color='gray', linestyle='--', alpha=0.5, label='Irreducible Loss c')
 ax1.legend(fontsize=9)
 
 # 图 2: 损失 vs 数据量
@@ -92,8 +110,8 @@ N_fixed = 7e9  # 固定模型大小 (7B 参数, 类似 LLaMA)
 losses_D = [kaplan_loss(N_fixed, D) for D in D_range]
 ax2 = axes[0, 1]
 ax2.loglog(D_range, losses_D, 'g-', linewidth=2)
-ax2.set_xlabel("训练数据量 D (tokens)", fontsize=11)
-ax2.set_ylabel("测试损失 L", fontsize=11)
+ax2.set_xlabel("Training Data D (tokens)", fontsize=11)
+ax2.set_ylabel("Test Loss L", fontsize=11)
 ax2.set_title("L(D) ∝ D^(-β), β≈0.095", fontsize=12)
 ax2.grid(True, alpha=0.3, which='both')
 
@@ -103,8 +121,8 @@ C_range = np.logspace(-3, 6, 100)  # PF-days
 losses_C = [kaplan_loss(np.sqrt(c/6*1e15), np.sqrt(c/6*1e15)) for c in C_range]
 ax3 = axes[1, 0]
 ax3.loglog(C_range, losses_C, 'purple', linewidth=2)
-ax3.set_xlabel("计算量 C (PF-days)", fontsize=11)
-ax3.set_ylabel("测试损失 L", fontsize=11)
+ax3.set_xlabel("Compute C (PF-days)", fontsize=11)
+ax3.set_ylabel("Test Loss L", fontsize=11)
 ax3.set_title("L(C) ∝ C^(-γ), γ≈0.057", fontsize=12)
 ax3.grid(True, alpha=0.3, which='both')
 
@@ -118,22 +136,22 @@ contour = ax4.contour(np.log10(NN), np.log10(DD), LL, levels=10, cmap='RdYlBu_r'
 ax4.clabel(contour, inline=True, fontsize=8)
 # Chinchilla 最优线: D = 20N
 optimal_D = [chinchilla_optimal_D(n) for n in N_vals]
-ax4.loglog(N_vals, optimal_D, 'r--', linewidth=2, label='Chinchilla 最优 D≈20N')
+ax4.loglog(N_vals, optimal_D, 'r--', linewidth=2, label='Chinchilla Optimal D≈20N')
 # GPT-3 点
 ax4.scatter([1.75e11], [3e11], color='orange', s=100, zorder=5, marker='s')
-ax4.annotate('GPT-3\n(欠训练)', (2e11, 4e11), fontsize=8, color='darkorange')
+ax4.annotate('GPT-3\n(Undertrained)', (2e11, 4e11), fontsize=8, color='darkorange')
 # LLaMA 7B 点
 ax4.scatter([7e9], [1e12], color='green', s=100, zorder=5, marker='^')
-ax4.annotate('LLaMA 7B\n(接近最优)', (1e10, 1.5e12), fontsize=8, color='green')
-ax4.set_xlabel("模型参数量 N (log)", fontsize=11)
-ax4.set_ylabel("训练 Token 数 D (log)", fontsize=11)
-ax4.set_title("Chinchilla 最优配比: D ≈ 20N", fontsize=12)
+ax4.annotate('LLaMA 7B\n(Near-optimal)', (1e10, 1.5e12), fontsize=8, color='green')
+ax4.set_xlabel("Model Parameters N (log)", fontsize=11)
+ax4.set_ylabel("Training Tokens D (log)", fontsize=11)
+ax4.set_title("Chinchilla Optimal Ratio: D ≈ 20N", fontsize=12)
 ax4.legend(fontsize=9)
 ax4.grid(True, alpha=0.3)
 
-plt.suptitle("语言模型的 Scaling Laws", fontsize=15, fontweight='bold')
+plt.suptitle("Scaling Laws of Language Models", fontsize=15, fontweight='bold')
 plt.tight_layout()
-plt.savefig("images/scaling_laws.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'scaling_laws.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[可视化] Scaling Laws 图表已保存至 images/scaling_laws.png")
 print(f"\n[计算示例]")
@@ -192,12 +210,12 @@ param_range = np.logspace(6, 12, 30)  # 1M → 1T
 
 # 模拟 6 个任务
 tasks = {
-    "3位加减法": (True, 8e9),        # 涌现，阈值 ~8B
-    "多语言翻译": (True, 1e10),       # 涌现，阈值 ~10B
-    "思维链推理(CoT)": (True, 6e10),  # 涌现，阈值 ~60B
-    "指令遵循": (True, 3e10),          # 涌现，阈值 ~30B
-    "情感分析": (False, None),         # 非涌现: 平滑增长
-    "词性标注": (False, None),         # 非涌现: 平滑增长
+    "3-Digit Arithmetic": (True, 8e9),        # Emergent, threshold ~8B
+    "Multilingual Translation": (True, 1e10),  # Emergent, threshold ~10B
+    "Chain-of-Thought (CoT)": (True, 6e10),    # Emergent, threshold ~60B
+    "Instruction Following": (True, 3e10),     # Emergent, threshold ~30B
+    "Sentiment Analysis": (False, None),        # Non-emergent: smooth growth
+    "POS Tagging": (False, None),              # Non-emergent: smooth growth
 }
 
 fig, axes = plt.subplots(2, 3, figsize=(16, 10))
@@ -217,24 +235,24 @@ for ax, (task_name, (is_emergent, threshold)) in zip(axes, tasks.items()):
         smooth_idx += 1
 
     ax.semilogx(param_range, accs * 100, 'o-', color=color, linewidth=1.5, markersize=4)
-    ax.set_xlabel("模型参数量", fontsize=9)
-    ax.set_ylabel("准确率 (%)", fontsize=9)
-    ax.set_title(f"{task_name} {'(涌现)' if is_emergent else '(平滑增长)'}", fontsize=11)
+    ax.set_xlabel("Model Parameters", fontsize=9)
+    ax.set_ylabel("Accuracy (%)", fontsize=9)
+    ax.set_title(f"{task_name} {'(Emergent)' if is_emergent else '(Smooth Growth)'}", fontsize=11)
 
     if is_emergent and threshold:
         ax.axvline(x=threshold, color='gray', linestyle='--', alpha=0.5)
-        ax.annotate(f'涌现阈值\n~{threshold/1e9:.0f}B',
+        ax.annotate(f'Emergence threshold\n~{threshold/1e9:.0f}B',
                    xy=(threshold, 50), fontsize=8, color='red',
                    ha='left',
                    arrowprops=dict(arrowstyle='->', color='red', lw=1))
 
     ax.set_ylim(0, 105)
     ax.grid(True, alpha=0.3)
-    ax.axhline(y=10, color='gray', linestyle=':', alpha=0.3, label='随机基线 10%' if task_name == "3位加减法" else '')
+    ax.axhline(y=10, color='gray', linestyle=':', alpha=0.3, label='Random baseline 10%' if task_name == "3-Digit Arithmetic" else '')
 
-plt.suptitle("涌现能力 vs 平滑增长：不同任务随模型规模的行为", fontsize=14, fontweight='bold')
+plt.suptitle("Emergent vs Smooth Growth: Task Behavior by Model Scale", fontsize=14, fontweight='bold')
 plt.tight_layout()
-plt.savefig("images/emergent_abilities.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'emergent_abilities.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[可视化] 涌现能力图已保存至 images/emergent_abilities.png")
 print()
@@ -321,12 +339,12 @@ for step_ratio in np.linspace(0.01, 1.0, 30):
 # 绘制 DPO 训练损失曲线
 plt.figure(figsize=(8, 4))
 plt.plot(np.linspace(0.01, 1.0, 30), dpo_losses, 'o-', color='#00897B', linewidth=1.5, markersize=4)
-plt.xlabel("训练进度", fontsize=12)
+plt.xlabel("Training Progress", fontsize=12)
 plt.ylabel("DPO Loss", fontsize=12)
-plt.title("DPO 训练损失曲线（模拟）: 模型逐步学会偏好好的回答", fontsize=13, fontweight='bold')
+plt.title("DPO Training Loss (Simulated): Model Learns to Prefer Good Responses", fontsize=13, fontweight='bold')
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig("images/dpo_training_loss.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'dpo_training_loss.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[可视化] DPO 训练损失曲线已保存至 images/dpo_training_loss.png")
 print()
@@ -412,13 +430,13 @@ print()
 
 # 模拟 LoRA 微调过程
 print("[模拟] LoRA 微调: 模型学习新任务...")
-lora_layer = LoRALinear(256, 256, r=8, alpha=16.0)
+lora_layer = LoRALinear(256, 256, r=8, alpha=16.0).to(DEVICE)
 optimizer = optim.Adam(lora_layer.parameters(), lr=0.01)
 # 模拟一个简单的回归任务
 lora_losses = []
 for epoch in range(100):
-    x_batch = torch.randn(16, 256)
-    y_batch = torch.randn(16, 256)  # 目标
+    x_batch = torch.randn(16, 256).to(DEVICE)
+    y_batch = torch.randn(16, 256).to(DEVICE)  # 目标
     optimizer.zero_grad()
     pred = lora_layer(x_batch)
     loss = F.mse_loss(pred, y_batch)
@@ -430,10 +448,10 @@ plt.figure(figsize=(8, 4))
 plt.plot(lora_losses, color='#7B1FA2', linewidth=1.5)
 plt.xlabel("Epoch", fontsize=12)
 plt.ylabel("MSE Loss", fontsize=12)
-plt.title("LoRA 微调训练损失（模拟）", fontsize=13, fontweight='bold')
+plt.title("LoRA Fine-tuning Training Loss (Simulated)", fontsize=13, fontweight='bold')
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig("images/lora_training_loss.png", dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_IMAGES, 'lora_training_loss.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[可视化] LoRA 训练损失曲线已保存至 images/lora_training_loss.png")
 print()

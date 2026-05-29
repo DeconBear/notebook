@@ -10,10 +10,17 @@ s05 计算图与前向传播 — 演示代码
 运行方式：在 s05_forward_computation_graph/ 目录下执行 python code/demo.py
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['axes.unicode_minus'] = False
 import matplotlib.patches as mpatches
 from typing import Dict, List, Tuple, Callable
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================================
 # 第一部分：激活函数及其导数
@@ -294,11 +301,11 @@ def plot_network_structure(parameters: Dict[str, np.ndarray], X_sample: np.ndarr
 
         # ---- 标注层名 ----
         if l_idx == 0:
-            layer_name = f'输入层\n({n_neurons} 神经元)'
+            layer_name = f'Input Layer\n({n_neurons} neurons)'
         elif l_idx == L:
-            layer_name = f'输出层\n({n_neurons} 神经元)'
+            layer_name = f'Output Layer\n({n_neurons} neurons)'
         else:
-            layer_name = f'隐藏层 {l_idx}\n({n_neurons} 神经元)'
+            layer_name = f'Hidden Layer {l_idx}\n({n_neurons} neurons)'
         ax.text(l_idx, max_neurons / 2 + 0.8, layer_name,
                 ha='center', fontsize=9, fontweight='bold')
 
@@ -311,22 +318,22 @@ def plot_network_structure(parameters: Dict[str, np.ndarray], X_sample: np.ndarr
                     fontsize=7, ha='center', color='#2C3E50',
                     bbox=dict(boxstyle='round,pad=0.3', facecolor='#E8F8F5', alpha=0.8))
 
-    ax.set_title('神经网络结构 — 计算图视角', fontsize=14, fontweight='bold')
+    ax.set_title('Neural Network Structure - Computation Graph View', fontsize=14, fontweight='bold')
     ax.axis('equal')
     ax.axis('off')
 
     # 图例
     legend_elements = [
-        mpatches.Patch(color='#4A90D9', label='输入层'),
-        mpatches.Patch(color='#F39C12', label='隐藏层'),
-        mpatches.Patch(color='#E74C3C', label='输出层'),
+        mpatches.Patch(color='#4A90D9', label='Input Layer'),
+        mpatches.Patch(color='#F39C12', label='Hidden Layer'),
+        mpatches.Patch(color='#E74C3C', label='Output Layer'),
     ]
     ax.legend(handles=legend_elements, loc='lower right', fontsize=9)
 
     plt.tight_layout()
-    plt.savefig('images/network_structure.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'network_structure.png'), dpi=150, bbox_inches='tight')
     plt.close()
-    print("\n[可视化] 网络结构图已保存至 images/network_structure.png")
+    print("\n[可视化] 网络结构图已保存至 " + os.path.join(_IMAGES, 'network_structure.png'))
 
 
 def plot_activation_functions():
@@ -345,7 +352,7 @@ def plot_activation_functions():
         ("Sigmoid", sigmoid, sigmoid_derivative, "1/(1+e^{-z})", "#A23B72"),
         ("Tanh", tanh, tanh_derivative, "tanh(z)", "#F18F01"),
         ("Leaky ReLU (α=0.01)", lambda z: np.maximum(0, z) + 0.01 * np.minimum(0, z),
-         lambda z: np.where(z > 0, 1.0, 0.01), "max(0,z)+0.01·min(0,z)", "#C73E1D"),
+         lambda z: np.where(z > 0, 1.0, 0.01), "max(0,z)+0.01*min(0,z)", "#C73E1D"),
     ]
 
     for ax, (name, fn, fn_prime, formula, color) in zip(axes, funcs):
@@ -369,11 +376,11 @@ def plot_activation_functions():
         ax.legend(loc='best', fontsize=8)
         ax.grid(True, alpha=0.3)
 
-    plt.suptitle('常见激活函数及其导数', fontsize=16, fontweight='bold', y=1.01)
+    plt.suptitle('Common Activation Functions and Their Derivatives', fontsize=16, fontweight='bold', y=1.01)
     plt.tight_layout()
-    plt.savefig('images/activation_functions.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'activation_functions.png'), dpi=150, bbox_inches='tight')
     plt.close()
-    print("[可视化] 激活函数对比图已保存至 images/activation_functions.png")
+    print("[可视化] 激活函数对比图已保存至 " + os.path.join(_IMAGES, 'activation_functions.png'))
 
 
 def print_tensor_shape_table(caches: List[Dict], parameters: Dict[str, np.ndarray]):
@@ -408,7 +415,7 @@ def print_tensor_shape_table(caches: List[Dict], parameters: Dict[str, np.ndarra
         # 激活输出
         print(f"{'第 ' + str(l) + ' 层':<10} {f'a[{l}]':<12} {str(cache['a'].shape):<22} "
               f"{'激活函数输出（下一层输入）'}")
-        print(f"{'':<10} {'':<12} {'':<22} {'  min=' + f'{cache[\"a\"].min():.4f}, max={cache[\"a\"].max():.4f}'}")
+        print(f"{'':<10} {'':<12} {'':<22}  min={cache['a'].min():.4f}, max={cache['a'].max():.4f}")
 
     print("-" * 70)
     total_params = sum(p.size for p in parameters.values())  # 计算总参数数量
@@ -431,25 +438,25 @@ def plot_forward_data_flow(caches: List[Dict]):
     # ---- 绘制输入分布 ----
     a_prev_vals = caches[0]['a_prev'].flatten()  # 输入数据展开为一维
     axes[0].hist(a_prev_vals, bins=30, color='#4A90D9', alpha=0.7, edgecolor='white')
-    axes[0].set_title(f'输入层 a[0]\nshape={caches[0]["a_prev"].shape}', fontsize=10)
-    axes[0].set_xlabel('值')
-    axes[0].set_ylabel('频次')
+    axes[0].set_title(f'Input Layer a[0]\nshape={caches[0]["a_prev"].shape}', fontsize=10)
+    axes[0].set_xlabel('Value')
+    axes[0].set_ylabel('Frequency')
     axes[0].axvline(x=0, color='red', linestyle='--', alpha=0.5)  # 零参考线
 
     # ---- 绘制每层激活分布 ----
     for l in range(L):
         a_vals = caches[l]['a'].flatten()  # 第 l 层激活值展开
         axes[l + 1].hist(a_vals, bins=30, color='#F39C12', alpha=0.7, edgecolor='white')
-        axes[l + 1].set_title(f'第 {l+1} 层 a[{l+1}]\nshape={caches[l]["a"].shape}', fontsize=10)
-        axes[l + 1].set_xlabel('值')
-        axes[l + 1].set_ylabel('频次')
+        axes[l + 1].set_title(f'Layer {l+1} a[{l+1}]\nshape={caches[l]["a"].shape}', fontsize=10)
+        axes[l + 1].set_xlabel('Value')
+        axes[l + 1].set_ylabel('Frequency')
         axes[l + 1].axvline(x=0, color='red', linestyle='--', alpha=0.5)  # 零参考线
 
-    plt.suptitle('前向传播中激活值分布的逐层演变', fontsize=14, fontweight='bold')
+    plt.suptitle('Layer-wise Evolution of Activation Distribution During Forward Propagation', fontsize=14, fontweight='bold')
     plt.tight_layout()
-    plt.savefig('images/forward_data_flow.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'forward_data_flow.png'), dpi=150, bbox_inches='tight')
     plt.close()
-    print("[可视化] 前向传播数据流图已保存至 images/forward_data_flow.png")
+    print("[可视化] 前向传播数据流图已保存至 " + os.path.join(_IMAGES, 'forward_data_flow.png'))
 
 
 # ============================================================================

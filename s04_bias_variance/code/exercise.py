@@ -24,8 +24,9 @@ s04_bias_variance/code/exercise.py — 过拟合、正则化与 Bias-Variance �
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
-matplotlib.rcParams['axes.unicode_minus'] = False
+# 中文字体配置
+matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False  # 修复负号显示
 
 
 # ============================================================================

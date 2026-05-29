@@ -12,10 +12,18 @@ s19 强化学习入门：MDP 与 Q-Learning — 演示代码
 
 import numpy as np
 import matplotlib.pyplot as plt
+# 中文字体配置
+import matplotlib
+matplotlib.rcParams['axes.unicode_minus'] = False
 import matplotlib.patches as mpatches
 from matplotlib.colors import Normalize
 from typing import Tuple, List, Dict, Optional
 import time
+
+import os
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_IMAGES = os.path.join(_HERE, '..', 'images')
+os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================================
 # 第一部分：GridWorld 环境实现
@@ -446,19 +454,19 @@ def plot_qvalue_heatmap(
     agent: QLearningAgent,
     episode_label: str,
     ax: plt.Axes,
-    title: str = "Q 值热力图",
+    title: str = "Q-Value Heatmap",
 ):
     """
-    绘制 Q 值热力图 —— 在网格世界每个格子上显示最大 Q 值对应的颜色。
+    Draw Q-value heatmap — display the max Q-value color for each grid cell.
 
-    使用 Q 表数据：Q 值越高的格子颜色越暖（红色），越低的格子越冷（蓝色）。
+    Uses Q-table data: higher Q-value cells are warmer (red), lower are cooler (blue).
 
-    参数:
-        env: 网格世界环境
-        agent: Q-Learning Agent（或其 Q 表快照）
-        episode_label: episode 标签
-        ax: matplotlib 坐标轴
-        title: 图表标题
+    Parameters:
+        env: GridWorld environment
+        agent: Q-Learning Agent (or its Q-table snapshot)
+        episode_label: episode label
+        ax: matplotlib axes
+        title: Chart title
     """
     # 提取每个状态的最大 Q 值作为该状态的"价值"
     if isinstance(agent, QLearningAgent):
@@ -487,13 +495,13 @@ def plot_qvalue_heatmap(
                        color='white' if abs(val) > vmax * 0.5 else 'black')
 
     # 标记起点、终点和陷阱
-    ax.plot(env.start[1], env.start[0], 'go',                  # 绿色圆点 = 起点
-            markersize=10, label='起点')
-    ax.plot(env.goal[1], env.goal[0], 'r*',                    # 红色星号 = 终点
-            markersize=15, label=f'终点 (+{env.goal_reward})')
+    ax.plot(env.start[1], env.start[0], 'go',                  # green dot = start
+            markersize=10, label='Start')
+    ax.plot(env.goal[1], env.goal[0], 'r*',                    # red star = goal
+            markersize=15, label=f'Goal (+{env.goal_reward})')
     for trap in env.traps:
-        ax.plot(trap[1], trap[0], 'kx', markersize=12,         # 黑色叉号 = 陷阱
-                mew=2, label='陷阱' if trap == env.traps[0] else "")
+        ax.plot(trap[1], trap[0], 'kx', markersize=12,         # black x = trap
+                mew=2, label='Trap' if trap == env.traps[0] else "")
 
     ax.set_title(title, fontsize=12, fontweight='bold')
     ax.set_xticks(range(env.size))
@@ -508,7 +516,7 @@ def plot_optimal_policy(
     env: GridWorld,
     agent: QLearningAgent,
     ax: plt.Axes,
-    title: str = "最优策略 π*(s) = argmax_a Q(s,a)",
+    title: str = "最优策略 pi*(s) = argmax_a Q(s,a)",
 ):
     """
     绘制最优策略图 —— 在每个格子上用箭头标明最优动作方向。
@@ -562,14 +570,14 @@ def plot_optimal_policy(
                     alpha=max(0.3, alpha), lw=2)
 
     # 标记特殊格子
-    ax.plot(env.start[1], env.start[0], 'go', markersize=12, label='起点 S')     # 绿色起点
-    ax.plot(env.goal[1], env.goal[0], 'r*', markersize=18, label=f'终点 G')      # 红色星号终点
+    ax.plot(env.start[1], env.start[0], 'go', markersize=12, label='Start S')     # green start
+    ax.plot(env.goal[1], env.goal[0], 'r*', markersize=18, label=f'Goal G')      # red star goal
     for i, trap in enumerate(env.traps):
-        ax.plot(trap[1], trap[0], 'ks', markersize=14, label=f'陷阱 X{i+1}')     # 黑色方形陷阱
+        ax.plot(trap[1], trap[0], 'ks', markersize=14, label=f'Trap X{i+1}')     # black square trap
 
     ax.set_title(title, fontsize=12, fontweight='bold')
-    ax.set_xlabel('列 (col)')
-    ax.set_ylabel('行 (row)')
+    ax.set_xlabel('Column (col)')
+    ax.set_ylabel('Row (row)')
     ax.legend(loc='upper right', fontsize=7)
     ax.grid(False)                                             # 关闭自动网格
 
@@ -577,7 +585,7 @@ def plot_optimal_policy(
 def plot_training_rewards(
     episode_rewards: List[float],
     window_size: int = 50,
-    title: str = "训练奖励曲线",
+    title: str = "Training Reward Curve",
     ax: Optional[plt.Axes] = None,
 ):
     """
@@ -604,17 +612,17 @@ def plot_training_rewards(
                               mode='valid')
         smooth_episodes = np.arange(window_size - 1, len(rewards))
 
-        ax.plot(smooth_episodes, smoothed, 'b-',               # 蓝色实线 = 平滑奖励
-                linewidth=2, label=f'滑动平均 (窗口={window_size})')
+        ax.plot(smooth_episodes, smoothed, 'b-',               # blue solid = smoothed reward
+                linewidth=2, label=f'Moving Avg (window={window_size})')
 
-    ax.plot(episodes, rewards, 'lightblue', alpha=0.3,         # 浅蓝透明 = 原始奖励
-            linewidth=0.5, label='原始奖励')
+    ax.plot(episodes, rewards, 'lightblue', alpha=0.3,         # light blue = raw reward
+            linewidth=0.5, label='Raw Reward')
 
-    ax.axhline(y=0, color='r', linestyle='--', alpha=0.5,      # y=0 参考线
-              label='y=0 (盈亏平衡线)')
+    ax.axhline(y=0, color='r', linestyle='--', alpha=0.5,      # y=0 reference line
+              label='y=0 (Break-even)')
 
     ax.set_xlabel('Episode', fontsize=10)
-    ax.set_ylabel('总奖励', fontsize=10)
+    ax.set_ylabel('Total Reward', fontsize=10)
     ax.set_title(title, fontsize=12, fontweight='bold')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
@@ -623,7 +631,7 @@ def plot_training_rewards(
 def plot_q_vs_episodes(
     q_snapshots: Dict[int, np.ndarray],
     env: GridWorld,
-    title_prefix: str = "Q 值热力图演化",
+    title_prefix: str = "Q-Value Heatmap Evolution",
 ):
     """
     绘制多个 episode 的 Q 值热力图快照，展示学习过程。
@@ -671,7 +679,7 @@ def plot_q_vs_episodes(
 
     fig.suptitle(title_prefix, fontsize=14, fontweight='bold', y=1.02)
     plt.tight_layout()
-    plt.savefig('images/qvalue_heatmap_evolution.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'qvalue_heatmap_evolution.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] Q 值热力图演化已保存至 images/qvalue_heatmap_evolution.png")
 
@@ -680,7 +688,7 @@ def plot_path_on_grid(
     env: GridWorld,
     path: List[Tuple[int, int]],
     ax: plt.Axes,
-    title: str = "Agent 最优路径",
+    title: str = "Agent Optimal Path",
 ):
     """
     在网格世界上绘制 Agent 的移动路径。
@@ -699,24 +707,24 @@ def plot_path_on_grid(
     # 绘制路径线
     path_rows = [p[0] for p in path]                           # 路径的行坐标
     path_cols = [p[1] for p in path]                           # 路径的列坐标
-    ax.plot(path_cols, path_rows, 'b-', linewidth=2,           # 蓝色线条连接路径
-            alpha=0.7, label=f'路径 ({len(path)} 步)')
-    ax.plot(path_cols, path_rows, 'bo', markersize=5, alpha=0.5)  # 蓝色圆点标记节点
+    ax.plot(path_cols, path_rows, 'b-', linewidth=2,           # blue line connecting path
+            alpha=0.7, label=f'Path ({len(path)} steps)')
+    ax.plot(path_cols, path_rows, 'bo', markersize=5, alpha=0.5)  # blue dot node marker
 
-    # 标记起点
+    # Mark start point
     ax.plot(env.start[1], env.start[0], 'go', markersize=12,
-            label=f'起点 ({env.start[0]},{env.start[1]})')
-    # 标记终点
+            label=f'Start ({env.start[0]},{env.start[1]})')
+    # Mark goal point
     ax.plot(env.goal[1], env.goal[0], 'r*', markersize=18,
-            label=f'终点 ({env.goal[0]},{env.goal[1]})')
-    # 标记陷阱
+            label=f'Goal ({env.goal[0]},{env.goal[1]})')
+    # Mark traps
     for i, trap in enumerate(env.traps):
         ax.plot(trap[1], trap[0], 'ks', markersize=14,
-                label=f'陷阱 {i+1}')
+                label=f'Trap {i+1}')
 
     ax.set_title(title, fontsize=12, fontweight='bold')
-    ax.set_xlabel('列 (col)')
-    ax.set_ylabel('行 (row)')
+    ax.set_xlabel('Column (col)')
+    ax.set_ylabel('Row (row)')
     ax.set_xticks(range(env.size))
     ax.set_yticks(range(env.size))
     ax.legend(loc='upper right', fontsize=7)
@@ -725,30 +733,30 @@ def plot_path_on_grid(
 
 def plot_epsilon_comparison(
     results: Dict[str, Dict],
-    title: str = "不同 ε 策略对比",
+    title: str = "Comparison of Different ε Strategies",
 ):
     """
-    对比不同 ε 衰减策略的训练效果。
+    Compare the training effects of different ε decay strategies.
 
-    参数:
-        results: 字典 {label: history_dict}
-        title: 图表标题
+    Parameters:
+        results: dict {label: history_dict}
+        title: Chart title
     """
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-    colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D']      # 配色方案
+    colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D']      # color scheme
 
-    # ---- 子图 1: ε 衰减曲线 ----
+    # ---- Subplot 1: ε decay curve ----
     for (label, history), color in zip(results.items(), colors):
         axes[0, 0].plot(history['epsilon_history'],
                        color=color, linewidth=2, label=label)
     axes[0, 0].set_xlabel('Episode', fontsize=9)
-    axes[0, 0].set_ylabel('ε (探索率)', fontsize=9)
-    axes[0, 0].set_title('探索率衰减曲线', fontsize=11, fontweight='bold')
+    axes[0, 0].set_ylabel('ε (Exploration Rate)', fontsize=9)
+    axes[0, 0].set_title('Exploration Rate Decay Curve', fontsize=11, fontweight='bold')
     axes[0, 0].legend(fontsize=7)
     axes[0, 0].grid(True, alpha=0.3)
 
-    # ---- 子图 2: 奖励曲线对比 ----
+    # ---- Subplot 2: Reward curve comparison ----
     for (label, history), color in zip(results.items(), colors):
         rewards = np.array(history['episode_rewards'])
         if len(rewards) >= 100:
@@ -757,13 +765,13 @@ def plot_epsilon_comparison(
             axes[0, 1].plot(np.arange(99, len(rewards)), smoothed,
                           color=color, linewidth=2, label=label)
     axes[0, 1].set_xlabel('Episode', fontsize=9)
-    axes[0, 1].set_ylabel('平均奖励 (窗口=100)', fontsize=9)
-    axes[0, 1].set_title('训练奖励对比', fontsize=11, fontweight='bold')
+    axes[0, 1].set_ylabel('Avg Reward (window=100)', fontsize=9)
+    axes[0, 1].set_title('Training Reward Comparison', fontsize=11, fontweight='bold')
     axes[0, 1].axhline(y=0, color='gray', linestyle='--', alpha=0.5)
     axes[0, 1].legend(fontsize=7)
     axes[0, 1].grid(True, alpha=0.3)
 
-    # ---- 子图 3: Episode 长度曲线 ----
+    # ---- Subplot 3: Episode length curve ----
     for (label, history), color in zip(results.items(), colors):
         lengths = np.array(history['episode_lengths'])
         if len(lengths) >= 100:
@@ -772,12 +780,12 @@ def plot_epsilon_comparison(
             axes[1, 0].plot(np.arange(99, len(lengths)), smoothed,
                           color=color, linewidth=2, label=label)
     axes[1, 0].set_xlabel('Episode', fontsize=9)
-    axes[1, 0].set_ylabel('每 episode 步数', fontsize=9)
-    axes[1, 0].set_title('Episode 长度对比', fontsize=11, fontweight='bold')
+    axes[1, 0].set_ylabel('Steps per Episode', fontsize=9)
+    axes[1, 0].set_title('Episode Length Comparison', fontsize=11, fontweight='bold')
     axes[1, 0].legend(fontsize=7)
     axes[1, 0].grid(True, alpha=0.3)
 
-    # ---- 子图 4: 训练时间与最终性能 ----
+    # ---- Subplot 4: Training time vs final performance ----
     labels = list(results.keys())
     times = [r['training_time'] for r in results.values()]
     final_rewards = [np.mean(results[l]['episode_rewards'][-100:])
@@ -785,17 +793,17 @@ def plot_epsilon_comparison(
 
     x = np.arange(len(labels))
     width = 0.35
-    bars1 = axes[1, 1].bar(x - width/2, times, width, label='训练时间 (秒)',
+    bars1 = axes[1, 1].bar(x - width/2, times, width, label='Training Time (s)',
                            color='#2E86AB')
-    axes[1, 1].set_xlabel('策略', fontsize=9)
-    axes[1, 1].set_ylabel('训练时间 (秒)', fontsize=9, color='#2E86AB')
+    axes[1, 1].set_xlabel('Strategy', fontsize=9)
+    axes[1, 1].set_ylabel('Training Time (s)', fontsize=9, color='#2E86AB')
     ax2 = axes[1, 1].twinx()
     bars2 = ax2.bar(x + width/2, final_rewards, width,
-                    label='最终平均奖励', color='#F18F01')
-    ax2.set_ylabel('最终平均奖励 (近100ep)', fontsize=9, color='#F18F01')
+                    label='Final Avg Reward', color='#F18F01')
+    ax2.set_ylabel('Final Avg Reward (last 100ep)', fontsize=9, color='#F18F01')
     axes[1, 1].set_xticks(x)
     axes[1, 1].set_xticklabels(labels, fontsize=7)
-    axes[1, 1].set_title('训练时间与最终性能', fontsize=11, fontweight='bold')
+    axes[1, 1].set_title('Training Time vs Final Performance', fontsize=11, fontweight='bold')
 
     lines1, labels1 = axes[1, 1].get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
@@ -803,7 +811,7 @@ def plot_epsilon_comparison(
 
     fig.suptitle(title, fontsize=14, fontweight='bold', y=1.01)
     plt.tight_layout()
-    plt.savefig('images/epsilon_comparison.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'epsilon_comparison.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] ε 策略对比图已保存至 images/epsilon_comparison.png")
 
@@ -831,13 +839,13 @@ def plot_learning_rate_comparison(
                    color=color, linewidth=2, label=f'α={label}')
 
     ax.set_xlabel('Episode', fontsize=10)
-    ax.set_ylabel('平均奖励 (窗口=100)', fontsize=10)
+    ax.set_ylabel('Avg Reward (window=100)', fontsize=10)
     ax.set_title(title, fontsize=13, fontweight='bold')
     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
     ax.legend(fontsize=10)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig('images/learning_rate_comparison.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'learning_rate_comparison.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] 学习率对比图已保存至 images/learning_rate_comparison.png")
 
@@ -903,28 +911,28 @@ def main():
 
     # -- 可视化 1: Q 值热力图演化 --
     plot_q_vs_episodes(history['q_table_snapshots'], env,
-                       title_prefix='Q 值热力图演化')
+                       title_prefix='Q-Value Heatmap Evolution')
 
-    # -- 可视化 2: 综合图表 (训练奖励 + 最优策略 + 路径) --
+    # -- Viz 2: Overview (training reward + optimal policy + path) --
     fig = plt.figure(figsize=(16, 5))
 
-    # 子图 2a: 训练奖励曲线
+    # Subplot 2a: Training reward curve
     ax1 = fig.add_subplot(1, 3, 1)
     plot_training_rewards(history['episode_rewards'], ax=ax1,
-                         title='训练奖励曲线 (滑动平均窗口=50)')
+                         title='Training Reward Curve (Moving Avg window=50)')
 
-    # 子图 2b: 最优策略
+    # Subplot 2b: Optimal policy
     ax2 = fig.add_subplot(1, 3, 2)
     plot_optimal_policy(env, agent, ax=ax2,
-                       title='最优策略 π* (箭头=最佳动作)')
+                       title='Optimal Policy pi* (arrow=best action)')
 
-    # 子图 2c: 最优路径
+    # Subplot 2c: Optimal path
     ax3 = fig.add_subplot(1, 3, 3)
     plot_path_on_grid(env, history['optimal_path'], ax=ax3,
-                     title=f'最优路径 ({len(history["optimal_path"])} 步)')
+                     title=f'Optimal Path ({len(history["optimal_path"])} steps)')
 
     plt.tight_layout()
-    plt.savefig('images/training_results_overview.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES, 'training_results_overview.png'), dpi=150, bbox_inches='tight')
     plt.close()
     print("[可视化] 训练结果总览已保存至 images/training_results_overview.png")
 
@@ -970,7 +978,7 @@ def main():
         print(f"    完成: 最终平均奖励={final_reward:.2f}, 耗时={result['training_time']:.1f}s")
         epsilon_results[label] = result
 
-    plot_epsilon_comparison(epsilon_results, title='不同 ε 衰减策略对比')
+    plot_epsilon_comparison(epsilon_results, title='Comparison of Different ε Strategies')
 
     # ========================================================================
     # 实验 3: 不同学习率对比
@@ -1007,7 +1015,7 @@ def main():
         alpha_results[label] = result
 
     plot_learning_rate_comparison(alpha_results,
-                                  title='不同学习率 α 对 Q-Learning 训练的影响')
+                                  title='Effect of Different Learning Rates α on Q-Learning')
 
     # ========================================================================
     # 最终总结
@@ -1046,7 +1054,7 @@ def main():
             print(f"  状态 ({r},{c}): "
                   f"Q=[{q_vals[0]:6.2f}, {q_vals[1]:6.2f}, "
                   f"{q_vals[2]:6.2f}, {q_vals[3]:6.2f}], "
-                  f"最佳动作: {agent.action_names[best_action]} "
+                  f"最佳动作: {env.action_names[best_action]} "
                   f"(Q={q_vals[best_action]:.2f})")
     print("-" * 50)
 

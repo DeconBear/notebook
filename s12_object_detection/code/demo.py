@@ -14,9 +14,15 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+matplotlib.rcParams['axes.unicode_minus'] = False
 import matplotlib.patches as patches
 import os
 import urllib.request
+
+# 图片保存目录：固定为本章节的 images/ 目录（相对于本脚本的 ../images/）
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_IMAGES_DIR = os.path.join(_SCRIPT_DIR, '..', 'images')
+os.makedirs(_IMAGES_DIR, exist_ok=True)
 from typing import List, Tuple, Optional
 
 
@@ -99,7 +105,7 @@ def compute_iou_batch(boxes: np.ndarray, query_box: np.ndarray) -> np.ndarray:
 
     # IoU，避免除以 0
     ious = np.divide(inter_area, union_area,
-                     out=np.zeros_like(inter_area), where=union_area > 0)
+                     out=np.zeros_like(inter_area, dtype=float), where=union_area > 0)
     return ious
 
 
@@ -442,9 +448,9 @@ def visualize_iou_examples(save_dir: str):
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
     examples = [
-        ("IoU = 0.96 (几乎完美)", [10, 10, 60, 60], [12, 12, 58, 58]),
-        ("IoU = 0.55 (中等重叠)", [10, 10, 60, 60], [35, 35, 85, 85]),
-        ("IoU = 0.08 (几乎不重叠)", [10, 10, 60, 60], [55, 55, 80, 80]),
+        ("IoU = 0.96 (Nearly Perfect)", [10, 10, 60, 60], [12, 12, 58, 58]),
+        ("IoU = 0.55 (Moderate Overlap)", [10, 10, 60, 60], [35, 35, 85, 85]),
+        ("IoU = 0.08 (Almost Disjoint)", [10, 10, 60, 60], [55, 55, 80, 80]),
     ]
 
     for ax, (title, box_a, box_b) in zip(axes, examples):
@@ -452,24 +458,24 @@ def visualize_iou_examples(save_dir: str):
         x1, y1, x2, y2 = box_a
         rect_a = patches.Rectangle((x1, y1), x2-x1, y2-y1, linewidth=2,
                                     edgecolor='green', facecolor='green',
-                                    alpha=0.3, label='真实框')
+                                    alpha=0.3, label='Ground Truth')
         ax.add_patch(rect_a)
         # 绘制 box B
         x1, y1, x2, y2 = box_b
         rect_b = patches.Rectangle((x1, y1), x2-x1, y2-y1, linewidth=2,
                                     edgecolor='red', facecolor='red',
-                                    alpha=0.3, linestyle='--', label='预测框')
+                                    alpha=0.3, linestyle='--', label='Prediction')
         ax.add_patch(rect_b)
 
         iou_val = compute_iou(np.array(box_a), np.array(box_b))
-        ax.set_title(f"{title}\n实际 IoU = {iou_val:.3f}", fontsize=11)
+        ax.set_title(f"{title}\nActual IoU = {iou_val:.3f}", fontsize=11)
         ax.set_xlim(0, 100)
         ax.set_ylim(0, 100)
         ax.set_aspect('equal')
         ax.legend(fontsize=8)
         ax.grid(True, alpha=0.3)
 
-    plt.suptitle("IoU (交并比) 计算示例", fontsize=14)
+    plt.suptitle("IoU (Intersection over Union) Calculation Examples", fontsize=14)
     plt.tight_layout()
     save_path = os.path.join(save_dir, "iou_examples.png")
     plt.savefig(save_path, dpi=120, bbox_inches='tight')
@@ -482,6 +488,13 @@ def run_yolo_detection():
     使用 YOLOv8 进行目标检测并可视化结果
     """
     print("\n--- YOLOv8 目标检测 ---")
+
+    # GPU 自动检测
+    import torch
+    _YOLO_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+    print(f"  使用设备: {_YOLO_DEVICE}")
+    if _YOLO_DEVICE.type == 'cpu':
+        print("  （未检测到 GPU，使用 CPU 进行 YOLO 推理，速度较慢）")
 
     # 检查是否安装了 ultralytics
     try:
@@ -501,7 +514,12 @@ def run_yolo_detection():
 
     # ---------- 加载 YOLOv8n (nano 版本，最快) ----------
     print("  加载 YOLOv8n 模型...")
-    model = YOLO("yolov8n.pt")  # 自动下载预训练权重
+    try:
+        model = YOLO("yolov8n.pt")  # 自动下载预训练权重
+    except Exception as e:
+        print(f"  [错误] YOLOv8n 模型下载失败 ({e})")
+        print("  [回退] 跳过 YOLO 检测演示，请检查网络连接后重试")
+        return
 
     # ---------- 对每张测试图像进行推理 ----------
     for img_path in image_paths:
@@ -545,15 +563,15 @@ def run_yolo_detection():
             # 原始检测
             draw_detections(
                 image_rgb.copy(), boxes_xyxy, scores, class_ids,
-                save_path=os.path.join("../images", f"{fname}_detections.png"),
-                title=f"原始检测 ({len(boxes_xyxy)} 个框)"
+                save_path=os.path.join(_IMAGES_DIR, f"{fname}_detections.png"),
+                title=f"Raw Detections ({len(boxes_xyxy)} boxes)"
             )
 
             # NMS 后
             draw_detections(
                 image_rgb.copy(), boxes_nms, scores_nms, class_ids_nms,
-                save_path=os.path.join("../images", f"{fname}_after_nms.png"),
-                title=f"NMS 后 ({len(boxes_nms)} 个框, IoU阈值=0.5)"
+                save_path=os.path.join(_IMAGES_DIR, f"{fname}_after_nms.png"),
+                title=f"After NMS ({len(boxes_nms)} boxes, IoU Threshold=0.5)"
             )
         else:
             print("    未检测到目标")
@@ -567,8 +585,7 @@ def main():
     print("=" * 60)
 
     # ---------- 准备工作 ----------
-    output_dir = "../images"
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = _IMAGES_DIR
 
     # ---------- 1. 测试 IoU 计算 ----------
     print("\n[1/4] 测试 IoU 计算...")
@@ -587,7 +604,7 @@ def main():
     run_yolo_detection()
 
     print("\n" + "=" * 60)
-    print("Demo 完成！查看 ../images/ 目录下的可视化结果。")
+    print(f"Demo 完成！查看 {_IMAGES_DIR} 目录下的可视化结果。")
     print("=" * 60)
 
 

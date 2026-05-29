@@ -19,14 +19,19 @@ s03_logistic_regression/code/demo.py — 逻辑回归从零实现
 ===============================================================================
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 from sklearn.datasets import load_iris  # 加载经典的 Iris 数据集
 from sklearn.model_selection import train_test_split  # 划分训练/测试集
 from sklearn.linear_model import LogisticRegression as SklearnLR  # sklearn 实现（对比用）
-matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
+
+# 图片保存目录：固定为本章节的 images/ 目录（相对于本脚本的 ../images/）
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_IMAGES_DIR = os.path.join(_SCRIPT_DIR, '..', 'images')
+os.makedirs(_IMAGES_DIR, exist_ok=True)
 
 
 # ============================================================================
@@ -416,26 +421,26 @@ def plot_sigmoid_curve():
     ax.axhline(y=1, color='gray', linestyle=':', linewidth=0.8)  # 渐近线 y=1
 
     # 区域标注
-    ax.annotate('正类区域\n(z > 0 → σ > 0.5)', xy=(3, 0.95), fontsize=11,
+    ax.annotate('Positive Region\n(z > 0 -> sigma > 0.5)', xy=(3, 0.95), fontsize=11,
                 ha='center', bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.7))
-    ax.annotate('负类区域\n(z < 0 → σ < 0.5)', xy=(-3, 0.05), fontsize=11,
+    ax.annotate('Negative Region\n(z < 0 -> sigma < 0.5)', xy=(-3, 0.05), fontsize=11,
                 ha='center', bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.7))
-    ax.annotate('决策边界\n(z = 0, σ = 0.5)', xy=(0, 0.5), fontsize=10,
+    ax.annotate('Decision Boundary\n(z = 0, sigma = 0.5)', xy=(0, 0.5), fontsize=10,
                 xytext=(1.5, 0.35), arrowprops=dict(arrowstyle='->', color='red'),
                 ha='center', color='red')
 
-    ax.set_xlabel('z = w·x + b', fontsize=13)
-    ax.set_ylabel('σ(z)', fontsize=13)
-    ax.set_title('Sigmoid 函数：将实数映射到 [0, 1]', fontsize=14)
+    ax.set_xlabel('z = w*x + b', fontsize=13)
+    ax.set_ylabel('sigma(z)', fontsize=13)
+    ax.set_title('Sigmoid Function: Mapping Reals to [0, 1]', fontsize=14)
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig('sigmoid_curve.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES_DIR, 'sigmoid_curve.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("Sigmoid 曲线已保存为 sigmoid_curve.png")
+    print(f"Sigmoid 曲线已保存为 {os.path.join(_IMAGES_DIR, 'sigmoid_curve.png')}")
 
 
-def plot_decision_boundary(model, X, y, title='逻辑回归决策边界'):
+def plot_decision_boundary(model, X, y, title='Logistic Regression Decision Boundary'):
     """
     绘制二维特征空间中的决策边界和概率热力图。
 
@@ -470,38 +475,38 @@ def plot_decision_boundary(model, X, y, title='逻辑回归决策边界'):
 
     # 绘制数据点
     ax.scatter(X[y == 0, 0], X[y == 0, 1], c='blue', marker='o',
-               edgecolors='k', s=60, label='负类 (y=0)', alpha=0.8)
+               edgecolors='k', s=60, label='Negative Class (y=0)', alpha=0.8)
     ax.scatter(X[y == 1, 0], X[y == 1, 1], c='red', marker='^',
-               edgecolors='k', s=60, label='正类 (y=1)', alpha=0.8)
+               edgecolors='k', s=60, label='Positive Class (y=1)', alpha=0.8)
 
     # 添加颜色条
     cbar = plt.colorbar(contour, ax=ax)
     cbar.set_label('P(y=1|x)', fontsize=11)
 
-    ax.set_xlabel('特征 x1', fontsize=13)
-    ax.set_ylabel('特征 x2', fontsize=13)
+    ax.set_xlabel('Feature x1', fontsize=13)
+    ax.set_ylabel('Feature x2', fontsize=13)
     ax.set_title(title, fontsize=14)
     ax.legend(fontsize=11, loc='upper left')
     ax.grid(True, alpha=0.2)
 
     plt.tight_layout()
-    plt.savefig('logistic_regression_boundary.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES_DIR, 'logistic_regression_boundary.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("决策边界图已保存为 logistic_regression_boundary.png")
+    print(f"决策边界图已保存为 {os.path.join(_IMAGES_DIR, 'logistic_regression_boundary.png')}")
 
 
-def plot_loss_curve(loss_history, title='训练损失曲线'):
+def plot_loss_curve(loss_history, title='Training Loss Curve'):
     """绘制训练过程中的损失变化。"""
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(range(1, len(loss_history) + 1), loss_history, 'b-', linewidth=1.5)
-    ax.set_xlabel('Epoch（训练轮数）', fontsize=12)
-    ax.set_ylabel('交叉熵损失', fontsize=12)
+    ax.set_xlabel('Epoch', fontsize=12)
+    ax.set_ylabel('Cross-Entropy Loss', fontsize=12)
     ax.set_title(title, fontsize=14)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig('loss_curve.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES_DIR, 'loss_curve.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("损失曲线已保存为 loss_curve.png")
+    print(f"损失曲线已保存为 {os.path.join(_IMAGES_DIR, 'loss_curve.png')}")
 
 
 # ============================================================================
@@ -565,8 +570,8 @@ def main():
 
     # 可视化
     plot_decision_boundary(model_binary, X_tr, y_tr,
-                           title='逻辑回归二分类 — 决策边界与概率热力图')
-    plot_loss_curve(model_binary.loss_history, title='二分类逻辑回归训练损失')
+                           title='Binary Logistic Regression - Decision Boundary & Probability Heatmap')
+    plot_loss_curve(model_binary.loss_history, title='Binary Logistic Regression Training Loss')
 
     # ---- 4. 多分类（Softmax 回归） ----
     print("\n" + "=" * 40)
@@ -603,16 +608,16 @@ def main():
                 colors=['#E8F5E9', '#FFF3E0', '#E3F2FD'], alpha=0.6)
     scatter = ax.scatter(X_tr_m[:, 0], X_tr_m[:, 1], c=y_tr_m,
                          cmap='viridis', edgecolors='k', s=60, alpha=0.8)
-    legend = ax.legend(*scatter.legend_elements(), title='类别',
+    legend = ax.legend(*scatter.legend_elements(), title='Class',
                         fontsize=10, title_fontsize=11)
-    ax.set_xlabel('特征 x1 (花萼长度)', fontsize=13)
-    ax.set_ylabel('特征 x2 (花萼宽度)', fontsize=13)
-    ax.set_title('Softmax 多分类 — 决策区域', fontsize=14)
+    ax.set_xlabel('Feature x1 (Sepal Length)', fontsize=13)
+    ax.set_ylabel('Feature x2 (Sepal Width)', fontsize=13)
+    ax.set_title('Softmax Multi-Class - Decision Regions', fontsize=14)
     ax.grid(True, alpha=0.2)
     plt.tight_layout()
-    plt.savefig('softmax_multiclass_boundary.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(_IMAGES_DIR, 'softmax_multiclass_boundary.png'), dpi=150, bbox_inches='tight')
     plt.show()
-    print("多分类决策区域图已保存为 softmax_multiclass_boundary.png")
+    print(f"多分类决策区域图已保存为 {os.path.join(_IMAGES_DIR, 'softmax_multiclass_boundary.png')}")
 
     print("\n" + "=" * 60)
     print("演示完成！")

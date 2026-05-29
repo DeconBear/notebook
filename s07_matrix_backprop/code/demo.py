@@ -10,8 +10,14 @@ s07 多层网络的矩阵反传 — 演示代码
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['axes.unicode_minus'] = False
 from typing import Dict, List, Tuple, Callable
+import os
 
+_HERE = os.path.dirname(os.path.abspath(__file__))  # demo.py 所在目录
+_IMAGES = os.path.join(_HERE, '..', 'images')        # 章节 images/ 目录
+os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================================
 # 第一部分：激活函数及其导数
@@ -360,18 +366,19 @@ def plot_decision_boundary(model: MLP, X: np.ndarray, Y: np.ndarray, title: str,
 
     # 绘制数据点
     plt.scatter(X[0, Y[0, :] == 0], X[1, Y[0, :] == 0],
-                c='#4A90D9', edgecolors='white', s=50, label='类别 0')
+                c='#4A90D9', edgecolors='white', s=50, label='Class 0')
     plt.scatter(X[0, Y[0, :] == 1], X[1, Y[0, :] == 1],
-                c='#E74C3C', edgecolors='white', s=50, label='类别 1')
+                c='#E74C3C', edgecolors='white', s=50, label='Class 1')
 
     plt.title(title, fontsize=14, fontweight='bold')
-    plt.xlabel('特征 1 (x₁)', fontsize=12)
-    plt.ylabel('特征 2 (x₂)', fontsize=12)
+    plt.xlabel('Feature 1 (x₁)', fontsize=12)
+    plt.ylabel('Feature 2 (x₂)', fontsize=12)
     plt.legend()
     plt.tight_layout()
-    plt.savefig(f"images/{filename}", dpi=150, bbox_inches='tight')
+    out = os.path.join(_IMAGES, filename)
+    plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"[可视化] {title} 已保存至 images/{filename}")
+    print(f"[可视化] {title} 已保存至 {out}")
 
 
 def plot_training_curves(losses: List[float], grad_norms_history: List[Dict]):
@@ -388,7 +395,7 @@ def plot_training_curves(losses: List[float], grad_norms_history: List[Dict]):
     axes[0].plot(losses, 'b-', linewidth=2, alpha=0.8)
     axes[0].set_xlabel('Epoch', fontsize=12)
     axes[0].set_ylabel('Loss (MSE)', fontsize=12)
-    axes[0].set_title('训练损失曲线', fontsize=14, fontweight='bold')
+    axes[0].set_title('Training Loss Curve', fontsize=14, fontweight='bold')
     axes[0].grid(True, alpha=0.3)
     axes[0].set_yscale('log')  # 对数刻度更容易观察收敛趋势
 
@@ -405,15 +412,16 @@ def plot_training_curves(losses: List[float], grad_norms_history: List[Dict]):
 
     axes[1].set_xlabel('Epoch', fontsize=12)
     axes[1].set_ylabel('Gradient L2 Norm', fontsize=12)
-    axes[1].set_title('梯度范数监控', fontsize=14, fontweight='bold')
+    axes[1].set_title('Gradient Norm Monitoring', fontsize=14, fontweight='bold')
     axes[1].legend(fontsize=9)
     axes[1].grid(True, alpha=0.3)
     axes[1].set_yscale('log')
 
     plt.tight_layout()
-    plt.savefig('images/training_curves.png', dpi=150, bbox_inches='tight')
+    out = os.path.join(_IMAGES, 'training_curves.png')
+    plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
-    print("[可视化] 训练曲线已保存至 images/training_curves.png")
+    print(f"[可视化] 训练曲线已保存至 {out}")
 
 
 def plot_weight_heatmaps(model_before: MLP, model_after: MLP):
@@ -434,20 +442,21 @@ def plot_weight_heatmaps(model_before: MLP, model_after: MLP):
         # 训练前的权重
         im1 = axes[l, 0].imshow(model_before.parameters[f"W{l+1}"],
                                 cmap='RdBu_r', aspect='auto')
-        axes[l, 0].set_title(f'W[{l+1}] 训练前', fontsize=11)
+        axes[l, 0].set_title(f'W[{l+1}] Before Training', fontsize=11)
         plt.colorbar(im1, ax=axes[l, 0])
 
         # 训练后的权重
         im2 = axes[l, 1].imshow(model_after.parameters[f"W{l+1}"],
                                 cmap='RdBu_r', aspect='auto')
-        axes[l, 1].set_title(f'W[{l+1}] 训练后', fontsize=11)
+        axes[l, 1].set_title(f'W[{l+1}] After Training', fontsize=11)
         plt.colorbar(im2, ax=axes[l, 1])
 
-    plt.suptitle('权重矩阵热力图：训练前 vs 训练后', fontsize=14, fontweight='bold')
+    plt.suptitle('Weight Matrix Heatmaps: Before vs After Training', fontsize=14, fontweight='bold')
     plt.tight_layout()
-    plt.savefig('images/weight_heatmaps.png', dpi=150, bbox_inches='tight')
+    out = os.path.join(_IMAGES, 'weight_heatmaps.png')
+    plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
-    print("[可视化] 权重热力图已保存至 images/weight_heatmaps.png")
+    print(f"[可视化] 权重热力图已保存至 {out}")
 
 
 # ============================================================================
@@ -550,11 +559,11 @@ def main():
     # 决策边界：训练前
     model_before = MLP(layer_dims, activations, seed=42)
     plot_decision_boundary(model_before, X, Y,
-                           '训练前的决策边界', 'decision_boundary_before.png')
+                           'Decision Boundary Before Training', 'decision_boundary_before.png')
 
     # 决策边界：训练后
     plot_decision_boundary(model, X, Y,
-                           f'训练后的决策边界 (准确率: {final_accuracy:.1%})',
+                           f'Decision Boundary After Training (Accuracy: {final_accuracy:.1%})',
                            'decision_boundary_after.png')
 
     # 训练曲线
