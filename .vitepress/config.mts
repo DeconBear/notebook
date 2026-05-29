@@ -18,7 +18,6 @@ export default withMermaid(
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: '首页', link: '/' },
-      { text: 'Code', link: '/code/s01_ai_overview/demo.py', target: '_blank' },
       { text: 'GitHub', link: 'https://github.com/shareAI-lab/learn-ai' },
     ],
 
