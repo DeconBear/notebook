@@ -11,7 +11,7 @@ hero:
       link: /s01_ai_overview/
     - theme: alt
       text: GitHub
-      link: https://github.com/shareAI-lab/learn-ai
+      link: https://github.com/DeconBear/learn-ai
 
 features:
   - icon: 🎨
@@ -88,7 +88,7 @@ flowchart TB
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/shareAI-lab/learn-ai.git
+git clone https://github.com/DeconBear/learn-ai.git
 cd learn-ai
 
 # 2. 安装 Python 依赖

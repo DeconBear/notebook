@@ -238,10 +238,28 @@ LayerNorm
 
 > 下一节 [s17 预训练范式](../s17_pretrained_models/) 将讨论：Transformer 如何催生了大规模预训练——BERT 和 GPT 分别代表了两种训练范式，以及预训练如何彻底改变了 NLP。
 
+## 扩展：nanoGPT — 从零训练一个真正的 GPT
+
+demo.py 实现了一个 mini Transformer 帮助理解原理。如果你想把理论变成实践，**nanoGPT** 展示了如何从零训练一个真正的 GPT-2 级别模型：
+
+- 完整的 GPT-2 架构（因果注意力、LayerNorm、FFN、残差）
+- 内置莎士比亚剧本语料，CPU 上 500 步即可看到效果
+- 支持模型保存、温度控制和 top-k 采样
+
+```bash
+cd s16_attention_transformer/code
+python nanogpt.py           # CPU 训练
+python nanogpt.py --gpu     # GPU 训练
+python nanogpt.py --generate # 仅生成
+```
+
+→ [nanoGPT 代码查看与下载](./nanogpt)
+
 ## 📥 Code
 
 | File | View | Download |
 |------|------|----------|
 | demo.py | [Open](./code-demo) | <a href="../code/s16_attention_transformer/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s16_attention_transformer/exercise.py" target="_blank" download>Download</a> |
+| nanogpt.py | [Open](./nanogpt) | <a href="../code/s16_attention_transformer/nanogpt.py" target="_blank" download>Download</a> |
 

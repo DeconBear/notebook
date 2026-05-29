@@ -141,7 +141,7 @@ flowchart TB
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/shareAI-lab/learn-ai.git
+git clone https://github.com/DeconBear/learn-ai.git
 cd learn-ai
 
 # 2. 创建虚拟环境（推荐 Python 3.10+）

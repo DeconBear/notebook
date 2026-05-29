@@ -4,6 +4,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 // https://vitepress.dev/reference/site-config
 export default withMermaid(
   defineConfig({
+  base: '/learn-ai/',
   title: "learn-ai",
   description: "图解 AI · 一行代码看懂一个概念",
   lang: 'zh-CN',
@@ -18,7 +19,7 @@ export default withMermaid(
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: '首页', link: '/' },
-      { text: 'GitHub', link: 'https://github.com/shareAI-lab/learn-ai' },
+      { text: 'GitHub', link: 'https://github.com/DeconBear/learn-ai' },
     ],
 
     sidebar: [
@@ -86,7 +87,7 @@ export default withMermaid(
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/shareAI-lab/learn-ai' }
+      { icon: 'github', link: 'https://github.com/DeconBear/learn-ai' }
     ],
 
     search: {
