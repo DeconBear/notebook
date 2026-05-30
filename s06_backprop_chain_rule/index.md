@@ -291,3 +291,8 @@ $\partial f / \partial z = x + y = 5$。与我们算的 5 一致。
 | demo.py | [Open](./code-demo) | <a href="../code/s06_backprop_chain_rule/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s06_backprop_chain_rule/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). Learning representations by back-propagating errors. *Nature*. [[doi:10.1038/323533a0](https://doi.org/10.1038/323533a0)]
+2. LeCun, Y., Bottou, L., Orr, G. B., & Müller, K.-R. (1998). Efficient BackProp. *Neural Networks: Tricks of the Trade*. [[doi:10.1007/978-3-642-35289-8_3](https://doi.org/10.1007/978-3-642-35289-8_3)]
+

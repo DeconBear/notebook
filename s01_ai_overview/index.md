@@ -252,8 +252,8 @@ AI 之所以在近十年迎来爆发，是三大因素同时成熟的结果：
 
 ## 参考
 
-1. Rosenblatt, F. (1958). The Perceptron: A Probabilistic Model for Information Storage and Organization in the Brain.
-2. Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). Learning representations by back-propagating errors.
-3. Krizhevsky, A., Sutskever, I., & Hinton, G. E. (2012). ImageNet Classification with Deep Convolutional Neural Networks.
-4. Vaswani, A., et al. (2017). Attention Is All You Need.
-5. Brown, T., et al. (2020). Language Models are Few-Shot Learners.
+1. Rosenblatt, F. (1958). The Perceptron: A Probabilistic Model for Information Storage and Organization in the Brain. *Psychological Review*.
+2. Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). Learning representations by back-propagating errors. *Nature*. [[doi:10.1038/323533a0](https://doi.org/10.1038/323533a0)]
+3. Krizhevsky, A., Sutskever, I., & Hinton, G. E. (2012). ImageNet Classification with Deep Convolutional Neural Networks. *NeurIPS 2012*. (AlexNet) [[doi:10.1145/3065386](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)]
+4. Vaswani, A., et al. (2017). Attention Is All You Need. *NeurIPS 2017*. [[arXiv:1706.03762](https://arxiv.org/abs/1706.03762)]
+5. Brown, T., et al. (2020). Language Models are Few-Shot Learners. *NeurIPS 2020*. (GPT-3) [[arXiv:2005.14165](https://arxiv.org/abs/2005.14165)]

@@ -264,3 +264,9 @@ GRU 的核心直觉是 $z_t$（更新门）同时做了 LSTM 遗忘门和输入�
 | demo.py | [Open](./code-demo) | <a href="../code/s15_sequence_models/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s15_sequence_models/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Hochreiter, S. & Schmidhuber, J. (1997). Long Short-Term Memory. *Neural Computation*. (LSTM) [[doi:10.1162/neco.1997.9.8.1735](https://doi.org/10.1162/neco.1997.9.8.1735)]
+2. Cho, K., et al. (2014). Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation. *EMNLP 2014*. (GRU) [[arXiv:1406.1078](https://arxiv.org/abs/1406.1078)]
+3. Sutskever, I., Vinyals, O., & Le, Q. V. (2014). Sequence to Sequence Learning with Neural Networks. *NeurIPS 2014*. (Seq2Seq) [[arXiv:1409.3215](https://arxiv.org/abs/1409.3215)]
+

@@ -229,3 +229,12 @@ LLM 的知识截止于训练数据。RAG 通过外部知识库来弥补这一缺
 | demo.py | [Open](./code-demo) | <a href="../code/s18_large_language_models/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s18_large_language_models/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Kaplan, J., et al. (2020). Scaling Laws for Neural Language Models. [[arXiv:2001.08361](https://arxiv.org/abs/2001.08361)]
+2. Hoffmann, J., et al. (2022). Training Compute-Optimal Large Language Models. *NeurIPS 2022*. (Chinchilla) [[arXiv:2203.15556](https://arxiv.org/abs/2203.15556)]
+3. Wei, J., et al. (2022). Emergent Abilities of Large Language Models. *TMLR 2022*. [[arXiv:2206.07682](https://arxiv.org/abs/2206.07682)]
+4. Ouyang, L., et al. (2022). Training language models to follow instructions with human feedback. *NeurIPS 2022*. (InstructGPT / RLHF) [[arXiv:2203.02155](https://arxiv.org/abs/2203.02155)]
+5. Rafailov, R., et al. (2023). Direct Preference Optimization: Your Language Model is Secretly a Reward Model. *NeurIPS 2023*. (DPO) [[arXiv:2305.18290](https://arxiv.org/abs/2305.18290)]
+6. Hu, E. J., et al. (2021). LoRA: Low-Rank Adaptation of Large Language Models. *ICLR 2022*. [[arXiv:2106.09685](https://arxiv.org/abs/2106.09685)]
+

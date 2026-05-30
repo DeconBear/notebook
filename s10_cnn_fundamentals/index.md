@@ -248,3 +248,8 @@ $$
 | demo.py | [Open](./code-demo) | <a href="../code/s10_cnn_fundamentals/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s10_cnn_fundamentals/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. LeCun, Y., Bottou, L., Bengio, Y., & Haffner, P. (1998). Gradient-Based Learning Applied to Document Recognition. *Proceedings of the IEEE*. (LeNet-5) [[doi:10.1109/5.726791](http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf)]
+2. Fukushima, K. (1980). Neocognitron: A Self-organizing Neural Network Model for a Mechanism of Pattern Recognition. *Biological Cybernetics*. (CNN 前身)
+

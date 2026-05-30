@@ -257,3 +257,10 @@ $$
 | demo.py | [Open](./code-demo) | <a href="../code/s08_optimizers_sgd_to_adam/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s08_optimizers_sgd_to_adam/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Robbins, H. & Monro, S. (1951). A Stochastic Approximation Method. *Annals of Mathematical Statistics*. (SGD 理论基础)
+2. Sutskever, I., Martens, J., Dahl, G., & Hinton, G. (2013). On the importance of initialization and momentum in deep learning. *ICML 2013*. (Momentum) [[PMLR](http://proceedings.mlr.press/v28/sutskever13.html)]
+3. Kingma, D. P. & Ba, J. (2015). Adam: A Method for Stochastic Optimization. *ICLR 2015*. [[arXiv:1412.6980](https://arxiv.org/abs/1412.6980)]
+4. Tieleman, T. & Hinton, G. (2012). Lecture 6.5: RMSProp. *Coursera*. (RMSProp)
+

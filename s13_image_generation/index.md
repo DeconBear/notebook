@@ -24,7 +24,7 @@
 
 ### 2.1 核心思想：博弈论
 
-GAN 由两个网络组成，它们相���对抗、共同进化：
+GAN 由两个网络组成，它们相互对抗、共同进化：
 
 - **生成器 $G$**：接收随机噪声 $z \sim p_z$（通常是高斯分布），输出一张假图像 $G(z)$。目标是"骗过"判别器。
 - **判别器 $D$**：接收一张图像（可能是真的也可能是假的），输出一个概率 $D(x) \in [0, 1]$ 表示图像为真的概率。目标是正确区分真假。
@@ -202,4 +202,11 @@ Stable Diffusion 将扩散模型从三个维度做了关键改进：
 |------|------|----------|
 | demo.py | [Open](./code-demo) | <a href="../code/s13_image_generation/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s13_image_generation/exercise.py" target="_blank" download>Download</a> |
+
+## 参考
+
+1. Goodfellow, I. J., et al. (2014). Generative Adversarial Nets. *NeurIPS 2014*. (GAN) [[arXiv:1406.2661](https://arxiv.org/abs/1406.2661)]
+2. Kingma, D. P. & Welling, M. (2014). Auto-Encoding Variational Bayes. *ICLR 2014*. (VAE) [[arXiv:1312.6114](https://arxiv.org/abs/1312.6114)]
+3. Ho, J., Jain, A., & Abbeel, P. (2020). Denoising Diffusion Probabilistic Models. *NeurIPS 2020*. (DDPM) [[arXiv:2006.11239](https://arxiv.org/abs/2006.11239)]
+4. Rombach, R., et al. (2022). High-Resolution Image Synthesis with Latent Diffusion Models. *CVPR 2022*. (Stable Diffusion) [[arXiv:2112.10752](https://arxiv.org/abs/2112.10752)]
 

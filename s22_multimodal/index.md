@@ -279,9 +279,9 @@ BLIP-2 中提出的 **Q-Former（Querying Transformer）** 是另一种重要的
 
 ## 参考
 
-1. Radford, A., Kim, J. W., Hallacy, C., et al. (2021). Learning Transferable Visual Models From Natural Language Supervision. *ICML 2021*.
-2. Liu, H., Li, C., Wu, Q., & Lee, Y. J. (2023). Visual Instruction Tuning. *NeurIPS 2023*.
-3. Li, J., Li, D., Savarese, S., & Hoi, S. (2023). BLIP-2: Bootstrapping Language-Image Pre-training with Frozen Image Encoders and Large Language Models. *ICML 2023*.
-4. Ramesh, A., Dhariwal, P., Nichol, A., et al. (2022). Hierarchical Text-Conditional Image Generation with CLIP Latents.
-5. Alayrac, J.-B., et al. (2022). Flamingo: a Visual Language Model for Few-Shot Learning. *NeurIPS 2022*.
-6. OpenAI (2023). GPT-4 Technical Report.
+1. Radford, A., Kim, J. W., Hallacy, C., et al. (2021). Learning Transferable Visual Models From Natural Language Supervision. *ICML 2021*. (CLIP) [[arXiv:2103.00020](https://arxiv.org/abs/2103.00020)]
+2. Liu, H., Li, C., Wu, Q., & Lee, Y. J. (2023). Visual Instruction Tuning. *NeurIPS 2023*. (LLaVA) [[arXiv:2304.08485](https://arxiv.org/abs/2304.08485)]
+3. Li, J., Li, D., Savarese, S., & Hoi, S. (2023). BLIP-2: Bootstrapping Language-Image Pre-training with Frozen Image Encoders and Large Language Models. *ICML 2023*. [[arXiv:2301.12597](https://arxiv.org/abs/2301.12597)]
+4. Ramesh, A., Dhariwal, P., Nichol, A., et al. (2022). Hierarchical Text-Conditional Image Generation with CLIP Latents. (DALL-E 2) [[arXiv:2204.06125](https://arxiv.org/abs/2204.06125)]
+5. Alayrac, J.-B., et al. (2022). Flamingo: a Visual Language Model for Few-Shot Learning. *NeurIPS 2022*. [[arXiv:2204.14198](https://arxiv.org/abs/2204.14198)]
+6. OpenAI (2023). GPT-4 Technical Report. [[arXiv:2303.08774](https://arxiv.org/abs/2303.08774)]

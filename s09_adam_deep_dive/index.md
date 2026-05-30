@@ -354,3 +354,9 @@ scheduler = CosineAnnealingLR(optimizer, T_max=total_steps,
 | demo.py | [Open](./code-demo) | <a href="../code/s09_adam_deep_dive/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s09_adam_deep_dive/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Kingma, D. P. & Ba, J. (2015). Adam: A Method for Stochastic Optimization. *ICLR 2015*. [[arXiv:1412.6980](https://arxiv.org/abs/1412.6980)]
+2. Loshchilov, I. & Hutter, F. (2019). Decoupled Weight Decay Regularization. *ICLR 2019*. (AdamW) [[arXiv:1711.05101](https://arxiv.org/abs/1711.05101)]
+3. Loshchilov, I. & Hutter, F. (2017). SGDR: Stochastic Gradient Descent with Warm Restarts. *ICLR 2017*. (Cosine Annealing) [[arXiv:1608.03983](https://arxiv.org/abs/1608.03983)]
+

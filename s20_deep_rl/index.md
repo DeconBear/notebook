@@ -251,3 +251,11 @@ Actor-Critic 方法结合了两种方法的优点：
 | demo.py | [Open](./code-demo) | <a href="../code/s20_deep_rl/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s20_deep_rl/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Mnih, V., et al. (2015). Human-level control through deep reinforcement learning. *Nature*. (DQN) [[doi:10.1038/nature14236](https://doi.org/10.1038/nature14236)]
+2. Williams, R. J. (1992). Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement Learning. *Machine Learning*. (REINFORCE) [[doi:10.1007/BF00992696](https://doi.org/10.1007/BF00992696)]
+3. Mnih, V., et al. (2016). Asynchronous Methods for Deep Reinforcement Learning. *ICML 2016*. (A3C) [[arXiv:1602.01783](https://arxiv.org/abs/1602.01783)]
+4. Schulman, J., et al. (2017). Proximal Policy Optimization Algorithms. (PPO) [[arXiv:1707.06347](https://arxiv.org/abs/1707.06347)]
+5. Silver, D., et al. (2016). Mastering the game of Go with deep neural networks and tree search. *Nature*. (AlphaGo) [[doi:10.1038/nature16961](https://doi.org/10.1038/nature16961)]
+

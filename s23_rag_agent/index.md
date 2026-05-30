@@ -232,9 +232,9 @@ RAG 和 Agent 不是互斥的，而是互补的。在实际应用中，Agent 经
 
 ## 参考
 
-1. Lewis, P., et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. *NeurIPS 2020*.
-2. Yao, S., et al. (2022). ReAct: Synergizing Reasoning and Acting in Language Models. *ICLR 2023*.
-3. Gao, Y., et al. (2023). Retrieval-Augmented Generation for Large Language Models: A Survey.
-4. Wang, L., et al. (2024). A Survey on Large Language Model based Autonomous Agents. *Frontiers of Computer Science*.
-5. LangChain Documentation. (2024). Agents and RAG.
-6. Chase, H. (2022). LangChain: Building Applications with LLMs through Composability.
+1. Lewis, P., et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. *NeurIPS 2020*. (RAG) [[arXiv:2005.11401](https://arxiv.org/abs/2005.11401)]
+2. Yao, S., et al. (2022). ReAct: Synergizing Reasoning and Acting in Language Models. *ICLR 2023*. [[arXiv:2210.03629](https://arxiv.org/abs/2210.03629)]
+3. Gao, Y., et al. (2023). Retrieval-Augmented Generation for Large Language Models: A Survey. [[arXiv:2312.10997](https://arxiv.org/abs/2312.10997)]
+4. Wang, L., et al. (2024). A Survey on Large Language Model based Autonomous Agents. *Frontiers of Computer Science*. [[arXiv:2308.11432](https://arxiv.org/abs/2308.11432)]
+5. LangChain Documentation. (2024). Agents and RAG. [[link](https://python.langchain.com/)]
+6. Chase, H. (2022). LangChain: Building Applications with LLMs through Composability. [[link](https://github.com/langchain-ai/langchain)]

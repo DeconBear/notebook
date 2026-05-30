@@ -254,3 +254,9 @@ One-Hot（每个词是独立符号）
 | demo.py | [Open](./code-demo) | <a href="../code/s14_text_representation/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s14_text_representation/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Mikolov, T., Chen, K., Corrado, G., & Dean, J. (2013). Efficient Estimation of Word Representations in Vector Space. (word2vec CBOW & Skip-gram) [[arXiv:1301.3781](https://arxiv.org/abs/1301.3781)]
+2. Mikolov, T., et al. (2013). Distributed Representations of Words and Phrases and their Compositionality. (Negative Sampling) [[arXiv:1310.4546](https://arxiv.org/abs/1310.4546)]
+3. Pennington, J., Socher, R., & Manning, C. D. (2014). GloVe: Global Vectors for Word Representation. *EMNLP 2014*. [[aclweb](https://aclanthology.org/D14-1162/)]
+

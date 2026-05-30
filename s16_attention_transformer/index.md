@@ -263,3 +263,9 @@ python nanogpt.py --generate # 仅生成
 | exercise.py | [Open](./code-exercise) | <a href="../code/s16_attention_transformer/exercise.py" target="_blank" download>Download</a> |
 | nanogpt.py | [Open](./nanogpt) | <a href="../code/s16_attention_transformer/nanogpt.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Vaswani, A., et al. (2017). Attention Is All You Need. *NeurIPS 2017*. [[arXiv:1706.03762](https://arxiv.org/abs/1706.03762)]
+2. Bahdanau, D., Cho, K., & Bengio, Y. (2015). Neural Machine Translation by Jointly Learning to Align and Translate. *ICLR 2015*. [[arXiv:1409.0473](https://arxiv.org/abs/1409.0473)]
+3. Luong, M.-T., Pham, H., & Manning, C. D. (2015). Effective Approaches to Attention-based Neural Machine Translation. *EMNLP 2015*. [[arXiv:1508.04025](https://arxiv.org/abs/1508.04025)]
+

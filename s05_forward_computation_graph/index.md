@@ -275,3 +275,9 @@ $$
 | demo.py | [Open](./code-demo) | <a href="../code/s05_forward_computation_graph/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s05_forward_computation_graph/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. He, K., Zhang, X., Ren, S., & Sun, J. (2015). Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification. *ICCV 2015*. (He 初始化) [[arXiv:1502.01852](https://arxiv.org/abs/1502.01852)]
+2. Glorot, X. & Bengio, Y. (2010). Understanding the difficulty of training deep feedforward neural networks. *AISTATS 2010*. (Xavier 初始化) [[PMLR](http://proceedings.mlr.press/v9/glorot10a.html)]
+3. Hornik, K., Stinchcombe, M., & White, H. (1989). Multilayer feedforward networks are universal approximators. *Neural Networks*. (Universal Approximation Theorem) [[doi:10.1016/0893-6080(89)90020-8](https://doi.org/10.1016/0893-6080(89)90020-8)]
+

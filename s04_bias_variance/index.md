@@ -255,8 +255,8 @@ Bias-Variance 权衡是理解机器学习泛化性能的核心框架：
 
 ## 参考
 
-1. Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of Statistical Learning. Springer. Chapter 7.
-2. Geman, S., Bienenstock, E., & Doursat, R. (1992). Neural Networks and the Bias/Variance Dilemma.
-3. Belkin, M., Hsu, D., Ma, S., & Mandal, S. (2019). Reconciling modern machine-learning practice and the classical bias-variance trade-off.
-4. Hoerl, A. E., & Kennard, R. W. (1970). Ridge Regression: Biased Estimation for Nonorthogonal Problems.
-5. Tibshirani, R. (1996). Regression Shrinkage and Selection via the Lasso.
+1. Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of Statistical Learning. Springer. Chapter 7. [[link](https://hastie.su.domains/ElemStatLearn/)]
+2. Geman, S., Bienenstock, E., & Doursat, R. (1992). Neural Networks and the Bias/Variance Dilemma. *Neural Computation*. [[doi:10.1162/neco.1992.4.1.1](https://doi.org/10.1162/neco.1992.4.1.1)]
+3. Belkin, M., Hsu, D., Ma, S., & Mandal, S. (2019). Reconciling modern machine-learning practice and the classical bias-variance trade-off. *PNAS*. (Double Descent) [[arXiv:1812.11118](https://arxiv.org/abs/1812.11118)]
+4. Hoerl, A. E., & Kennard, R. W. (1970). Ridge Regression: Biased Estimation for Nonorthogonal Problems. *Technometrics*. [[doi:10.1080/00401706.1970.10488634](https://doi.org/10.1080/00401706.1970.10488634)]
+5. Tibshirani, R. (1996). Regression Shrinkage and Selection via the Lasso. *Journal of the Royal Statistical Society*. [[doi:10.1111/j.2517-6161.1996.tb02080.x](https://doi.org/10.1111/j.2517-6161.1996.tb02080.x)]

@@ -253,3 +253,11 @@ GAE 平衡了"用更多数据降低方差"和"引入偏差"之间的权衡，是
 | demo.py | [Open](./code-demo) | <a href="../code/s21_rlhf/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s21_rlhf/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Christiano, P., et al. (2017). Deep Reinforcement Learning from Human Preferences. *NeurIPS 2017*. (RLHF) [[arXiv:1706.03741](https://arxiv.org/abs/1706.03741)]
+2. Ouyang, L., et al. (2022). Training language models to follow instructions with human feedback. *NeurIPS 2022*. (InstructGPT) [[arXiv:2203.02155](https://arxiv.org/abs/2203.02155)]
+3. Schulman, J., et al. (2017). Proximal Policy Optimization Algorithms. (PPO) [[arXiv:1707.06347](https://arxiv.org/abs/1707.06347)]
+4. Rafailov, R., et al. (2023). Direct Preference Optimization: Your Language Model is Secretly a Reward Model. *NeurIPS 2023*. (DPO) [[arXiv:2305.18290](https://arxiv.org/abs/2305.18290)]
+5. Schulman, J., et al. (2016). High-Dimensional Continuous Control Using Generalized Advantage Estimation. *ICLR 2016*. (GAE) [[arXiv:1506.02438](https://arxiv.org/abs/1506.02438)]
+

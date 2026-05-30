@@ -267,3 +267,16 @@ ViT 的意义不仅是又一个 SOTA 模型。它证明了一件事：**Transfor
 | demo.py | [Open](./code-demo) | <a href="../code/s11_cnn_architectures/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s11_cnn_architectures/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Krizhevsky, A., Sutskever, I., & Hinton, G. E. (2012). ImageNet Classification with Deep Convolutional Neural Networks. *NeurIPS 2012*. (AlexNet) [[doi:10.1145/3065386](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)]
+2. Simonyan, K. & Zisserman, A. (2015). Very Deep Convolutional Networks for Large-Scale Image Recognition. *ICLR 2015*. (VGG) [[arXiv:1409.1556](https://arxiv.org/abs/1409.1556)]
+3. Szegedy, C., et al. (2015). Going Deeper with Convolutions. *CVPR 2015*. (GoogLeNet/Inception) [[arXiv:1409.4842](https://arxiv.org/abs/1409.4842)]
+4. He, K., Zhang, X., Ren, S., & Sun, J. (2016). Deep Residual Learning for Image Recognition. *CVPR 2016*. (ResNet) [[arXiv:1512.03385](https://arxiv.org/abs/1512.03385)]
+5. Xie, S., et al. (2017). Aggregated Residual Transformations for Deep Neural Networks. *CVPR 2017*. (ResNeXt) [[arXiv:1611.05431](https://arxiv.org/abs/1611.05431)]
+6. Huang, G., Liu, Z., van der Maaten, L., & Weinberger, K. Q. (2017). Densely Connected Convolutional Networks. *CVPR 2017*. (DenseNet) [[arXiv:1608.06993](https://arxiv.org/abs/1608.06993)]
+7. Hu, J., Shen, L., & Sun, G. (2018). Squeeze-and-Excitation Networks. *CVPR 2018*. (SENet) [[arXiv:1709.01507](https://arxiv.org/abs/1709.01507)]
+8. Tan, M. & Le, Q. V. (2019). EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks. *ICML 2019*. [[arXiv:1905.11946](https://arxiv.org/abs/1905.11946)]
+9. Liu, Z., et al. (2022). A ConvNet for the 2020s. *CVPR 2022*. (ConvNeXt) [[arXiv:2201.03545](https://arxiv.org/abs/2201.03545)]
+10. Dosovitskiy, A., et al. (2020). An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale. *ICLR 2021*. (ViT) [[arXiv:2010.11929](https://arxiv.org/abs/2010.11929)]
+

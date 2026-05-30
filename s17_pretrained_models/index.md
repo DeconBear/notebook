@@ -220,3 +220,11 @@ GPT-3 之后，NLP 的使用方式发生了根本变化：
 | demo.py | [Open](./code-demo) | <a href="../code/s17_pretrained_models/demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="../code/s17_pretrained_models/exercise.py" target="_blank" download>Download</a> |
 
+## 参考
+
+1. Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K. (2019). BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. *NAACL 2019*. [[arXiv:1810.04805](https://arxiv.org/abs/1810.04805)]
+2. Radford, A., et al. (2018). Improving Language Understanding by Generative Pre-Training. (GPT-1) [[OpenAI](https://openai.com/research/language-unsupervised)]
+3. Radford, A., et al. (2019). Language Models are Unsupervised Multitask Learners. (GPT-2) [[OpenAI](https://openai.com/research/better-language-models)]
+4. Brown, T., et al. (2020). Language Models are Few-Shot Learners. *NeurIPS 2020*. (GPT-3) [[arXiv:2005.14165](https://arxiv.org/abs/2005.14165)]
+5. Liu, Y., et al. (2019). RoBERTa: A Robustly Optimized BERT Pretraining Approach. [[arXiv:1907.11692](https://arxiv.org/abs/1907.11692)]
+
