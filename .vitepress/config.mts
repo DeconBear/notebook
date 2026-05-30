@@ -50,8 +50,8 @@ export default withMermaid(
         items: [
           { text: 's10 CNN 核心原理', link: '/s10_cnn_fundamentals/' },
           { text: 's11 经典架构演进', link: '/s11_cnn_architectures/' },
-          { text: 's11b Vision Transformer', link: '/s11b_vit/' },
           { text: 's12 目标检测', link: '/s12_object_detection/' },
+          { text: 's12b Vision Transformer', link: '/s11b_vit/' },
           { text: 's13 图像生成', link: '/s13_image_generation/' },
         ]
       },

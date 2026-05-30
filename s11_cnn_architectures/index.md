@@ -258,7 +258,7 @@ $$
 
 ViT 的意义不仅是又一个 SOTA 模型。它证明了一件事：**Transformer 是一个通用计算原语**——处理文本（GPT）、处理图像（ViT）、处理蛋白质（AlphaFold），底层用的都是同一个 self-attention 机制。这为 s22 中的多模态模型（CLIP、LLaVA）铺平了道路。
 
-> 下一节 [s11b Vision Transformer](../s11b_vit/) 将深入探讨 Transformer 如何彻底改变了计算机视觉——用 patch + 自注意力替代卷积，开创了图像理解的新范式。然后是 [s12 目标检测](../s12_object_detection/)，介绍如何在这些 backbone 上加"检测头"。
+> 下一节 [s12 目标检测](../s12_object_detection/) 将介绍如何在这些 backbone 上加一个"检测头"，让网络不仅知道"图像里是什么"，还能回答"物体在哪里"。之后的 [s12b Vision Transformer](../s11b_vit/) 将展示 Transformer 如何颠覆 CV。
 
 ## 📥 Code
 
