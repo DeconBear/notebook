@@ -42,6 +42,12 @@ export default withMermaid(
           { text: 'ml03 朴素贝叶斯与贝叶斯网络', link: '/ml03_naive_bayes/' },
           { text: 'ml04 支持向量机 (SVM)', link: '/ml04_svm/' },
           { text: 'ml05 决策树', link: '/ml05_decision_tree/' },
+        ]
+      },
+      {
+        text: '番外：经典机器学习进阶',
+        collapsed: true,
+        items: [
           { text: 'ml06 集成学习：Bagging与随机森林', link: '/ml06_random_forest/' },
           { text: 'ml07 集成学习：Boosting与Stacking', link: '/ml07_boosting/' },
           { text: 'ml08 聚类：无监督学习的核心', link: '/ml08_clustering/' },
