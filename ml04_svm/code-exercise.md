@@ -2,6 +2,10 @@
 title: "ml04 支持向量机 — exercise.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # ml04 支持向量机 (SVM) — exercise.py 练习指南
 
 <a href="../code/ml04_svm/exercise.py" target="_blank" download>Download exercise.py</a>

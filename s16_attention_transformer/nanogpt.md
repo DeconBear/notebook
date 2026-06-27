@@ -2,6 +2,10 @@
 title: "s16 — nanoGPT: 从零训练 GPT-2"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # nanoGPT: 从零训练一个真正的 GPT
 
 基于 [Andrej Karpathy 的 nanoGPT](https://github.com/karpathy/nanoGPT)，从零实现完整的 GPT-2 架构，在莎士比亚文本上训练并生成文本。

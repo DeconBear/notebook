@@ -2,6 +2,10 @@
 title: "s23 RAG 与 AI Agent — demo.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # s23 RAG 与 AI Agent — demo.py 代码详解
 
 <a href="../code/s23_rag_agent/demo.py" target="_blank" download>Download demo.py</a>

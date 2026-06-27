@@ -1,5 +1,9 @@
 # s08 优化器：从 SGD 到 Adam
 
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
+
 > 拿到了梯度，怎么用？Momentum、RMSProp、Adam 一步步解决梯度下降的困境
 
 ---

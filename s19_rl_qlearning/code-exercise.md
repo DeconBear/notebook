@@ -2,6 +2,10 @@
 title: "s19 强化学习入门：MDP 与 Q-Learning — exercise.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # s19 强化学习入门：MDP 与 Q-Learning — exercise.py 练习指南
 
 <a href="../code/s19_rl_qlearning/exercise.py" target="_blank" download>Download exercise.py</a>

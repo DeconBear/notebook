@@ -2,6 +2,10 @@
 title: "s25 AI 安全与对齐 — demo.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # s25 AI 安全与对齐 — demo.py 代码详解
 
 <a href="../code/s25_ai_safety/demo.py" target="_blank" download>Download demo.py</a>

@@ -2,6 +2,10 @@
 title: "s05 前向传播与计算图 — demo.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # s05 前向传播与计算图 — demo.py 代码详解
 
 <a href="../code/s05_forward_computation_graph/demo.py" target="_blank" download>Download demo.py</a>

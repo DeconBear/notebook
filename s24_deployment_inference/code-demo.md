@@ -2,6 +2,10 @@
 title: "s24 模型部署与推理优化 — demo.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # s24 模型部署与推理优化 — demo.py 代码详解
 
 <a href="../code/s24_deployment_inference/demo.py" target="_blank" download>Download demo.py</a>

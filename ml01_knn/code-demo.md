@@ -2,6 +2,10 @@
 title: "ml01 k-近邻与距离度量 — demo.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # ml01 k-近邻与距离度量 — demo.py 代码详解
 
 <a href="../code/ml01_knn/demo.py" target="_blank" download>Download demo.py</a>
