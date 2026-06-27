@@ -1,5 +1,9 @@
 # 集成学习：Boosting 与 Stacking
 
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
+
 ## 1. Boosting 的哲学：从弱学习器到强学习器
 
 ### 1.1 Bagging vs Boosting

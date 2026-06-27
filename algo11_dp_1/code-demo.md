@@ -2,6 +2,10 @@
 title: "algo11 动态规划（上）— demo.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # algo11 动态规划（上）— demo.py 代码详解
 
 <a href="../code/algo11_dp_1/demo.py" target="_blank" download>Download demo.py</a>

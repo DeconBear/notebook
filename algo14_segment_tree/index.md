@@ -1,5 +1,9 @@
 # algo14 线段树与树状数组
 
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
+
 > Fenwick Tree 和 Segment Tree —— 区间查询与更新的两大高效数据结构
 
 ---

@@ -2,6 +2,10 @@
 title: "algo16 计算几何与博弈论入门 — demo.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # algo16 计算几何与博弈论入门 — demo.py 代码详解
 
 <a href="../code/algo16_geometry_game/demo.py" target="_blank" download>Download demo.py</a>

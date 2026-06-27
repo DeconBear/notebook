@@ -1,5 +1,9 @@
 # s11b Vision Transformer：当 Transformer 遇见图像
 
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
+
 > 2020 年，Google 用一篇《An Image is Worth 16x16 Words》证明：把图像切成 patch 当词序列，扔进标准 Transformer，就能超越 CNN。
 
 ---

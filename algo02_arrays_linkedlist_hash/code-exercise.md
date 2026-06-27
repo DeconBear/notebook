@@ -2,6 +2,10 @@
 title: "algo02 数组、链表与哈希表 — exercise.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # algo02 数组、链表与哈希表 — exercise.py 练习指南
 
 <a href="../code/algo02_arrays_linkedlist_hash/exercise.py" target="_blank" download>Download exercise.py</a>

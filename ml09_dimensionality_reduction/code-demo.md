@@ -2,6 +2,10 @@
 title: "ml09 降维与特征工程 — demo.py"
 ---
 
+
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
 # ml09 降维与特征工程 — demo.py 代码详解
 
 <a href="../code/ml09_dimensionality_reduction/demo.py" target="_blank" download>Download demo.py</a>

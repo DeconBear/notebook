@@ -1,5 +1,9 @@
 # s16 Attention 与 Transformer
 
+> [!WARNING]
+> 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
+
+
 > 注意力就是你告诉我"看哪"，我去看。Transformer 让每个词同时"看"所有词——不需要一步一步传递信息。
 
 ---
