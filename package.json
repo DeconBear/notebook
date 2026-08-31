@@ -1,10 +1,13 @@
 {
-  "name": "learn-ai",
+  "name": "notebook",
   "version": "1.0.0",
-  "description": "图解 AI——从感知机到大模型",
+  "description": "图解笔记——AI、算法、ROS 2",
   "scripts": {
-    "dev": "vitepress dev",
-    "build": "vitepress build",
+    "sync-code": "node scripts/sync-public-code.mjs",
+    "new-chapter": "node scripts/new-chapter.mjs",
+    "gen-toc": "node scripts/gen-readme-toc.mjs",
+    "dev": "npm run sync-code && vitepress dev",
+    "build": "npm run sync-code && vitepress build",
     "preview": "vitepress preview"
   },
   "devDependencies": {

@@ -1,0 +1,8 @@
+# Lesson 07 — custom service
+# 请求点亮/关闭某路 LED，返回是否成功
+
+uint8 led_id
+bool turn_on
+---
+bool success
+string message
