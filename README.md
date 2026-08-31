@@ -136,14 +136,24 @@ https://deconbear.github.io/notebook/
 
 ### 世界模型
 
-- [wm01 世界模型导论与分类](docs/world-models/intro/)
-- [wm02 经典起源与 RSSM](docs/world-models/rssm/)
-- [wm03 Dreamer 家族](docs/world-models/dreamer/)
-- [wm04 MuZero：隐式世界模型](docs/world-models/muzero/)
-- [wm05 JEPA / V-JEPA](docs/world-models/jepa/)
-- [wm06 Genie：交互式世界模型](docs/world-models/genie/)
-- [wm07 视频生成式世界模型](docs/world-models/video/)
-- [wm08 LLM 世界模型与路径对比](docs/world-models/llm/)
+- [世界模型导论：四条路径](docs/world-models/intro/)
+- [路径一 · 视频生成式世界模型](docs/world-models/video/)
+
+#### 路径二 · 交互 / 3D 生成
+
+- [Genie：从视频中长出可玩的世界](docs/world-models/interactive/genie/)
+- [交互式 3D 世界：从 Genie 到可漫游场景](docs/world-models/interactive/scene-3d/)
+
+#### 路径三 · 抽象状态预测
+
+- [PETS：概率集成、轨迹采样与 MPC](docs/world-models/abstract/pets/)
+- [RSSM 与 PlaNet](docs/world-models/abstract/rssm/)
+- [Dreamer V1–V4：在想象里学会行动](docs/world-models/abstract/dreamer/)
+- [MuZero：隐式世界模型](docs/world-models/abstract/muzero/)
+- [JEPA / V-JEPA](docs/world-models/abstract/jepa/)
+- [LeWM：两项损失的端到端 JEPA 世界模型](docs/world-models/abstract/lewm/)
+- [路径四 · 因果世界模型](docs/world-models/causal/)
+- [附录 · LLM 世界模型与路径对照](docs/world-models/llm/)
 
 ### ROS 2
 
@@ -212,7 +222,7 @@ https://deconbear.github.io/notebook/
 | 🟣 **面试冲刺** | 已学过，快速复习高频考点 | s02-s04 → ml04(SVM) → ml05(树) → s06-s09 → s16 → s18 → s21 → s25 |
 | 🔴 **算法竞赛** | 只关注算法与数据结构 | 直接看附录 algo01 → algo16，其余章节按需查阅 |
 | 🟤 **科研向 / AI4S** | 做科学计算、生物、芯片等交叉 | 阶段三~五 → 进阶一（as01–as08） |
-| ⬛ **世界模型** | 关注具身智能 / 生成式模拟 | 阶段六 → 进阶二（wm01–wm08） |
+| ⬛ **世界模型** | 关注具身智能 / 生成式模拟 | 阶段六 → 进阶二（四路径：视频 / 交互·3D / 抽象状态 / 因果） |
 | 🟠 **ROS 2 / 机器人** | 要在本机跑 Humble | 侧栏 ROS 2；工作区 `workspaces/ros2-humble/` |
 
 > 💡 **番外一**（集成学习、聚类、降维、蒙特卡洛、HMM、EM、概率图、高斯过程）在阶段二之后，默认折叠。内容独立、互不依赖，可按需跳读。**进阶一 / 进阶二**在阶段七之后，默认折叠；**番外二**为论文精读占位，敬请期待。
