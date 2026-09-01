@@ -100,6 +100,7 @@ https://deconbear.github.io/notebook/
 - [s07 多层网络矩阵反传](docs/dl/matrix-backprop/)
 - [s08 优化器：SGD→Adam](docs/dl/optimizers/)
 - [s09 Adam 深度解析](docs/dl/adam/)
+- [混合专家 MoE](docs/dl/moe/)
 
 ### 计算机视觉
 

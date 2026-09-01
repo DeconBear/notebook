@@ -242,7 +242,7 @@ LayerNorm
 | $\sqrt{d_k}$ 缩放 | 控制点积方差，防止 softmax 饱和 |
 | 多头注意力 | 并行多组 QKV 投影，捕捉不同类型的关系 |
 | 位置编码 | 注入序列位置信息——正弦函数或可学习嵌入 |
-| Transformer Block | LN → Attention → Add → LN → FFN → Add |
+| Transformer Block | LN → Attention → Add → LN → FFN → Add（FFN 可换成 [MoE](/dl/moe/)） |
 | Pre-LN | LayerNorm 在子层之前，训练更稳定 |
 | 因果掩码 | 防止看到未来信息，用于自回归生成 |
 
