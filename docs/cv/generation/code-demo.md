@@ -121,6 +121,8 @@ $$
 
 #### 2.3 GAN 训练循环 —— 交替优化
 
+正文 [GAN 交替训练示意](/cv/generation/) 对应这里的实现节奏：先 D 后 G。
+
 ```python
 for epoch in range(n_epochs):
     for imgs, _ in dataloader:
@@ -177,7 +179,7 @@ for epoch in range(n_epochs):
 
 ### 第3步：VAE —— 变分自编码器
 
-VAE 的学习目标与 GAN 完全不同：它不是对抗博弈，而是最大化数据的**证据下界（ELBO）**。
+VAE 的学习目标与 GAN 完全不同：它不是对抗博弈，而是最大化数据的**证据下界（ELBO）**。管线与 AE/VAE 潜空间对比见正文 [VAE 一节](/cv/generation/)。
 
 **VAE 的数学核心**：
 
