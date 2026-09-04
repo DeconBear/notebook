@@ -45,7 +45,7 @@ $$
 | **量子模拟** | 如何用量子系统模拟量子系统？ | [simulation](/quantum/simulation/) |
 | **量子机器学习** | 经典特征如何写进线路并训练？ | [qml](/quantum/qml/) |
 
-阅读顺序建议：全景 → 计算 → 网络 / 存储（可并行）→ 模拟 → 机器学习。QML 章收编了 [qml-mnist-classify](https://github.com/DeconBear/qml-mnist-classify) 的混合模型实验。
+阅读顺序建议：全景 → 计算 → 网络 / 存储（可并行）→ 模拟 → 机器学习。QML 章收编了混合量子分类实验（VQNet 核心随该章发布）。
 
 ---
 

@@ -1,7 +1,7 @@
 """
 qml_core.py：本项目的“共享核心模块”。
 
-迁自 https://github.com/DeconBear/qml-mnist-classify （MIT License）。
+迁自独立示例工程 qml-mnist-classify（MIT License），现随本章发布。
 未安装 pyvqnet 时请不要直接 import 本文件；见同目录 demo.py 的降级逻辑。
 
 如果你把整个项目想成一台机器，那么：

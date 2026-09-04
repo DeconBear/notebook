@@ -1,5 +1,5 @@
-MIT License — 以下 VQNet 相关文件迁自
-https://github.com/DeconBear/qml-mnist-classify
+MIT License — 以下 VQNet 核心与 16x16 数据集随本章发布，
+源工程名为 qml-mnist-classify（MIT）。不依赖该仓库是否公开。
 
 Copyright (c) 2026 qzx
 
