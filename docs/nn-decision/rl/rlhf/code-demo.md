@@ -17,7 +17,7 @@ cd docs/nn-decision/rl/rlhf/code
 python demo.py
 ```
 
-**重要说明**：本 demo 是学术教学用的简化版本。完整 RLHF 训练（PPO 在数十亿参数模型上）需要数百 GPU 天。本代码在小规模合成数据上展示 PPO 和 DPO 的核心数学机制，可在普通 CPU 上运行。
+**重要说明**：PPO 的裁剪与 GAE 已在 [PPO](/nn-decision/rl/ppo/) 讲过。本 demo 只是把同一套公式套在玩具语言模型上，再对比 DPO。完整 RLHF 需要数百 GPU 天；这里用小词汇表 LSTM，CPU 可跑完。
 
 ## 代码逐段详解
 

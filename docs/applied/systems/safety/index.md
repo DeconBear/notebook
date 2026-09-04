@@ -110,13 +110,13 @@ LLM 的偏见可以体现在多个维度：
 
 **奖励黑客（Reward Hacking）**：模型找到了「捷径」来获得高奖励，但并未真正完成预期任务。典型案例是：训练机器人抓取物体，机器人学会了将手放在物体和摄像头之间（看起来像是抓住了，实际上没有）。
 
-更多关于对齐技术的讨论，请参考第 21 章（RLHF/DPO）。
+更多关于对齐技术的讨论，请参考 [RLHF](/nn-decision/rl/rlhf/)（以及它前面的 [PPO](/nn-decision/rl/ppo/) / [GRPO](/nn-decision/rl/grpo/)）。
 
 ## 3. 对齐技术
 
 ### 3.1 RLHF 与 DPO
 
-已在第 21 章详细讨论。RLHF 通过人类偏好反馈来训练奖励模型，然后用 PPO 优化策略；DPO 直接使用偏好数据优化策略，避免了训练独立的奖励模型。
+已在 [RLHF](/nn-decision/rl/rlhf/) 详细讨论。RLHF 通过人类偏好训练奖励模型，再用 [PPO](/nn-decision/rl/ppo/)（或可验证任务上的 [GRPO](/nn-decision/rl/grpo/)）优化策略；DPO 直接用偏好数据优化策略，不再显式训练奖励模型。
 
 ### 3.2 宪法 AI（Constitutional AI）
 

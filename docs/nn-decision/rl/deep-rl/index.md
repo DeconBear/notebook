@@ -231,12 +231,13 @@ Actor-Critic 方法结合了两种方法的优点：
 
 - **2013**: DQN (DeepMind) — 首次用 CNN + Q-Learning 在 Atari 2600 游戏上达到人类水平，发表于 NIPS 2013
 - **2015**: DQN Nature 版 — 加入目标网络和经验回放，发表于 Nature，标志着"从像素到动作"的端到端学习成为现实
-- **2016**: AlphaGo (DeepMind) — 结合深度策略网络（SL + RL）和蒙特卡洛树搜索，击败李世石。RL 部分是 Policy Gradient + 自我对弈
-- **2017**: PPO (OpenAI) — Proximal Policy Optimization，用裁剪目标函数实现稳定更新，成为最广泛使用的 RL 算法之一
+- **2016**: AlphaGo (DeepMind) — 策略网 + 价值网 + MCTS，击败李世石。下一节会单独把自我对弈和 PUCT 讲开，而不是一句「就是 REINFORCE」带过
+- **2017**: PPO (OpenAI) — 用裁剪把 on-policy 更新锁在旧策略邻域里，后面会单独成章
 - **2019**: OpenAI Five / AlphaStar — 在 Dota 2 和星际争霸 2 上达到职业水平，展示 RL 在复杂多智能体场景中的潜力
-- **2022**: RLHF — 强化学习被用于对齐大语言模型（通过人类反馈），成为 ChatGPT 成功的核心要素
+- **2022**: RLHF — 把 PPO 接到大语言模型上（人类反馈 → 奖励模型 → 策略优化）
+- **2024–2025**: GRPO / DeepSeek-R1 — 用组内相对奖励代替 Critic，做可验证的推理强化学习
 
-> AlphaGo 的 RL 部分本质上就是 Policy Gradient：用自我对弈（self-play）产生数据，用 REINFORCE 风格的梯度优化策略网络。而 RLHF 则是 PPO 在大语言模型上的直接应用。
+> 自我对弈、近端更新、组相对优势，都值得各自讲清楚，再接到 LLM 上。下一节先看棋：网络负责感觉，树负责算清。
 
 ---
 
@@ -253,7 +254,7 @@ Actor-Critic 方法结合了两种方法的优点：
 | 优势函数 | $A(s,a) = Q(s,a) - V(s)$，衡量"比平均好多少" |
 | A2C | 同步多 worker 的 Actor-Critic，用 $n$ 步回报 + 优势函数 |
 
-> 下一节 [s21 RLHF：当强化学习遇见大模型](/nn-decision/rl/rlhf/) 将展示 PPO 和 DPO 如何被用于对齐大语言模型，这是深度强化学习在当今最重要的应用。
+> 下一节 [AlphaGo：自我对弈与 MCTS](/nn-decision/rl/alphago/)。之后是 [PPO](/nn-decision/rl/ppo/)、[GRPO](/nn-decision/rl/grpo/)，最后才把这些优化器接到 [RLHF](/nn-decision/rl/rlhf/) 的 token 序列上。
 
 ## 📥 Code
 
