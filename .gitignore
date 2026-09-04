@@ -46,6 +46,7 @@ data/
 docs/**/models/
 docs/quantum/qml/code/model/
 docs/quantum/qml/code/output/
+docs/quantum/qml/code/_mnist_cache/
 **/nanogpt_model.pt
 **/input.txt
 

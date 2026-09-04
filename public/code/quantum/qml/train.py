@@ -1,7 +1,7 @@
 """
 train.py：训练入口脚本。
 
-迁自 https://github.com/DeconBear/qml-mnist-classify （MIT）。
+迁自独立示例工程 qml-mnist-classify（MIT），现随本章发布。
 需要 pyvqnet。请在本目录运行：python train.py
 
 这个目录只保留一个固定配置。
