@@ -44,6 +44,8 @@ Thumbs.db
 bert_sentiment_checkpoints/
 data/
 docs/**/models/
+docs/quantum/qml/code/model/
+docs/quantum/qml/code/output/
 **/nanogpt_model.pt
 **/input.txt
 

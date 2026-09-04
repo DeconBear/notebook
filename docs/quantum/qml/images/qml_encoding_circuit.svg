@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <style>
+      .title { font: 700 28px "Microsoft YaHei", "SimHei", sans-serif; fill: #17324d; }
+      .sub { font: 700 20px "Microsoft YaHei", "SimHei", sans-serif; fill: #17324d; }
+      .wire { stroke: #5a6e80; stroke-width: 2; }
+      .gate-main { fill: #e2f7df; stroke: #72b36a; stroke-width: 2; rx: 10; }
+      .gate-backup { fill: #fce2ee; stroke: #c77295; stroke-width: 2; rx: 10; }
+      .gate-mid { fill: #fff2dc; stroke: #cf9b4a; stroke-width: 2; rx: 10; }
+      .label { font: 600 16px "Microsoft YaHei", "SimHei", sans-serif; fill: #17324d; }
+      .text { font: 400 14px "Microsoft YaHei", "SimHei", sans-serif; fill: #2a4b63; }
+      .small { font: 400 13px "Microsoft YaHei", "SimHei", sans-serif; fill: #52718b; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="640" fill="#fcfdff"/>
+  <text x="40" y="48" class="title">主方案与备份方案的编码线路对比</text>
+  <text x="40" y="78" class="small">主方案去掉了编码阶段的 CNOT 链，把纠缠任务更多交给固定 HEA，因此在同样 1.0000 准确率下拿到了更高复杂度分。</text>
+
+  <g transform="translate(0,20)">
+    <text x="60" y="120" class="sub">主方案：精简双轴重上传编码（推荐提交）</text>
+    <text x="60" y="145" class="small">结构：8 × Ry + 8 × Rz，门数 16，深度 2</text>
+
+    <g>
+      <text x="60" y="185" class="label">q0</text>
+      <text x="60" y="220" class="label">q1</text>
+      <text x="60" y="255" class="label">q2</text>
+      <text x="60" y="290" class="label">q3</text>
+      <text x="60" y="325" class="label">q4</text>
+      <text x="60" y="360" class="label">q5</text>
+      <text x="60" y="395" class="label">q6</text>
+      <text x="60" y="430" class="label">q7</text>
+
+      <line x1="100" y1="180" x2="1150" y2="180" class="wire"/>
+      <line x1="100" y1="215" x2="1150" y2="215" class="wire"/>
+      <line x1="100" y1="250" x2="1150" y2="250" class="wire"/>
+      <line x1="100" y1="285" x2="1150" y2="285" class="wire"/>
+      <line x1="100" y1="320" x2="1150" y2="320" class="wire"/>
+      <line x1="100" y1="355" x2="1150" y2="355" class="wire"/>
+      <line x1="100" y1="390" x2="1150" y2="390" class="wire"/>
+      <line x1="100" y1="425" x2="1150" y2="425" class="wire"/>
+
+      <rect x="190" y="162" width="84" height="36" class="gate-main"/>
+      <rect x="190" y="197" width="84" height="36" class="gate-main"/>
+      <rect x="190" y="232" width="84" height="36" class="gate-main"/>
+      <rect x="190" y="267" width="84" height="36" class="gate-main"/>
+      <rect x="190" y="302" width="84" height="36" class="gate-main"/>
+      <rect x="190" y="337" width="84" height="36" class="gate-main"/>
+      <rect x="190" y="372" width="84" height="36" class="gate-main"/>
+      <rect x="190" y="407" width="84" height="36" class="gate-main"/>
+
+      <text x="232" y="185" text-anchor="middle" class="text">Ry(θ₀)</text>
+      <text x="232" y="220" text-anchor="middle" class="text">Ry(θ₁)</text>
+      <text x="232" y="255" text-anchor="middle" class="text">Ry(θ₂)</text>
+      <text x="232" y="290" text-anchor="middle" class="text">Ry(θ₃)</text>
+      <text x="232" y="325" text-anchor="middle" class="text">Ry(θ₄)</text>
+      <text x="232" y="360" text-anchor="middle" class="text">Ry(θ₅)</text>
+      <text x="232" y="395" text-anchor="middle" class="text">Ry(θ₆)</text>
+      <text x="232" y="430" text-anchor="middle" class="text">Ry(θ₇)</text>
+
+      <rect x="510" y="162" width="84" height="36" class="gate-main"/>
+      <rect x="510" y="197" width="84" height="36" class="gate-main"/>
+      <rect x="510" y="232" width="84" height="36" class="gate-main"/>
+      <rect x="510" y="267" width="84" height="36" class="gate-main"/>
+      <rect x="510" y="302" width="84" height="36" class="gate-main"/>
+      <rect x="510" y="337" width="84" height="36" class="gate-main"/>
+      <rect x="510" y="372" width="84" height="36" class="gate-main"/>
+      <rect x="510" y="407" width="84" height="36" class="gate-main"/>
+
+      <text x="552" y="185" text-anchor="middle" class="text">Rz(φ₀)</text>
+      <text x="552" y="220" text-anchor="middle" class="text">Rz(φ₁)</text>
+      <text x="552" y="255" text-anchor="middle" class="text">Rz(φ₂)</text>
+      <text x="552" y="290" text-anchor="middle" class="text">Rz(φ₃)</text>
+      <text x="552" y="325" text-anchor="middle" class="text">Rz(φ₄)</text>
+      <text x="552" y="360" text-anchor="middle" class="text">Rz(φ₅)</text>
+      <text x="552" y="395" text-anchor="middle" class="text">Rz(φ₆)</text>
+      <text x="552" y="430" text-anchor="middle" class="text">Rz(φ₇)</text>
+
+      <rect x="760" y="185" width="330" height="180" class="gate-mid"/>
+      <text x="925" y="225" text-anchor="middle" class="sub">为什么这样更优</text>
+      <text x="925" y="262" text-anchor="middle" class="text">1. 保留双轴表达力</text>
+      <text x="925" y="292" text-anchor="middle" class="text">2. 去掉编码阶段额外 CNOT 链</text>
+      <text x="925" y="322" text-anchor="middle" class="text">3. 把纠缠更多交给固定 HEA</text>
+      <text x="925" y="352" text-anchor="middle" class="text">4. 同样达到 1.0000，但复杂度分更高</text>
+    </g>
+  </g>
+
+  <line x1="40" y1="500" x2="1240" y2="500" stroke="#d7e4f2" stroke-width="2"/>
+
+  <g transform="translate(0,20)">
+    <text x="60" y="550" class="sub">备份方案：双轴重上传编码 + 编码纠缠链</text>
+    <text x="60" y="575" class="small">结构：8 × Ry + 7 × CNOT + 8 × Rz，门数 23，深度 4</text>
+
+    <rect x="790" y="528" width="380" height="72" class="gate-backup"/>
+    <text x="980" y="557" text-anchor="middle" class="text">备份方案的核心区别：在编码阶段额外插入一条线性 CNOT 链</text>
+    <text x="980" y="584" text-anchor="middle" class="text">准确率同样能到 1.0000，但编码复杂度更高，所以最终作为备份而不是首选提交</text>
+
+    <rect x="150" y="535" width="110" height="40" class="gate-backup"/>
+    <text x="205" y="560" text-anchor="middle" class="text">8 × Ry</text>
+    <rect x="310" y="535" width="160" height="40" class="gate-backup"/>
+    <text x="390" y="560" text-anchor="middle" class="text">7 × 线性 CNOT 链</text>
+    <rect x="520" y="535" width="110" height="40" class="gate-backup"/>
+    <text x="575" y="560" text-anchor="middle" class="text">8 × Rz</text>
+  </g>
+</svg>

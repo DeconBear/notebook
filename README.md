@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  AI · 算法 · ROS 2 · 图解 + 可运行代码
+  AI · 量子信息 · 算法 · ROS 2 · 图解 + 可运行代码
 </p>
 
 <p align="center">
@@ -43,6 +43,7 @@ AI 领域每天都有新论文、新框架、新名词。但真正关键的底�
 | 面试冲刺者 | 高频考点速通复习 | 已学过一遍 |
 | 算法竞赛选手 | 算法与数据结构图解（algo01-algo16） | 有编程基础 |
 | ROS 2 初学者 | Humble 入门（Topic → Gazebo），边做边记 | Ubuntu 22.04 + ROS 2 Humble |
+| 量子信息学习者 | 计算 / 网络 / 存储 / 模拟 / 混合 QML | 线代直觉；VQNet 为可选 |
 
 > 所有代码默认 CPU 运行，消费级笔记本即可跑通。每章 20-30 分钟读完：读正文（30min）→ 推公式（30min）→ 跑代码（30min）→ 做练习（30min）。
 
@@ -142,6 +143,15 @@ https://deconbear.github.io/notebook/
 - [as07 AlphaChip 与电路设计中的神经网络](docs/science/alphachip/)
 - [as08 AI4S 综合与前沿](docs/science/frontier/)
 
+### 量子信息
+
+- [量子信息全景](docs/quantum/overview/)
+- [量子计算](docs/quantum/computing/)
+- [量子网络](docs/quantum/network/)
+- [量子存储](docs/quantum/memory/)
+- [量子模拟](docs/quantum/simulation/)
+- [量子机器学习](docs/quantum/qml/)
+
 ### 世界模型
 
 - [世界模型导论：四条路径](docs/world-models/intro/)
@@ -230,6 +240,7 @@ https://deconbear.github.io/notebook/
 | 🟣 **面试冲刺** | 已学过，快速复习高频考点 | s02-s04 → ml04(SVM) → ml05(树) → s06-s09 → s16 → s18 → s21 → s25 |
 | 🔴 **算法竞赛** | 只关注算法与数据结构 | 直接看附录 algo01 → algo16，其余章节按需查阅 |
 | 🟤 **科研向 / AI4S** | 做科学计算、生物、芯片等交叉 | 阶段三~五 → 进阶一（as01–as08） |
+| 🟦 **量子信息** | 计算 / 网络 / 存储 / 模拟 / QML | 侧栏 **量子信息**（`docs/quantum/`）；QML 可选本源 VQNet |
 | ⬛ **世界模型** | 关注具身智能 / 生成式模拟 | 阶段六 → 进阶二（四路径：视频 / 交互·3D / 抽象状态 / 因果） |
 | 🟠 **ROS 2 / 机器人** | 要在本机跑 Humble | 侧栏 ROS 2；工作区 `workspaces/ros2-humble/` |
 

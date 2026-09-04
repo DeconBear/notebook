@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="760" viewBox="0 0 1380 760">
+  <defs>
+    <style>
+      .title { font: 700 30px "Microsoft YaHei", "SimHei", sans-serif; fill: #17324d; }
+      .sub { font: 700 19px "Microsoft YaHei", "SimHei", sans-serif; fill: #17324d; }
+      .label { font: 600 16px "Microsoft YaHei", "SimHei", sans-serif; fill: #17324d; }
+      .text { font: 400 14px "Microsoft YaHei", "SimHei", sans-serif; fill: #294861; }
+      .small { font: 400 12px "Microsoft YaHei", "SimHei", sans-serif; fill: #5a768d; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#5a768d"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1380" height="760" fill="#f8fbff"/>
+  <text x="40" y="50" class="title">项目源码阅读路线图</text>
+  <text x="40" y="82" class="small">建议先从入口脚本建立整体印象，再进入 qml_core.py 看模型、训练和评估细节，最后回到实验脚本与报告材料。</text>
+
+  <rect x="50" y="130" width="250" height="150" rx="18" fill="#d8ecff" stroke="#6ba1d6" stroke-width="2"/>
+  <text x="175" y="165" text-anchor="middle" class="sub">第一站</text>
+  <text x="175" y="198" text-anchor="middle" class="label">train.py</text>
+  <text x="175" y="225" text-anchor="middle" class="text">看程序如何启动训练</text>
+  <text x="175" y="248" text-anchor="middle" class="small">重点：参数解析、方案选择、输出目录</text>
+
+  <rect x="360" y="130" width="300" height="150" rx="18" fill="#e2f7df" stroke="#72b36a" stroke-width="2"/>
+  <text x="510" y="165" text-anchor="middle" class="sub">第二站</text>
+  <text x="510" y="198" text-anchor="middle" class="label">qml_core.py</text>
+  <text x="510" y="225" text-anchor="middle" class="text">核心实现都在这里</text>
+  <text x="510" y="248" text-anchor="middle" class="small">重点：配置类、模型结构、训练函数、评估函数</text>
+
+  <rect x="720" y="130" width="250" height="150" rx="18" fill="#fff1d8" stroke="#d8a24f" stroke-width="2"/>
+  <text x="845" y="165" text-anchor="middle" class="sub">第三站</text>
+  <text x="845" y="198" text-anchor="middle" class="label">eval.py</text>
+  <text x="845" y="225" text-anchor="middle" class="text">看训练好的模型如何验收</text>
+  <text x="845" y="248" text-anchor="middle" class="small">重点：模型加载、目录定位、结果输出</text>
+
+  <rect x="1030" y="130" width="290" height="150" rx="18" fill="#fce2ee" stroke="#c77295" stroke-width="2"/>
+  <text x="1175" y="165" text-anchor="middle" class="sub">第四站</text>
+  <text x="1175" y="198" text-anchor="middle" class="label">run_experiments.py</text>
+  <text x="1175" y="225" text-anchor="middle" class="text">看方案是怎么被比较出来的</text>
+  <text x="1175" y="248" text-anchor="middle" class="small">重点：实验列表、批量训练、自动汇总</text>
+
+  <line x1="300" y1="205" x2="360" y2="205" stroke="#5a768d" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="660" y1="205" x2="720" y2="205" stroke="#5a768d" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="970" y1="205" x2="1030" y2="205" stroke="#5a768d" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="90" y="360" width="280" height="250" rx="18" fill="#ffffff" stroke="#c7d7e7" stroke-width="2"/>
+  <text x="230" y="395" text-anchor="middle" class="sub">qml_core.py 内部阅读顺序</text>
+  <text x="120" y="435" class="label">1. 全局常量</text>
+  <text x="120" y="463" class="text">先理解图像尺寸、量子比特数、默认方案名</text>
+  <text x="120" y="500" class="label">2. 配置类</text>
+  <text x="120" y="528" class="text">ModelConfig / TrainingConfig / ExperimentSpec</text>
+  <text x="120" y="565" class="label">3. 方案预设</text>
+  <text x="120" y="593" class="text">看主方案、备份方案和对照方案怎么定义</text>
+
+  <rect x="420" y="360" width="280" height="250" rx="18" fill="#ffffff" stroke="#c7d7e7" stroke-width="2"/>
+  <text x="560" y="395" text-anchor="middle" class="sub">模型阅读顺序</text>
+  <text x="450" y="435" class="label">1. __init__</text>
+  <text x="450" y="463" class="text">先看经典压缩器、角度头、固定 HEA、测量层</text>
+  <text x="450" y="500" class="label">2. _encode</text>
+  <text x="450" y="528" class="text">看不同方案的编码线路究竟怎么切换</text>
+  <text x="450" y="565" class="label">3. forward</text>
+  <text x="450" y="593" class="text">把“图像 -> 分类结果”的完整数据流串起来</text>
+
+  <rect x="750" y="360" width="260" height="250" rx="18" fill="#ffffff" stroke="#c7d7e7" stroke-width="2"/>
+  <text x="880" y="395" text-anchor="middle" class="sub">训练阅读顺序</text>
+  <text x="780" y="435" class="label">1. load_dataset</text>
+  <text x="780" y="463" class="text">先看数据怎样进入程序</text>
+  <text x="780" y="500" class="label">2. train_experiment</text>
+  <text x="780" y="528" class="text">重点理解 batch、loss、optimizer、best model</text>
+  <text x="780" y="565" class="label">3. history / report</text>
+  <text x="780" y="593" class="text">最后看训练记录为什么要写成 JSON</text>
+
+  <rect x="1060" y="360" width="250" height="250" rx="18" fill="#ffffff" stroke="#c7d7e7" stroke-width="2"/>
+  <text x="1185" y="395" text-anchor="middle" class="sub">学习配套材料</text>
+  <text x="1090" y="435" class="label">1. qml_beginner_tutorial.md</text>
+  <text x="1090" y="463" class="text">适合先建立整体概念</text>
+  <text x="1090" y="500" class="label">2. submission_report.md</text>
+  <text x="1090" y="528" class="text">适合看方案叙事和实验结论</text>
+  <text x="1090" y="565" class="label">3. scheme_comparison.md</text>
+  <text x="1090" y="593" class="text">适合看多方案对比证据</text>
+
+  <line x1="510" y1="280" x2="510" y2="330" stroke="#5a768d" stroke-width="3"/>
+  <line x1="510" y1="330" x2="230" y2="330" stroke="#5a768d" stroke-width="3"/>
+  <line x1="230" y1="330" x2="230" y2="360" stroke="#5a768d" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <line x1="510" y1="280" x2="510" y2="360" stroke="#5a768d" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <line x1="510" y1="280" x2="510" y2="330" stroke="#5a768d" stroke-width="3"/>
+  <line x1="510" y1="330" x2="880" y2="330" stroke="#5a768d" stroke-width="3"/>
+  <line x1="880" y1="330" x2="880" y2="360" stroke="#5a768d" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <line x1="1175" y1="280" x2="1175" y2="360" stroke="#5a768d" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <text x="40" y="700" class="small">阅读建议：先建立全局图景，再顺着一条主线读，不要一开始就在训练循环里打转。</text>
+</svg>

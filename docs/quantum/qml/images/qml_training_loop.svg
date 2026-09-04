@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="430" viewBox="0 0 1180 430">
+  <defs>
+    <style>
+      .title { font: 700 28px "Microsoft YaHei", "SimHei", sans-serif; fill: #17324d; }
+      .label { font: 600 18px "Microsoft YaHei", "SimHei", sans-serif; fill: #17324d; }
+      .text { font: 400 15px "Microsoft YaHei", "SimHei", sans-serif; fill: #2a4b63; }
+      .small { font: 400 13px "Microsoft YaHei", "SimHei", sans-serif; fill: #53728b; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#53728b"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="430" fill="#fbfdff"/>
+  <text x="40" y="48" class="title">训练循环在做什么</text>
+
+  <rect x="40" y="120" width="150" height="110" rx="16" fill="#d8ecff" stroke="#6ba1d6" stroke-width="2"/>
+  <text x="115" y="160" text-anchor="middle" class="label">取一个 batch</text>
+  <text x="115" y="188" text-anchor="middle" class="text">图像 + 标签</text>
+
+  <rect x="250" y="120" width="180" height="110" rx="16" fill="#e2f7df" stroke="#72b36a" stroke-width="2"/>
+  <text x="340" y="160" text-anchor="middle" class="label">前向传播</text>
+  <text x="340" y="188" text-anchor="middle" class="text">经典压缩 → 量子编码</text>
+  <text x="340" y="212" text-anchor="middle" class="text">→ HEA → 分类头</text>
+
+  <rect x="490" y="95" width="200" height="70" rx="16" fill="#fff1d8" stroke="#d8a24f" stroke-width="2"/>
+  <text x="590" y="137" text-anchor="middle" class="label">交叉熵损失</text>
+
+  <rect x="490" y="185" width="200" height="70" rx="16" fill="#fce2ee" stroke="#c77295" stroke-width="2"/>
+  <text x="590" y="227" text-anchor="middle" class="label">对齐正则损失</text>
+
+  <rect x="750" y="120" width="150" height="110" rx="16" fill="#e7e0ff" stroke="#8d7ad1" stroke-width="2"/>
+  <text x="825" y="160" text-anchor="middle" class="label">总损失</text>
+  <text x="825" y="188" text-anchor="middle" class="text">CE + λ × Align</text>
+
+  <rect x="960" y="120" width="170" height="110" rx="16" fill="#d9f5f0" stroke="#58a99a" stroke-width="2"/>
+  <text x="1045" y="160" text-anchor="middle" class="label">反向传播 + 更新</text>
+  <text x="1045" y="188" text-anchor="middle" class="text">backward()</text>
+  <text x="1045" y="212" text-anchor="middle" class="text">optimizer.step()</text>
+
+  <rect x="380" y="300" width="420" height="82" rx="18" fill="#ffe7dc" stroke="#cc8560" stroke-width="2"/>
+  <text x="590" y="332" text-anchor="middle" class="label">每个 epoch 结束后</text>
+  <text x="590" y="357" text-anchor="middle" class="text">计算 train/test accuracy，若 test 更好就保存 best_model.vq</text>
+
+  <line x1="190" y1="175" x2="250" y2="175" stroke="#53728b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="430" y1="155" x2="490" y2="130" stroke="#53728b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="430" y1="195" x2="490" y2="220" stroke="#53728b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="690" y1="130" x2="750" y2="155" stroke="#53728b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="690" y1="220" x2="750" y2="195" stroke="#53728b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="900" y1="175" x2="960" y2="175" stroke="#53728b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="1045" y1="230" x2="1045" y2="275" stroke="#53728b" stroke-width="3"/>
+  <line x1="1045" y1="275" x2="800" y2="275" stroke="#53728b" stroke-width="3"/>
+  <line x1="800" y1="275" x2="800" y2="300" stroke="#53728b" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <text x="70" y="262" class="small">训练时不停重复这个流程，直到达到设定 epoch。</text>
+</svg>

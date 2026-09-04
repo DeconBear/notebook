@@ -4,7 +4,7 @@ Guide for AI agents working in this repository. Covers the non-obvious architect
 
 ## Project overview
 
-**notebook** is a Chinese-language illustrated notebook published as a [VitePress](https://vitepress.dev) static site (formerly *learn-ai*). Content lives under `docs/`, grouped by domain (machine learning, deep learning, CV, NLP, RL, systems, scientific computing, world models, algorithms, papers, **ROS 2**)—not a single `ai/` bucket. Most chapters pair illustrated prose (`index.md`) with runnable Python (`code/demo.py`) and a guided exercise (`code/exercise.py`). ROS 2 lessons are Markdown-only; their colcon workspace is `workspaces/ros2-humble/`.
+**notebook** is a Chinese-language illustrated notebook published as a [VitePress](https://vitepress.dev) static site (formerly *learn-ai*). Content lives under `docs/`, grouped by domain (machine learning, deep learning, CV, NLP, RL, systems, scientific computing, **quantum information**, world models, algorithms, papers, **ROS 2**)—not a single `ai/` bucket. Most chapters pair illustrated prose (`index.md`) with runnable Python (`code/demo.py`) and a guided exercise (`code/exercise.py`). ROS 2 lessons are Markdown-only; their colcon workspace is `workspaces/ros2-humble/`.
 
 - Site URL: deployed at `https://<user>.github.io/notebook/` (note the `/notebook/` base path).
 - All content is written in **Chinese** (`lang: 'zh-CN'`); code comments are in Chinese. Keep new content in Chinese unless told otherwise.
