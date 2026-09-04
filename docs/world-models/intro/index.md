@@ -1,10 +1,10 @@
 ---
-title: "世界模型导论：四条路径"
+title: "世界模型导论：五条路径"
 order: 10
 legacyPaths:
   - /wm01_world_model_intro/
 ---
-# 世界模型导论：四条路径
+# 世界模型导论：五条路径
 
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
@@ -34,22 +34,25 @@ $$
 
 ---
 
-## 二、为什么用「四条路径」而不是一张杂货清单？
+## 二、为什么用「五条路径」而不是一张杂货清单？
 
-近年 survey（如 *Learning to Model the World*、*Agentic World Modeling*）与开源 Awesome 列表里，方法名爆炸。教学上我们按**你要世界模型干什么**收成四条主路径——它们互补，不是互斥排名：
+近年 survey（如 *Learning to Model the World*、*Agentic World Modeling*）与开源 Awesome 列表里，方法名爆炸。教学上我们按**你要世界模型干什么**收成五条主路径——它们互补，不是互斥排名：
 
-![世界模型四条路径](./images/wm01-02-four-paths.png)
+![世界模型五条路径](./images/wm01-01-taxonomy.png)
 
-> **图解说明**：路径一追求开放视觉模拟；路径二追求可交互（含 3D）；路径三追求紧凑状态上的预测与决策；路径四强调 $P(\cdot\mid do(a))$ 与反事实。箭头表示技术互相借用。
+> **图解说明**：本章 `demo.py` 生成的分类地图。路径一从 GAN/VAE/扩散讲到视频 WM；路径五是谓词、程序与 LLM 规则对齐。旧图 `wm01-02-four-paths.png` 仍可对照「补符号之前」的四路径版本。
 
 | 路径 | 关键问题 | 预测对象 | 代表 |
 |------|----------|----------|------|
-| **一 · 视频生成** | 未来「长什么样」？ | 像素 / 视频潜空间 | Sora、Cosmos、Movie Gen |
+| **一 · 视频生成** | 未来「长什么样」？ | 像素 / 视频潜空间 | GAN → VAE → 扩散 → Sora、Cosmos |
 | **二 · 交互 / 3D** | 我能否「玩」这个世界？ | 动作条件帧或 3D 场景 | Genie、HunyuanWorld、Marble |
 | **三 · 抽象状态预测** | 如何在便宜的 $z$ 里规划/学策略？ | 状态 / 嵌入 | PETS、RSSM/PlaNet、Dreamer、MuZero、JEPA、LeWM |
-| **四 · 因果世界模型** | 相关还是可干预？ | $P(y\mid do(a))$、反事实 | LLM-CWM、NTP 因果分析、Next Forcing… |
+| **四 · 因果世界模型** | 相关还是可干预？ | $P(y\mid do(a))$、反事实 | LLM-CWM、NTP 因果分析 |
+| **五 · 符号 / 神经符号** | 定律能否写成可执行符号？ | 谓词、规则、程序 | pix2pred、COSMOS（ICLR）、WALL-E、PoE-World、NeSyS |
 
-旧版「六路径」把 RSSM、MuZero、JEPA、Genie、视频、LLM 并列。现在把 **RSSM/Dreamer/JEPA/MuZero/PETS/LeWM** 收进路径三（都是抽象状态上的预测），把 **Genie 与 3D** 收进路径二，**视频生成**独立为路径一，并补上长期被低估的 **因果** 为路径四。LLM 模拟器仍有用，但放在 [附录章](/world-models/llm/) 做符号/语言接口，不再占主路径名额。
+旧版「六路径」把 RSSM、MuZero、JEPA、Genie、视频、LLM 并列。后来收成四条，并把 LLM 贬到附录。这一版把 **GAN/VAE/扩散**从计算机视觉挪进路径一（分章细讲），再把 LLM 与 neurosymbolic 升为**路径五**：语言模型不再假装自己是主路径里的「第六种神经网络动力学」，而是符号接口 + 规则/程序世界模型。
+
+NVIDIA **Cosmos**（视频基础模型）属于路径一；ICLR 2024 的 **COSMOS**（神经符号组合世界模型）属于路径五——名字撞车，不是同一系统。
 
 ---
 
@@ -86,7 +89,7 @@ $$
 - **先验** $p$：不看 $o_t$ 的预测（想象 / 规划）；
 - 部署时多步只滚先验，就是「做梦」。
 
-路径一可能直接在像素/视频潜空间做生成；路径四则追问：你滚的到底是 $P$ 还是 $P(\cdot\mid do(a))$？
+路径一可能直接在像素/视频潜空间做生成；路径四追问你滚的到底是 $P$ 还是 $P(\cdot\mid do(a))$；路径五追问同一件事能不能写成谓词与规则。
 
 ---
 
@@ -102,11 +105,15 @@ $$
 
 ```mermaid
 flowchart TB
-    intro["导论 · 四路径（本章）"] --> p1["路径一 · 视频生成"]
+    intro["导论 · 五路径（本章）"] --> p1["路径一 · 视频生成"]
     intro --> p2["路径二 · 交互/3D"]
     intro --> p3["路径三 · 抽象状态预测"]
     intro --> p4["路径四 · 因果世界模型"]
-    p1 --> video["Sora / Cosmos"]
+    intro --> p5["路径五 · 符号/神经符号"]
+    p1 --> gan["GAN"]
+    gan --> vae["VAE"]
+    vae --> diff["扩散 / DiT"]
+    diff --> video["Sora / Cosmos"]
     p2 --> genie["Genie"]
     p2 --> scene["交互式 3D"]
     p3 --> pets["PETS · MPC/CEM"]
@@ -116,10 +123,12 @@ flowchart TB
     dreamer --> jepa["JEPA / V-JEPA"]
     jepa --> lewm["LeWM"]
     p4 --> causal["Pearl 梯与 do(a)"]
-    intro -.-> llm["附录 · LLM 世界模型"]
+    p5 --> ground["像素→谓词"]
+    p5 --> prog["PDDL / 程序定律"]
+    p5 --> align["WALL-E / NeSyS"]
 ```
 
-建议顺序：导论 → 路径一（建立生成直觉）→ 路径二（交互）→ 路径三按 PETS → PlaNet → Dreamer → JEPA → LeWM（MuZero 可穿插）→ 路径四 → 需要时读 LLM 附录。
+建议顺序：导论 → 路径一按 GAN → VAE → 扩散 → 视频 WM → 路径二 → 路径三按 PETS → PlaNet → Dreamer → JEPA → LeWM（MuZero 可穿插）→ 路径四 → 路径五。
 
 ---
 
@@ -128,12 +137,12 @@ flowchart TB
 | 概念 | 一句话 |
 |------|--------|
 | 世界模型 | 内部动力学预测器，用于想象与决策 |
-| 四路径 | 视频生成 / 交互·3D / 抽象状态 / 因果 |
+| 五路径 | 视频生成 / 交互·3D / 抽象状态 / 因果 / 符号 |
 | 先验·后验 | 做梦用先验，训练常用后验 |
 | 潜空间 | 降低多步误差，服务规划 |
 | 互补 | 好看、可玩、可算、可干预——常常要组合 |
 
-> 下一节建议：[路径一 · 视频生成式世界模型](/world-models/video/)。若你更关心控制，也可直奔 [PETS](/world-models/abstract/pets/)。
+> 下一节建议：[路径一导论](/world-models/video/overview/)，从 GAN 讲起。若你更关心控制，也可直奔 [PETS](/world-models/abstract/pets/)；若关心谓词与 LLM 规则，可先看 [路径五](/world-models/symbolic/overview/)。
 
 ## 📥 Code
 
@@ -151,3 +160,6 @@ flowchart TB
 5. LeCun, Y. (2022). A Path Towards Autonomous Machine Intelligence.
 6. Lyu, Q., Dong, J., et al. Learning to Model the World（survey）.
 7. Chu, M., et al. (2026). Agentic World Modeling. [[arXiv:2604.22748](https://arxiv.org/abs/2604.22748)]
+8. Sehgal, A., et al. (2024). Neurosymbolic Grounding for Compositional World Models. *ICLR*. [[arXiv:2310.12690](https://arxiv.org/abs/2310.12690)]
+9. Zhou, S., et al. WALL-E / WALL-E 2.0. [[arXiv:2410.07484](https://arxiv.org/abs/2410.07484)]
+10. Hu, M., et al. (2025). Text2World. [[arXiv:2502.13092](https://arxiv.org/abs/2502.13092)]

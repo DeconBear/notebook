@@ -27,7 +27,13 @@ export function parseSimpleYaml(text) {
     const listItem = trimmed.match(/^\s*-\s+(.*)$/)
     if (listItem && currentKey) {
       if (!Array.isArray(data[currentKey])) data[currentKey] = []
-      data[currentKey].push(unquote(listItem[1]))
+      const inline = unquote(listItem[1])
+      const pair = inline.match(/^from:\s*(\S+)\s+to:\s*(\S+)\s*$/)
+      if (pair) {
+        data[currentKey].push({ from: unquote(pair[1]), to: unquote(pair[2]) })
+      } else {
+        data[currentKey].push(inline)
+      }
       continue
     }
     const kv = trimmed.match(/^([A-Za-z_][\w]*)\s*:\s*(.*)$/)

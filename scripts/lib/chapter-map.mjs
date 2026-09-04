@@ -52,7 +52,7 @@ export const CHAPTERS = [
   { from: 's11_cnn_architectures', to: 'cv/architectures', title: 's11 经典架构演进', order: 20 },
   { from: 's12_object_detection', to: 'cv/object-detection', title: 's12 目标检测', order: 30 },
   { from: 's11b_vit', to: 'cv/vit', title: 's12b Vision Transformer', order: 40 },
-  { from: 's13_image_generation', to: 'cv/generation', title: 's13 图像生成', order: 50 },
+  { from: 's13_image_generation', to: 'world-models/video/overview', title: '路径一导论（原 s13）', order: 5 },
 
   { from: 's14_text_representation', to: 'nlp/text-representation', title: 's14 文本表示', order: 10 },
   { from: 's15_sequence_models', to: 'nlp/sequence-models', title: 's15 序列模型', order: 20 },

@@ -23,7 +23,8 @@ def classify_world_model(features: Dict[str, bool]) -> str:
     """
     TODO 1: 根据一组二值特征，判断某个方法属于世界模型的哪条技术路径。
 
-    这是对 index.md 中"六大技术路径"分类逻辑的代码化。
+    这是对方法标签的代码化练习（旧六分法：RSSM/MuZero/JEPA/Genie/VideoGen/LLM）。
+    正文已收成五条路径：VideoGen⊂路径一，Genie⊂路径二，RSSM/MuZero/JEPA⊂路径三，LLM⊂路径五。
     每条路径的判定规则（按优先级顺序检查）：
 
         1. 如果 uses_tree_search=True                     → 'MuZero'
