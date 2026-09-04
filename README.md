@@ -109,7 +109,6 @@ https://deconbear.github.io/notebook/
 - [s11 经典架构演进](docs/cv/architectures/)
 - [s12 目标检测](docs/cv/object-detection/)
 - [s12b Vision Transformer](docs/cv/vit/)
-- [s13 图像生成](docs/cv/generation/)
 
 ### 自然语言处理
 
@@ -154,24 +153,44 @@ https://deconbear.github.io/notebook/
 
 ### 世界模型
 
-- [世界模型导论：四条路径](docs/world-models/intro/)
-- [路径一 · 视频生成式世界模型](docs/world-models/video/)
+- [世界模型导论：五条路径](docs/world-models/intro/)
+
+#### 路径一 · 从图像生成到视频世界模型
+
+- [路径一导论：生成模型如何变成世界模拟器](docs/world-models/video/overview/)
+- [GAN：对抗里长出的生成器](docs/world-models/video/gan/)
+- [VAE：能采样的压缩瓶](docs/world-models/video/vae/)
+- [扩散模型：从 DDPM 到视频世界模拟器](docs/world-models/video/diffusion/)
+- [Sora / Cosmos：视频世界模拟器](docs/world-models/video/sora/)
 
 #### 路径二 · 交互 / 3D 生成
 
+- [路径二导论：可交互的世界](docs/world-models/interactive/overview/)
 - [Genie：从视频中长出可玩的世界](docs/world-models/interactive/genie/)
 - [交互式 3D 世界：从 Genie 到可漫游场景](docs/world-models/interactive/scene-3d/)
 
 #### 路径三 · 抽象状态预测
 
+- [路径三导论：在紧凑状态上预测与决策](docs/world-models/abstract/overview/)
 - [PETS：概率集成、轨迹采样与 MPC](docs/world-models/abstract/pets/)
 - [RSSM 与 PlaNet](docs/world-models/abstract/rssm/)
 - [Dreamer V1–V4：在想象里学会行动](docs/world-models/abstract/dreamer/)
 - [MuZero：隐式世界模型](docs/world-models/abstract/muzero/)
 - [JEPA / V-JEPA](docs/world-models/abstract/jepa/)
 - [LeWM：两项损失的端到端 JEPA 世界模型](docs/world-models/abstract/lewm/)
-- [路径四 · 因果世界模型](docs/world-models/causal/)
-- [附录 · LLM 世界模型与路径对照](docs/world-models/llm/)
+
+#### 路径四 · 因果世界模型
+
+- [因果阶梯：关联、干预、反事实](docs/world-models/causal/ladder/)
+- [因果世界模型文献](docs/world-models/causal/literature/)
+
+#### 路径五 · 符号 / 神经符号世界模型
+
+- [路径五导论：符号、程序与神经符号世界模型](docs/world-models/symbolic/overview/)
+- [视觉接地：从像素到谓词](docs/world-models/symbolic/grounding/)
+- [程序化世界模型：PDDL、专家乘积与随机定律](docs/world-models/symbolic/programs/)
+- [世界对齐：规则约束下的 LLM 世界模型](docs/world-models/symbolic/alignment/)
+- [LLM 作为世界模型：语言接口与幻觉](docs/world-models/symbolic/llm-sim/)
 
 ### ROS 2
 
@@ -241,7 +260,7 @@ https://deconbear.github.io/notebook/
 | 🔴 **算法竞赛** | 只关注算法与数据结构 | 直接看附录 algo01 → algo16，其余章节按需查阅 |
 | 🟤 **科研向 / AI4S** | 做科学计算、生物、芯片等交叉 | 阶段三~五 → 进阶一（as01–as08） |
 | 🟦 **量子信息** | 计算 / 网络 / 存储 / 模拟 / QML | 侧栏 **量子信息**（`docs/quantum/`）；QML 可选本源 VQNet |
-| ⬛ **世界模型** | 关注具身智能 / 生成式模拟 | 阶段六 → 进阶二（四路径：视频 / 交互·3D / 抽象状态 / 因果） |
+| ⬛ **世界模型** | 关注具身智能 / 生成式模拟 | 阶段六 → 进阶二（五路径：视频 / 交互·3D / 抽象状态 / 因果 / 符号） |
 | 🟠 **ROS 2 / 机器人** | 要在本机跑 Humble | 侧栏 ROS 2；工作区 `workspaces/ros2-humble/` |
 
 > 💡 **番外一**（集成学习、聚类、降维、蒙特卡洛、HMM、EM、概率图、高斯过程）在阶段二之后，默认折叠。内容独立、互不依赖，可按需跳读。**进阶一 / 进阶二**在阶段七之后，默认折叠；**番外二**为论文精读占位，敬请期待。

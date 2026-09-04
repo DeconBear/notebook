@@ -170,7 +170,7 @@ $$
 | 潜空间 CEM | 最小化 $\|\hat z_H-z_g\|^2$，MPC 滚动执行 |
 | 定位 | 路径三：比 JEPA 更「能控」，比 Dreamer 更「任务无关」 |
 
-> 路径三其余节点：回到 [MuZero](/world-models/abstract/muzero/) 看搜索式隐式模型，或进入路径四 [因果世界模型](/world-models/causal/)。
+> 路径三其余节点：回到 [MuZero](/world-models/abstract/muzero/) 看搜索式隐式模型，或进入路径四 [因果阶梯](/world-models/causal/ladder/)。
 
 ## 📥 Code
 

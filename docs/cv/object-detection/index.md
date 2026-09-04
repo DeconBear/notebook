@@ -208,7 +208,7 @@ DETR 消除了 NMS、锚框等手工设计的组件，是端到端检测的极�
 | NMS | 去除冗余框：保留置信度最高的，移除高 IoU 的 |
 | mAP | 多类别平均精度：PR 曲线下面积的平均值 |
 
-> 下一节 [s12b Vision Transformer](/cv/vit/) 将展示 Transformer 如何颠覆计算机视觉——用自注意力替代卷积，开创图像理解的新范式。之后 [s13 图像生成](/cv/generation/) 将探讨如何让模型"创造"图像。
+> 下一节 [s12b Vision Transformer](/cv/vit/) 将展示 Transformer 如何颠覆计算机视觉——用自注意力替代卷积，开创图像理解的新范式。图像/视频生成已并入世界模型 [路径一](/world-models/video/overview/)（GAN → VAE → 扩散）。
 
 ## 📥 Code
 

@@ -3,13 +3,12 @@
 wm01 世界模型导论与分类 —— 演示代码
 ======================================================
 功能：
-  1. 绘制"世界模型六大技术路径"分类地图（taxonomy map）
-     - RSSM/Dreamer（隐式动力学 + 想象规划）
-     - MuZero（隐式模型 + 树搜索）
-     - JEPA（联合嵌入预测架构）
-     - Genie（交互式生成世界模型）
-     - 视频生成式世界模型
-     - LLM 世界模型
+  1. 绘制「世界模型五条技术路径」分类地图
+     - 路径一：GAN / VAE / 扩散 / 视频 WM
+     - 路径二：Genie / 3D
+     - 路径三：PETS / Dreamer / JEPA / LeWM / MuZero
+     - 路径四：因果（干预 / 反事实）
+     - 路径五：符号 / 神经符号 / LLM 规则
   2. 用玩具仿真展示"为什么要在潜空间里做梦"——对比像素空间
      与潜空间做多步预测（rollout）时的误差累积速度
   3. 绘制六条路径在多个维度上的雷达图对比
@@ -56,46 +55,39 @@ def set_seed(seed: int = 42):
 # 每条路径的元数据：(简称, 全称, 代表方法, 颜色, 关键词)
 TAXONOMY = [
     dict(
-        key='RSSM/Dreamer',
-        full='隐式动力学 + 想象规划',
-        methods=['PlaNet (RSSM)', 'DreamerV1→V3'],
-        color='#2E86AB',
-        note='latent space rollout',
-    ),
-    dict(
-        key='MuZero',
-        full='隐式模型 + 树搜索',
-        methods=['MuZero', 'EfficientZero'],
-        color='#A23B72',
-        note='learned model + MCTS',
-    ),
-    dict(
-        key='JEPA',
-        full='联合嵌入预测架构',
-        methods=['I-JEPA', 'V-JEPA / V-JEPA2'],
-        color='#F18F01',
-        note='predict embeddings, not pixels',
-    ),
-    dict(
-        key='Genie',
-        full='交互式生成世界模型',
-        methods=['Genie', 'Genie-2 / GameNGen'],
-        color='#3B7A57',
-        note='learn actions unsupervised',
-    ),
-    dict(
-        key='VideoGen',
-        full='视频生成式世界模型',
-        methods=['Sora', 'VideoPoet / WorldDreamer'],
+        key='路径一 视频生成',
+        full='GAN / VAE / 扩散 / Sora',
+        methods=['GAN→VAE→DiT', 'Sora / Cosmos'],
         color='#C1666B',
-        note='diffusion / autoregressive pixels',
+        note='pixels / video latents',
     ),
     dict(
-        key='LLM',
-        full='LLM 世界模型',
-        methods=['LLM-as-simulator', 'Voyager / 生成式智能体'],
+        key='路径二 交互/3D',
+        full='可玩、可漫游',
+        methods=['Genie', 'HunyuanWorld / Marble'],
+        color='#3B7A57',
+        note='action as first-class',
+    ),
+    dict(
+        key='路径三 抽象状态',
+        full='便宜的 z 上规划',
+        methods=['PETS / Dreamer', 'JEPA / LeWM / MuZero'],
+        color='#2E86AB',
+        note='latent rollout',
+    ),
+    dict(
+        key='路径四 因果',
+        full='P vs P(·|do)',
+        methods=['Pearl 阶梯', '干预评测'],
+        color='#F18F01',
+        note='confounding / intervention',
+    ),
+    dict(
+        key='路径五 符号',
+        full='谓词 / 规则 / 程序',
+        methods=['pix2pred / COSMOS', 'WALL-E / PoE-World'],
         color='#6A4C93',
-        note='language as world state',
+        note='executable symbols',
     ),
 ]
 
@@ -178,7 +170,7 @@ def plot_taxonomy_map(save_name: str = 'wm01-01-taxonomy.png'):
         ax.text(branch_xy[0], branch_xy[1] - 0.62, f"« {item['note']} »", ha='center', va='center',
                 fontsize=7, color='#666666', style='italic', zorder=4)
 
-    ax.set_title('世界模型六大技术路径分类地图 (World Model Taxonomy Map)',
+    ax.set_title('世界模型五条技术路径分类地图',
                   fontsize=13, fontweight='bold', pad=14)
     plt.tight_layout()
     out_path = os.path.join(_IMAGES_DIR, save_name)
@@ -282,18 +274,17 @@ def plot_rollout_error_comparison(
 # 六个评价维度上的主观打分（1-5，5 为最优），仅用于教学直觉，非严格科学评估
 RADAR_DIMENSIONS = ['样本效率', '规划能力', '生成质量', '计算成本(越低越好)', '可解释性', '通用性']
 RADAR_SCORES = {
-    'RSSM/Dreamer': [4, 5, 3, 3, 3, 3],
-    'MuZero':       [3, 5, 1, 2, 2, 2],
-    'JEPA':         [4, 2, 2, 4, 3, 4],
-    'Genie':        [2, 3, 4, 2, 2, 3],
-    'VideoGen':     [1, 2, 5, 1, 1, 4],
-    'LLM':          [3, 3, 3, 2, 4, 5],
+    '路径一 视频生成': [1, 2, 5, 1, 1, 4],
+    '路径二 交互/3D':   [2, 3, 4, 2, 2, 3],
+    '路径三 抽象状态': [4, 5, 3, 3, 3, 3],
+    '路径四 因果':     [3, 4, 2, 3, 4, 3],
+    '路径五 符号':     [4, 4, 2, 4, 5, 3],
 }
 
 
 def plot_radar_comparison(save_name: str = 'world_model_radar_comparison.png'):
     """
-    绘制六条世界模型技术路径在多个维度上的雷达图对比。
+    绘制五条世界模型技术路径在多个维度上的雷达图对比。
 
     评分是教学用的主观定性打分（1-5），帮助建立"没有一种路径全面占优，
     需要根据任务需求选择"的直觉，而非严格的定量评测结果。
@@ -319,7 +310,7 @@ def plot_radar_comparison(save_name: str = 'world_model_radar_comparison.png'):
     ax.set_yticks([1, 2, 3, 4, 5])
     ax.set_yticklabels(['1', '2', '3', '4', '5'], fontsize=8)
     ax.set_ylim(0, 5)
-    ax.set_title('世界模型六条技术路径 —— 多维度直觉对比（主观定性打分）',
+    ax.set_title('世界模型五条技术路径 —— 多维度直觉对比（主观定性打分）',
                   fontsize=12, fontweight='bold', pad=20)
     ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), fontsize=9)
     plt.tight_layout()
@@ -344,7 +335,7 @@ def main():
     set_seed(42)                                                   # 固定随机种子，保证可复现
 
     # ---- 1. 分类地图 ----
-    print("\n[步骤 1] 绘制世界模型六大技术路径分类地图...")
+    print("\n[步骤 1] 绘制世界模型五条技术路径分类地图...")
     plot_taxonomy_map()
 
     # ---- 2. rollout 误差累积对比 ----
@@ -358,7 +349,7 @@ def main():
     plot_rollout_error_comparison(pixel_err, latent_err, pixel_std, latent_std)
 
     # ---- 3. 雷达图对比 ----
-    print("\n[步骤 3] 绘制六条技术路径的多维度雷达图对比...")
+    print("\n[步骤 3] 绘制五条技术路径的多维度雷达图对比...")
     plot_radar_comparison()
 
     # ---- 总结 ----
@@ -367,10 +358,10 @@ def main():
     print("=" * 70)
     print("  世界模型的核心思想：学习环境动力学的内部预测模型，")
     print("  使 Agent 能够'在脑海中'模拟未来，而不必每次都与真实环境交互。")
-    print("\n  六条技术路径各有侧重：")
+    print("\n  五条技术路径各有侧重：")
     for item in TAXONOMY:
         print(f"    - {item['key']:12s} ({item['full']}): {', '.join(item['methods'])}")
-    print("\n  下一节 wm02 将深入 RSSM —— 第一个被广泛验证的潜空间动力学模型。")
+    print("\n  下一节进入路径一：GAN → VAE → 扩散 → 视频世界模型。")
     print(f"\n  所有图片已保存至 {_IMAGES_DIR}")
     print("=" * 70)
     print("\n  运行完成！\n")

@@ -1,2 +1,22 @@
-# 已删除章节的旧 URL。每项: { from: /old-slug/, to: /parent/ }
-redirects: []
+# 已删除章节的旧 URL。每项一行: from: /old/ to: /new/
+redirects:
+  - from: /world-models/video/ to: /world-models/video/overview/
+  - from: /cv/generation/ to: /world-models/video/overview/
+  - from: /cv/generation/code-demo to: /world-models/video/gan/code-demo
+  - from: /cv/generation/code-exercise to: /world-models/video/gan/code-exercise
+  - from: /code/cv/generation/demo.py to: /code/world-models/video/gan/demo.py
+  - from: /code/cv/generation/exercise.py to: /code/world-models/video/gan/exercise.py
+  - from: /code/s13_image_generation/demo.py to: /code/world-models/video/gan/demo.py
+  - from: /code/s13_image_generation/exercise.py to: /code/world-models/video/gan/exercise.py
+  - from: /world-models/video/code-demo to: /world-models/video/sora/code-demo
+  - from: /world-models/video/code-exercise to: /world-models/video/sora/code-exercise
+  - from: /code/world-models/video/demo.py to: /code/world-models/video/sora/demo.py
+  - from: /code/world-models/video/exercise.py to: /code/world-models/video/sora/exercise.py
+  - from: /world-models/causal/code-demo to: /world-models/causal/ladder/code-demo
+  - from: /world-models/causal/code-exercise to: /world-models/causal/ladder/code-exercise
+  - from: /code/world-models/causal/demo.py to: /code/world-models/causal/ladder/demo.py
+  - from: /code/world-models/causal/exercise.py to: /code/world-models/causal/ladder/exercise.py
+  - from: /world-models/llm/code-demo to: /world-models/symbolic/llm-sim/code-demo
+  - from: /world-models/llm/code-exercise to: /world-models/symbolic/llm-sim/code-exercise
+  - from: /code/world-models/llm/demo.py to: /code/world-models/symbolic/llm-sim/demo.py
+  - from: /code/world-models/llm/exercise.py to: /code/world-models/symbolic/llm-sim/exercise.py

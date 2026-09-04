@@ -78,7 +78,7 @@ $$
 - 强迫后验别离开先验太远（正则）；
 - 或强迫先验去追后验（学动力学）。
 
-Dreamer 的 **KL balancing / free bits**，就是在调整这两边的梯度谁更大，避免某一侧把表示掐死。细节见 [Dreamer](/world-models/abstract/dreamer/) 与 [RSSM](/world-models/abstract/rssm/)。图像生成里的 [VAE](/cv/generation/) 用的也是同一项：$\mathrm{KL}(q_\phi(z\mid x)\|p(z))$。
+Dreamer 的 **KL balancing / free bits**，就是在调整这两边的梯度谁更大，避免某一侧把表示掐死。细节见 [Dreamer](/world-models/abstract/dreamer/) 与 [RSSM](/world-models/abstract/rssm/)。图像生成里的 [VAE](/world-models/video/vae/) 用的也是同一项：$\mathrm{KL}(q_\phi(z\mid x)\|p(z))$。
 
 ---
 
@@ -118,7 +118,7 @@ $$
 | 训练联系 | 交叉熵 ↓ ⇔ 似然 ↑ |
 | 下游 | 分类、VAE、RSSM/Dreamer、蒸馏 |
 
-> 数学基础四章到此收束。建议回到 [线性回归](/ml/foundations/linear-regression/) 或按兴趣进入 [机器学习](/ml/foundations/ai-overview/)。世界模型读者可带着 KL 直觉去看 [RSSM](/world-models/abstract/rssm/)；图像生成读者可看 [GAN / VAE / 扩散](/cv/generation/)。
+> 数学基础四章到此收束。建议回到 [线性回归](/ml/foundations/linear-regression/) 或按兴趣进入 [机器学习](/ml/foundations/ai-overview/)。世界模型读者可带着 KL 直觉去看 [RSSM](/world-models/abstract/rssm/)；生成模型读者可看 [VAE](/world-models/video/vae/) 与 [扩散](/world-models/video/diffusion/)。
 
 ## 📥 Code
 
