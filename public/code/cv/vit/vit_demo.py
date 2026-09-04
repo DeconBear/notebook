@@ -11,7 +11,7 @@ s11b Vision Transformer (ViT) Demo：从零实现 ViT，对比预训练 ViT 与 
   3. 直观感受 ViT 需要更多数据的特性
 
 运行方式：
-  cd docs/cv/vit/code
+  cd docs/applied/cv/vit/code
   python vit_demo.py
 
 依赖：torch, torchvision, matplotlib, numpy

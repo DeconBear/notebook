@@ -94,42 +94,46 @@ https://deconbear.github.io/notebook/
 - [ml13 概率图模型基础](docs/ml/advanced/probabilistic-graphical-models/)
 - [ml14 核方法与高斯过程](docs/ml/advanced/kernel-gp/)
 
-### 深度学习
+### 神经网络与决策
 
-- [s05 计算图与前向传播](docs/dl/forward-graph/)
-- [s06 反向传播与链式法则](docs/dl/backprop/)
-- [s07 多层网络矩阵反传](docs/dl/matrix-backprop/)
-- [s08 优化器：SGD→Adam](docs/dl/optimizers/)
-- [s09 Adam 深度解析](docs/dl/adam/)
-- [混合专家 MoE](docs/dl/moe/)
+#### 深度学习
 
-### 计算机视觉
+- [s05 计算图与前向传播](docs/nn-decision/dl/forward-graph/)
+- [s06 反向传播与链式法则](docs/nn-decision/dl/backprop/)
+- [s07 多层网络矩阵反传](docs/nn-decision/dl/matrix-backprop/)
+- [s08 优化器：SGD→Adam](docs/nn-decision/dl/optimizers/)
+- [s09 Adam 深度解析](docs/nn-decision/dl/adam/)
+- [混合专家 MoE](docs/nn-decision/dl/moe/)
 
-- [s10 CNN 核心原理](docs/cv/cnn/)
-- [s11 经典架构演进](docs/cv/architectures/)
-- [s12 目标检测](docs/cv/object-detection/)
-- [s12b Vision Transformer](docs/cv/vit/)
+#### 强化学习
 
-### 自然语言处理
+- [s19 MDP & Q-Learning](docs/nn-decision/rl/qlearning/)
+- [s20 深度强化学习](docs/nn-decision/rl/deep-rl/)
+- [s21 RLHF](docs/nn-decision/rl/rlhf/)
 
-- [s14 文本表示](docs/nlp/text-representation/)
-- [s15 序列模型](docs/nlp/sequence-models/)
-- [s16 Attention & Transformer](docs/nlp/transformer/)
-- [s17 预训练范式](docs/nlp/pretrained/)
-- [s18 大语言模型](docs/nlp/llm/)
+### 感知、语言与系统
 
-### 强化学习
+#### 计算机视觉
 
-- [s19 MDP & Q-Learning](docs/rl/qlearning/)
-- [s20 深度强化学习](docs/rl/deep-rl/)
-- [s21 RLHF](docs/rl/rlhf/)
+- [s10 CNN 核心原理](docs/applied/cv/cnn/)
+- [s11 经典架构演进](docs/applied/cv/architectures/)
+- [s12 目标检测](docs/applied/cv/object-detection/)
+- [s12b Vision Transformer](docs/applied/cv/vit/)
 
-### 系统与应用
+#### 自然语言处理
 
-- [s22 多模态模型](docs/systems/multimodal/)
-- [s23 RAG 与 Agent](docs/systems/rag-agent/)
-- [s24 部署与推理优化](docs/systems/deployment/)
-- [s25 AI 安全与对齐](docs/systems/safety/)
+- [s14 文本表示](docs/applied/nlp/text-representation/)
+- [s15 序列模型](docs/applied/nlp/sequence-models/)
+- [s16 Attention & Transformer](docs/applied/nlp/transformer/)
+- [s17 预训练范式](docs/applied/nlp/pretrained/)
+- [s18 大语言模型](docs/applied/nlp/llm/)
+
+#### 系统与应用
+
+- [s22 多模态模型](docs/applied/systems/multimodal/)
+- [s23 RAG 与 Agent](docs/applied/systems/rag-agent/)
+- [s24 部署与推理优化](docs/applied/systems/deployment/)
+- [s25 AI 安全与对齐](docs/applied/systems/safety/)
 
 ### 科学计算
 

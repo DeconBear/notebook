@@ -37,12 +37,14 @@ const publicCode = path.join(REPO_ROOT, 'public', 'code')
 fs.mkdirSync(publicCode, { recursive: true })
 
 const { chapters } = walkDocs(DOCS_DIR)
-const legacySlugOf = new Map()
+const legacyDirsOf = new Map()
 for (const ch of chapters) {
+  const dirs = []
   for (const legacy of ch.legacyPaths || []) {
     const slug = String(legacy).replace(/^\//, '').replace(/\/$/, '')
-    if (slug && !slug.includes('/')) legacySlugOf.set(ch.rel, slug)
+    if (slug) dirs.push(slug)
   }
+  if (dirs.length) legacyDirsOf.set(ch.rel, dirs)
 }
 
 let copied = 0
@@ -50,9 +52,8 @@ for (const f of files) {
   const dest = path.join(publicCode, f.relPath)
   copyFile(f.abs, dest)
   copied++
-  const slug = legacySlugOf.get(f.chapterRel)
-  if (slug) {
-    const name = path.basename(f.abs)
+  const name = path.basename(f.abs)
+  for (const slug of legacyDirsOf.get(f.chapterRel) || []) {
     copyFile(f.abs, path.join(publicCode, slug, name))
     copied++
   }
