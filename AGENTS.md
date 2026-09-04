@@ -4,7 +4,7 @@ Guide for AI agents working in this repository. Covers the non-obvious architect
 
 ## Project overview
 
-**notebook** is a Chinese-language illustrated notebook published as a [VitePress](https://vitepress.dev) static site (formerly *learn-ai*). Content lives under `docs/`, grouped by domain (machine learning, deep learning, CV, NLP, RL, systems, scientific computing, **quantum information**, world models, algorithms, papers, **ROS 2**)—not a single `ai/` bucket. Most chapters pair illustrated prose (`index.md`) with runnable Python (`code/demo.py`) and a guided exercise (`code/exercise.py`). ROS 2 lessons are Markdown-only; their colcon workspace is `workspaces/ros2-humble/`.
+**notebook** is a Chinese-language illustrated notebook published as a [VitePress](https://vitepress.dev) static site (formerly *learn-ai*). Content lives under `docs/`, grouped by domain (machine learning, **neural nets & decision**, **perception / language / systems**, scientific computing, **quantum information**, world models, algorithms, papers, **ROS 2**)—not a single `ai/` bucket. Most chapters pair illustrated prose (`index.md`) with runnable Python (`code/demo.py`) and a guided exercise (`code/exercise.py`). ROS 2 lessons are Markdown-only; their colcon workspace is `workspaces/ros2-humble/`.
 
 - Site URL: deployed at `https://<user>.github.io/notebook/` (note the `/notebook/` base path).
 - All content is written in **Chinese** (`lang: 'zh-CN'`); code comments are in Chinese. Keep new content in Chinese unless told otherwise.
@@ -28,9 +28,9 @@ cd docs/ml/foundations/ai-overview/code && python demo.py
 cd docs/ml/foundations/ai-overview/code && python exercise.py
 
 # Special chapter with CLI flags
-cd docs/nlp/transformer/code && python nanogpt.py            # CPU ~15min
-cd docs/nlp/transformer/code && python nanogpt.py --gpu      # GPU
-cd docs/nlp/transformer/code && python nanogpt.py --generate # load & generate
+cd docs/applied/nlp/transformer/code && python nanogpt.py            # CPU ~15min
+cd docs/applied/nlp/transformer/code && python nanogpt.py --gpu      # GPU
+cd docs/applied/nlp/transformer/code && python nanogpt.py --generate # load & generate
 ```
 
 There is **no test suite** and no linter configured. "Testing" a code change means running the relevant `demo.py` / `exercise.py` and confirming the output/figures look right. Verifying a docs change means `npm run build` (and ideally `npm run dev` to eyeball the page).
@@ -94,12 +94,12 @@ docs/<domain>/.../<slug>/
 └── images/
 ```
 
-Group folders (`docs/ml/`, `docs/ml/foundations/`, `docs/algorithms/graph/`, …) contain `_meta.yaml` and child folders, not a lesson `index.md`.
+Group folders (`docs/ml/`, `docs/nn-decision/`, `docs/applied/`, `docs/algorithms/graph/`, …) contain `_meta.yaml` and child folders, not a lesson `index.md`.
 
 **Exceptions:**
-- `docs/cv/vit/` has **no** `exercise.py` / `code-exercise.md` — only `vit_demo.py` and `code-demo.md`.
-- `docs/nlp/transformer/` has extra `nanogpt.py` and `nanogpt.md`.
-- `docs/systems/multimodal/images/samples/` ships real JPG samples for the CLIP demo.
+- `docs/applied/cv/vit/` has **no** `exercise.py` / `code-exercise.md` — only `vit_demo.py` and `code-demo.md`.
+- `docs/applied/nlp/transformer/` has extra `nanogpt.py` and `nanogpt.md`.
+- `docs/applied/systems/multimodal/images/samples/` ships real JPG samples for the CLIP demo.
 - `docs/papers/placeholder/` has no `code/` yet.
 - `docs/ros2/` lessons have **no** `code/demo.py`. Runnable packages live in `workspaces/ros2-humble/src/` (outside VitePress `srcDir`). See [ROS 2 tutoring](#ros-2-tutoring) below.
 

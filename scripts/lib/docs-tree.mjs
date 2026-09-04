@@ -269,7 +269,7 @@ export function writeRedirects({ outDir, base, chapters, gone = [] }) {
     }
     for (const legacy of ch.legacyPaths || []) {
       const slug = String(legacy).replace(/^\//, '').replace(/\/$/, '')
-      if (!slug || slug.includes('/')) continue
+      if (!slug) continue
       if (!ch.hasCode) continue
       const codeDir = path.join(ch.absDir, 'code')
       if (!fs.existsSync(codeDir)) continue

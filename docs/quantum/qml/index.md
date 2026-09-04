@@ -9,7 +9,7 @@ order: 60
 
 > 量子机器学习（QML）在 NISQ 上几乎总是**混合**的：经典网络整理特征，量子线路吃角度、吐测量，再接一个小分类头。本章把这条管线讲清楚，并收编独立示例工程 *qml-mnist-classify*（MIT，现随本章发布）里基于本源 **VQNet** 的 8 比特实验。
 
-前置：[量子计算](/quantum/computing/) 的门与测量、[CNN](/cv/cnn/) 的特征提取、[优化](/math/optimization/) 的梯度下降。`pyvqnet` **不是** notebook 默认依赖；没装也能跑经典基线。
+前置：[量子计算](/quantum/computing/) 的门与测量、[CNN](/applied/cv/cnn/) 的特征提取、[优化](/math/optimization/) 的梯度下降。`pyvqnet` **不是** notebook 默认依赖；没装也能跑经典基线。
 
 ---
 

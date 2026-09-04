@@ -25,7 +25,7 @@ features:
     details: LaTeX 公式推导，从链式法则到 Attention，每一步都有推导过程，不留黑盒
   - icon: 🗺️
     title: 体系完整
-    details: 覆盖数学基础 → 机器学习 → 深度学习 → CV / NLP / RL → 系统与应用 → AI4S / 量子信息 / 世界模型 → 算法附录 → ROS 2，适合不同学习路径
+    details: 覆盖数学基础 → 机器学习 → 神经网络与决策 → 感知、语言与系统 → AI4S / 量子信息 / 世界模型 → 算法附录 → ROS 2，适合不同学习路径
   - icon: 🇨🇳
     title: 中文原创
     details: 全部内容用中文撰写，术语保留英文对照，适合中文读者系统学习
@@ -41,19 +41,14 @@ features:
 ```mermaid
 flowchart TB
     math["数学基础"] --> ml["机器学习"]
-    ml --> dl["深度学习"]
-    dl --> cv["计算机视觉"]
-    dl --> nlp["自然语言处理"]
-    dl --> rl["强化学习"]
-    nlp --> sys["系统与应用"]
-    cv --> sys
-    rl --> sys
-    sys --> sci["科学计算"]
+    ml --> nn["神经网络与决策"]
+    nn --> applied["感知、语言与系统"]
+    applied --> sci["科学计算"]
     sci --> qi["量子信息"]
-    sys --> wm["世界模型"]
-    sys --> ros2["ROS 2"]
+    applied --> wm["世界模型"]
+    applied --> ros2["ROS 2"]
     ml --> algo["算法与数据结构"]
-    sys --> papers["论文精读"]
+    applied --> papers["论文精读"]
 ```
 
 ## 🧭 学习路径推荐
