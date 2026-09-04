@@ -155,14 +155,12 @@ $$
 
 其中 $y_w$ 是人类偏好的回答（winner），$y_l$ 是较差的回答（loser）。
 
-**阶段 3 — PPO 优化**：
-- 用奖励模型给 SFT 模型的输出打分
-- 用 PPO（Proximal Policy Optimization）算法优化模型参数，最大化奖励分数
-- 同时加入 KL 惩罚，防止模型偏离 SFT 模型太远失去语言能力
+**阶段 3 — PPO / GRPO 优化**：
+- 用奖励模型（或规则验证器）给输出打分
+- 优化器用 [PPO](/nn-decision/rl/ppo/)（裁剪 + GAE）或 [GRPO](/nn-decision/rl/grpo/)（组相对、无 Critic）；推导在那两章，这里不展开
+- 同时加 KL 惩罚，防止模型离开 SFT 太远、丢掉语言能力
 
-$$
-\mathcal{L}_{\text{PPO}} = \mathbb{E}[r_\theta(x, y) - \beta \cdot \text{KL}(\pi_{\text{new}}(y|x) \| \pi_{\text{SFT}}(y|x))]
-$$
+完整的人类反馈流程、token-MDP 和 DPO 见 [RLHF](/nn-decision/rl/rlhf/)。这里只保留「对齐还有第三段在线优化」这个印象。
 
 ### 6.3 DPO（Direct Preference Optimization）
 
@@ -226,8 +224,8 @@ LLM 的知识截止于训练数据。RAG 通过外部知识库来弥补这一缺
 | Chinchilla 最优 | 训练 token 数应该约等于 20 倍参数量 |
 | 涌现能力 | 某些能力在模型规模跨过阈值后突然出现 |
 | SFT | 用（指令，回复）对做监督微调，让模型学会遵循指令 |
-| 奖励模型 | 学习预测人类偏好，为 PPO 提供奖励信号 |
-| RLHF | SFT → 奖励模型 → PPO 优化，三阶段对齐 pipeline |
+| 奖励模型 | 学习预测人类偏好，为 PPO / GRPO 提供标量奖励 |
+| RLHF | SFT → 奖励模型 → PPO（或可验证任务上的 GRPO）；完整流程见 [RLHF](/nn-decision/rl/rlhf/) |
 | DPO | 直接从偏好数据优化策略，无需独立的奖励模型 |
 | LoRA | 低秩适配，用极少参数实现高效的模型微调 |
 

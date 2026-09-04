@@ -109,6 +109,9 @@ https://deconbear.github.io/notebook/
 
 - [s19 MDP & Q-Learning](docs/nn-decision/rl/qlearning/)
 - [s20 深度强化学习](docs/nn-decision/rl/deep-rl/)
+- [AlphaGo：自我对弈与 MCTS](docs/nn-decision/rl/alphago/)
+- [PPO：近端策略优化](docs/nn-decision/rl/ppo/)
+- [GRPO：组相对策略优化](docs/nn-decision/rl/grpo/)
 - [s21 RLHF](docs/nn-decision/rl/rlhf/)
 
 ### 感知、语言与系统

@@ -10,233 +10,170 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
-
-> 从对齐问题到 PPO/DPO —— 理解大语言模型背后的强化学习
+> 前置已经齐了：[PPO](/nn-decision/rl/ppo/) 的裁剪目标与 GAE，[GRPO](/nn-decision/rl/grpo/) 的组相对优势，[AlphaGo](/nn-decision/rl/alphago/) 说明策略梯度可以赢过人类。这一章不再推优化器，只做一件事：**把这些零件接到 token 序列上**——SFT、奖励模型、KL 橡皮筋、以及不必走在线 RL 的 DPO。
 
 ---
 
 ## 一、为什么大模型需要强化学习？
 
-在 s18 中我们了解了 Transformer 和 LLM 的架构与预训练。但仅仅"预测下一个 token"的预训练目标，并不足以让模型成为有用的助手。预训练模型学到的是互联网文本的统计分布——它能续写句子，但不一定会遵循人类指令、保持安全、或承认自己不知道的事情。
+预训练只优化「下一个 token 的交叉熵」。它学的是互联网文本的统计分布：会续写，但不保证遵循指令、承认不知道、或拒绝有害请求。
 
-**对齐问题（Alignment Problem）**：如何让 LLM 的行为与人类的意图和价值观一致？
+**对齐问题（Alignment）**：如何让 LLM 的行为与人类意图和价值观一致？三个常用维度是 HHH：
 
-这个问题的三个关键维度（Helpful, Honest, Harmless，简称 HHH）：
+1. **有用（Helpful）**：跟着指令把任务做完
+2. **诚实（Honest）**：不编造、不懂装懂
+3. **无害（Harmless）**：不输出危险或歧视内容
 
-1. **有用性（Helpful）**：模型应该遵循指令、完成任务、给出有用的回复
-2. **诚实性（Honest）**：模型不应该编造事实、不懂装懂
-3. **无害性（Harmless）**：模型不应该生成有害、歧视性或危险的内容
+交叉熵衡量不了「整段回复好不好」。强化学习擅长的恰好是**延迟的整段奖励**——把一次生成看成一条轨迹，结束时打一个标量分。
 
-预训练阶段的损失函数（交叉熵）只能衡量"下一个 token 预测得对不对"，无法衡量回复的整体质量。而强化学习恰好擅长处理这种"延迟的整体奖励"问题——我们可以设定奖励模型来判断整个回复的好坏。
-
-> 强化学习为 LLM 提供了一个优化目标：不是"预测正确的 token"，而是"生成好的回复"。
+> 目标从「预测对下一个 token」变成「生成一段人类觉得好的回复」。
 
 ![RLHF 完整三阶段流程](./images/21-01-rlhf-pipeline.png)
+
+> **图解说明**：SFT 学会听话，奖励模型学会打分，第三段才把 [PPO](/nn-decision/rl/ppo/)（或 [GRPO](/nn-decision/rl/grpo/)）套上去。
 
 ---
 
 ## 二、RLHF 三阶段流程
 
-RLHF（Reinforcement Learning from Human Feedback）最早由 OpenAI 在 2017 年提出（Christiano et al., 2017），2022 年随 InstructGPT / ChatGPT 的发布而成为 AI 对齐的标准范式。
+RLHF（Reinforcement Learning from Human Feedback）由 Christiano et al. (2017) 提出，InstructGPT / ChatGPT（Ouyang et al., 2022）把它做成对齐的默认流水线。
 
-整个流程分为三个阶段：
+### 阶段 1：监督微调（SFT）
 
-### 阶段 1：监督微调（Supervised Fine-Tuning, SFT）
+- **数据**：人类按 prompt 写高质量回复
+- **目标**：$\max \log \pi(y\mid x)$，标准监督学习
+- **产出**：$\pi_{\mathrm{SFT}}$，初步会听指令
 
-- **数据**：人类标注者根据 prompt 编写高质量回复，形成 (prompt, response) 对
-- **目标**：在人类示范数据上微调预训练模型，使基础模型初步具备指令跟随能力
-- **产出**：SFT 模型 $\pi_{\text{SFT}}$，它能理解并尝试遵循指令
-- **本质**：标准的监督学习 —— 最大化 $\log P(\text{response} | \text{prompt})$
+没有 SFT 就直接做 RL，模型连「什么叫遵循指令」都不知道，奖励几乎没有意义。
 
-SFT 是必要的预热步骤——如果直接在预训练模型上做 RL，模型连"跟随指令"是什么都不知道，奖励信号几乎没有意义。
+### 阶段 2：奖励模型（RM）
 
-### 阶段 2：训练奖励模型（Reward Model, RM）
-
-- **数据**：SFT 模型对同一个 prompt 生成多个不同回复（如 $K=4$ 个），人类标注者对它们进行排序（从最好到最差）
-- **目标**：训练一个"奖励模型" $R_{\phi}$，它接受一个 (prompt, response) 对，输出一个标量分数，代表这个回复的质量
-- **损失函数**：基于 Bradley-Terry 偏好模型
-
-对于一对回复 $(y_w, y_l)$，其中 $y_w$（win）比 $y_l$（lose）更受标注者偏好：
+同一个 prompt 让 SFT 生成 $K$ 条回复，人类排序。用 Bradley-Terry 训练 $R_\phi(x,y)$：
 
 $$
-\mathcal{L}_R(\phi) = -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( R_{\phi}(x, y_w) - R_{\phi}(x, y_l) \right) \right]
+\mathcal{L}_R(\phi) = -\mathbb{E}_{(x, y_w, y_l)} \left[ \log \sigma \big( R_\phi(x, y_w) - R_\phi(x, y_l) \big) \right]
 $$
 
-其中 $\sigma$ 是 sigmoid 函数。这个损失的含义是：奖励模型应该给更好的回复打更高的分——它本质上是一个**偏好分类器**。
+$y_w$ 比 $y_l$ 更受偏好。RM 是一个**偏好分类器**，输出标量分数，不是生成模型。
 
-### 阶段 3：PPO 强化学习
+### 阶段 3：用已经学过的优化器微调策略
 
-- **模型**：SFT 模型 $\pi_{\text{SFT}}$ 作为初始策略，奖励模型 $R_{\phi}$ 提供奖励信号
-- **目标**：用 PPO 算法优化策略 $\pi_{\theta}$，最大化奖励模型评分的同时保持与 SFT 模型的接近程度
+- 初始策略：$\pi_{\mathrm{SFT}}$
+- 奖励：RM 的分数，再减一项到参考策略的 KL（下一节）
+- **优化器原样拿来用**：
+  - InstructGPT 路线 → [PPO](/nn-decision/rl/ppo/)（Actor + Critic + GAE + clip）
+  - DeepSeek-R1 一类可验证推理 → [GRPO](/nn-decision/rl/grpo/)（组内 z-score，不训 $V$）
 
-这是整个 RLHF 的核心强化学习环节。
+$L^{\mathrm{CLIP}}$、$r_t(\theta)$、GAE 的公式都在 PPO 章；组相对优势在 GRPO 章。下面只写 **LLM 记号下多出来的那几行**。
 
 ---
 
-## 三、RLHF 的强化学习形式化
+## 三、把生成写成 MDP
 
-在 RLHF 中，强化学习问题被形式化如下：
+| RL 符号 | 在 LLM 里是什么 |
+|---------|----------------|
+| 状态 $s_t$ | prompt + 已写 token $(x, y_{<t})$ |
+| 动作 $a_t$ | 下一个 token $y_t$，词表约 $10^4\sim 10^5$ |
+| 策略 $\pi_\theta(a_t\mid s_t)$ | 模型本身的 next-token 分布 |
+| 奖励 | 中间 token 为 0；序列结束时才有标量 $R$ |
+| 轨迹 $\tau$ | 一次完整生成 $(x,y_1,\ldots,y_T)$ |
 
-- **状态 $s_t$**：prompt + 到目前为止生成的所有 token $(x, y_{<t})$
-- **动作 $a_t$**：下一个 token $y_t$（从词汇表 $\mathcal{V}$ 中选择，$|\mathcal{V}| \approx 50000$）
-- **策略 $\pi_{\theta}(a_t | s_t)$**：LLM 本身 —— 输入 prompt 和已生成 token，输出下一个 token 的概率分布
-- **奖励 $R(s, a)$**：
-  - 序列中间所有 token 的奖励为 0
-  - 序列最后一个 token 的奖励来自奖励模型 $R_{\phi}(x, y)$
-- **轨迹 $\tau$**：$(x, y_1, y_2, \ldots, y_T)$，即完整的生成序列
+> 一次自回归生成 = 一条 RL 轨迹。每个 token = 一个动作。
 
-> 关键洞察：LLM 的每一次推理（自回归生成）就是强化学习中的一条完整轨迹。每个 token 的选择就是一个动作。
-
-这里有一个重要细节——奖励信号非常稀疏（只在完整序列结束时获得），但 PPO 和 Actor-Critic 架构天然处理稀疏奖励，因为价值函数 $V(s_t)$ 能够预估从当前 token 到序列结束的期望总奖励。
+奖励稀疏，所以 InstructGPT 需要 Critic 估「写到这里还值多少分」——这就是 PPO 章的 $V_\phi$ 和 GAE。若同一题采一组完整答案、用验证器打分，就可以换成 GRPO，不再训 $V$。
 
 ---
 
-## 四、PPO（Proximal Policy Optimization）
+## 四、PPO 接到 LLM 上：新东西只有奖励塑形
 
-PPO 是 OpenAI 在 2017 年提出的策略梯度算法，因其稳定性和易调参而成为 RL 社区的首选方法。RLHF 选择 PPO 而非其他 RL 算法的原因很明确：它足够稳定来处理 LLM 的庞大动作空间和不稳定的奖励信号。
-
-### 4.1 PPO 的裁剪目标
-
-PPO 的核心思想是用一个**裁剪（Clipping）**机制来限制策略更新的幅度，防止一次更新就让策略变得面目全非。
-
-定义概率比率 $r_t(\theta)$：
+概率比和裁剪**不要重新推**，直接抄 [PPO](/nn-decision/rl/ppo/)：
 
 $$
-r_t(\theta) = \frac{\pi_{\theta}(a_t | s_t)}{\pi_{\theta_{\text{old}}}(a_t | s_t)}
+r_t(\theta)=\frac{\pi_\theta(y_t\mid x,y_{<t})}{\pi_{\theta_{\mathrm{old}}}(y_t\mid x,y_{<t})}
 $$
 
-PPO 的裁剪替代目标（Clipped Surrogate Objective）：
-
 $$
-\mathcal{L}^{\text{CLIP}}(\theta) = \mathbb{E}_t \left[ \min \left( r_t(\theta) \hat{A}_t, \; \text{clip}\left(r_t(\theta), 1 - \varepsilon, 1 + \varepsilon\right) \hat{A}_t \right) \right]
+L^{\mathrm{CLIP}}(\theta)=\mathbb{E}_t\Big[\min\big(r_t\hat{A}_t,\;\mathrm{clip}(r_t,1-\varepsilon,1+\varepsilon)\hat{A}_t\big)\Big]
 $$
 
-逐项解释：
+$\hat{A}_t$ 用该章的 GAE，Critic 看的是 token 前缀。
 
-- **$r_t(\theta)$**：新策略与旧策略在动作 $a_t$ 上的概率比。$r > 1$ 表示新策略更倾向于这个动作；$r < 1$ 表示新策略更不倾向于这个动作
-- **$\hat{A}_t$**：优势估计，衡量动作 $a_t$ 比平均水平好多少（$\hat{A}_t > 0$ = 好动作，$\hat{A}_t < 0$ = 坏动作）
-- **$\text{clip}(r, 1-\varepsilon, 1+\varepsilon)$**：将概率比限制在 $[1-\varepsilon, 1+\varepsilon]$ 范围内（通常 $\varepsilon = 0.2$）
-- **$\min(\cdot, \cdot)$**：取原始目标和裁剪目标的较小值——这确保我们不会因为更新幅度过大而受益，从而实现保守的策略更新
-
-### 4.2 为什么裁剪有效？
-
-考虑两种情况：
-
-1. **$\hat{A}_t > 0$（好动作）**：我们想增加这个动作的概率。但如果 $r_t(\theta) > 1+\varepsilon$（已经增加太多了），裁剪会阻止进一步增加——避免过度乐观。
-
-2. **$\hat{A}_t < 0$（坏动作）**：我们想降低这个动作的概率。但如果 $r_t(\theta) < 1-\varepsilon$（已经降太多了），裁剪会阻止进一步降低——避免过度惩罚。
-
-### 4.3 KL 惩罚：防止奖励黑客
-
-RLHF 在 PPO 的标准目标函数上增加了一个关键正则化项——**KL 散度惩罚**：
+LLM 对齐真正多出来的是 **KL 橡皮筋**。把参考策略 $\pi_{\mathrm{ref}}$（通常冻结的 SFT）写进奖励：
 
 $$
-R_{\text{total}} = R_{\phi}(x, y) - \beta \cdot \text{KL}\left( \pi_{\theta} \parallel \pi_{\text{ref}} \right)
+R_{\mathrm{total}} = R_\phi(x,y) - \beta\, D_{\mathrm{KL}}\big(\pi_\theta(\cdot\mid x)\,\|\,\pi_{\mathrm{ref}}(\cdot\mid x)\big)
 $$
 
-其中：
-- $\pi_{\text{ref}}$ 是参考模型（通常是 SFT 模型）
-- $\beta$ 控制惩罚强度
-- $\text{KL}(\pi_{\theta} \parallel \pi_{\text{ref}})$ 衡量当前策略与初始策略的差异
+没有这根筋，策略会 **奖励黑客**：专攻 RM 的癖好（特别长、套话、假装权威），把预训练学到的语言能力抽走。$\beta$ 越大，越不敢离开 SFT。
 
-**为什么要加 KL 惩罚？** 如果没有这个约束，策略可能会学会"奖励黑客"（Reward Hacking）——找到一个让奖励模型打高分但实际上毫无意义的策略。例如，奖励模型可能偏好长句子、某些特定词汇，策略就会滥用这些模式来获取高分，而不是真正提高回复质量。
+GRPO 论文把 $\beta\,\mathrm{KL}$ 写进损失而不是改写 $R$；作用一样，见 [GRPO](/nn-decision/rl/grpo/) 第三节。
 
-KL 惩罚像一根"橡皮筋"，把策略拉向初始模型——允许策略偏离一点点来适应人类偏好，但不允许完全脱离预训练期间学到的语言能力。
+实践里这一阶段要同时盯四个网络：Actor $\pi_\theta$、Critic $V$、冻结的 $\pi_{\mathrm{ref}}$、冻结的 $R_\phi$。这就是「PPO 训 LLM 又贵又脆」的来源——不是裁剪公式变了，是模型个数变了。
 
-> 奖励黑客就像学生发现了答题卡上的漏洞：也许在某些位置填 B 总是得分，但这是他做的正确的事吗？
+![PPO 裁剪替代目标——公式本身在上一章](./images/21-02-ppo-clipped-objective.png)
 
-![PPO 裁剪替代目标函数解释](./images/21-02-ppo-clipped-objective.png)
+> **图解说明**：这张图是 [PPO 章](/nn-decision/rl/ppo/) 裁剪目标的回顾。$A>0$ 时 $r$ 不能过 $1+\varepsilon$；$A<0$ 时不能过 $1-\varepsilon$。
 
 ---
 
-## 五、DPO：直接偏好优化
+## 五、可验证任务可以换成 GRPO
 
-### 5.1 为什么需要 DPO？
+数学、代码、带单测的推理：最终对错可以由规则说了算，不一定每一步都要人类。DeepSeekMath / DeepSeek-R1 用 [GRPO](/nn-decision/rl/grpo/)：
 
-PPO + 奖励模型的三阶段流程有三个痛点：
+- 同一 prompt 采 $G$ 条完整输出；
+- $\hat{A}_i=(r_i-\mathrm{mean})/\mathrm{std}$，**没有 Critic**；
+- 目标仍是 PPO-Clip，外加到 $\pi_{\mathrm{ref}}$ 的 KL。
 
-1. **需要训练奖励模型**：奖励模型本身可能不够准确，且需要持续的人为标注来改进
-2. **训练复杂**：PPO 需要同时维护 Actor、Critic、Reference Model 和 Reward Model 共 4 个模型
-3. **不稳定性**：PPO 在 LLM 的离散动作空间（50000 个 token）和稀疏奖励下仍然有一定的不稳定性
+和「经典 RLHF」的分工：
 
-斯坦福在 2023 年提出的 **DPO（Direct Preference Optimization）** 直接绕过了奖励模型的显式训练，将偏好数据直接用于策略优化。
+| | InstructGPT 式 RLHF | R1 式强化学习 |
+|--|---------------------|---------------|
+| 奖励从哪来 | 人类偏好 → RM | 验证器 / 规则（可加少量偏好） |
+| 优化器 | PPO + GAE + $V$ | GRPO 组相对 |
+| 还要不要 SFT | 要 | 要（冷启动） |
 
-### 5.2 DPO 的数学直觉
+HHH、偏好数据、奖励黑客，仍然是本章的主题；**换优化器不会自动解决对齐**。
 
-DPO 的起点是一个观察：在 Bradley-Terry 偏好模型下，最优策略有一个封闭形式的解，可以反推出奖励函数：
+---
+
+## 六、DPO：离线偏好，绕过显式 RM 和在线 RL
+
+PPO+RM 的痛点：多一个可能被黑客的 RM、四模型同步、on-policy 采样贵。DPO（Rafailov et al., 2023）从 Bradley-Terry 反解出：最优策略对应的奖励可以写成 $\pi$ 相对 $\pi_{\mathrm{ref}}$ 的 log 比。代回偏好损失后，$Z(x)$ 消掉，得到只含策略的损失：
 
 $$
-R^*(x, y) = \beta \cdot \log \frac{\pi^*(y|x)}{\pi_{\text{ref}}(y|x)} + \beta \cdot \log Z(x)
+\mathcal{L}_{\mathrm{DPO}}(\theta)
+= -\mathbb{E}_{(x,y_w,y_l)}\left[
+  \log\sigma\left(
+    \beta\log\frac{\pi_\theta(y_w\mid x)}{\pi_{\mathrm{ref}}(y_w\mid x)}
+    -\beta\log\frac{\pi_\theta(y_l\mid x)}{\pi_{\mathrm{ref}}(y_l\mid x)}
+  \right)
+\right]
 $$
 
-将这个表达式代入偏好模型的损失函数，$Z(x)$ 会相互抵消，最终得到一个只涉及策略 $\pi_{\theta}$ 和参考模型 $\pi_{\text{ref}}$ 的损失函数，而**不需要显式的奖励模型**！
+直观：相对参考模型，抬高 $y_w$、压低 $y_l$。$\beta$ 仍然是「能离开 SFT 多远」。
 
-### 5.3 DPO 损失函数
+| 维度 | RLHF（PPO / GRPO） | DPO |
+|------|-------------------|-----|
+| 模型 | PPO 要 Actor/Critic/Ref/RM；GRPO 省 Critic | Policy + Ref |
+| 数据 | on-policy 采样（GRPO 还必须成组） | 离线偏好对 |
+| 奖励 | 显式 RM 或验证器 | 隐含在 $\pi/\pi_{\mathrm{ref}}$ 里 |
+| 稳定性 | 要调 clip、$\beta$、GAE 或组大小 | 更像分类损失 |
+| 灵活性 | 能接在线反馈、可验证奖励 | 偏好分布一变就要重采数据 |
 
-$$
-\mathcal{L}_{\text{DPO}}(\theta) = -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta \cdot \log \frac{\pi_{\theta}(y_w | x)}{\pi_{\text{ref}}(y_w | x)} - \beta \cdot \log \frac{\pi_{\theta}(y_l | x)}{\pi_{\text{ref}}(y_l | x)} \right) \right]
-$$
-
-逐项解释：
-- $\frac{\pi_{\theta}(y|x)}{\pi_{\text{ref}}(y|x)}$：当前策略相对于参考模型在回复 $y$ 上的概率比——如果策略更喜欢 $y$ 而参考模型不那么喜欢，这个比值大于 1
-- $\beta$：控制策略可以偏离参考模型的程度（与 PPO 中的 KL 系数作用类似）
-- 直观：DPO 让策略增加对偏好回复 $y_w$ 的概率（相对参考模型），同时减少对不偏好回复 $y_l$ 的概率
-
-DPO 的优势：
-- **简单**：不需要奖励模型，不需要 Actor-Critic，只需要一个策略模型
-- **稳定**：直接优化偏好数据，是一个类似分类的损失
-- **高效**：一步训练代替 PPO 的在线交互式训练
-
-### 5.4 DPO vs RLHF (PPO) 对比
-
-| 维度 | RLHF (PPO) | DPO |
-|------|-----------|-----|
-| **模型数量** | 4 个 (Actor, Critic, Ref, RM) | 2 个 (Policy, Ref) |
-| **训练阶段** | 3 阶段 (SFT → RM → PPO) | 2 或 1 阶段 (SFT → DPO) |
-| **稳定性** | 需要仔细调参 | 较稳定 |
-| **样本效率** | 高（on-policy + 经验回放） | 依赖已有偏好数据 |
-| **灵活性** | 支持在线交互式 RL | 纯离线学习 |
-| **理论保证** | 收敛到 RM 下的最优策略 | 等价于 Bradley-Terry 下的最优策略 |
-
-在实践中，最高质量的"对齐"模型通常使用 PPO（如 GPT-4），而社区开源模型（如 Llama 2/3 的微调版本）越来越多地使用 DPO 因其简单性和更低的计算开销。
+高质量闭源助手仍常用 PPO 一类在线 RL；开源微调大量用 DPO / ORPO，因为省。DPO **不是** GRPO 的替代：一个吃离线对，一个吃 on-policy 组采样。
 
 ![DPO vs RLHF 对比图](./images/21-03-dpo-vs-rlhf.png)
 
 ---
 
-## 六、通用优势估计（GAE）
+## 七、挑战与前沿
 
-在 PPO 中，$\hat{A}_t$ 是优势函数的估计。最常用的估计方法是 **GAE（Generalized Advantage Estimation）**：
+1. **奖励黑客**：策略欺骗 RM。KL 只能减缓，不能从根上消掉。
+2. **分布偏移**：on-policy 生成渐渐离开 RM 训练时见过的回复，RM 失效。
+3. **偏好不一致**：标注者对「好」的定义不同，直接进 $R_\phi$。
+4. **对齐税**：过度讨好人类，基准能力掉一点。
 
-$$
-\hat{A}_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l}
-$$
-
-其中 $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$ 是单步 TD 误差。
-
-- $\lambda = 0$：GAE 退化为单步 TD 误差 $\delta_t$（低方差，高偏差）
-- $\lambda = 1$：GAE 变为 Monte Carlo 回报（高方差，低偏差）
-- $0 < \lambda < 1$：在偏差和方差之间取折中（通常 $\lambda = 0.95$）
-
-GAE 平衡了"用更多数据降低方差"和"引入偏差"之间的权衡，是 PPO 在实际实现中的标准配置。
-
----
-
-## 七、RLHF 的挑战与前沿
-
-### 7.1 当前挑战
-
-1. **奖励黑客（Reward Hacking）**：策略学会了欺骗奖励模型。典型案例包括：过度冗长、重复套话、假装权威——这些行为在奖励模型看来"像"好回复，但实际并非如此
-2. **分布偏移（Distribution Shift）**：PPO 的训练分布由策略自身决定，随着训练进行，策略生成的回复可能与奖励模型训练时看到的回复差异越来越大——奖励模型在新分布上的表现变差
-3. **人类偏好模糊性（Human Preference Ambiguity）**：不同人对"好回复"的定义不同，标注者的偏好不一致会传递给奖励模型
-4. **对齐税（Alignment Tax）**：过度对齐可能导致模型在某些基准测试上的能力下降——因为优化目标从"知识"变成了"讨好人"
-
-### 7.2 前沿方向
-
-- **Constitutional AI**（Anthropic）：用 AI 反馈代替人类反馈——让模型根据一套"宪法"原则自我批评和改进
-- **RRHF / ORPO**：更新一代的对齐方法，进一步简化 pipeline
-- **Multi-objective RLHF**：同时优化多个维度的奖励（有用性、安全性、诚实性等）
-- **Iterated RLHF**：在多轮互动中持续收集反馈和改进
+前沿（点到为止）：Constitutional AI（AI 按「宪法」自批评）、Iterated RLHF、多目标奖励、ORPO / RRHF 等更短的偏好损失。推理向则把验证器 + GRPO 做成主路径。
 
 ![奖励黑客——当模型学会欺骗奖励模型](./images/21-04-reward-hacking.png)
 
@@ -244,18 +181,18 @@ GAE 平衡了"用更多数据降低方差"和"引入偏差"之间的权衡，是
 
 ## 八、本节小结
 
-| 概念 | 一句话 |
-|------|--------|
-| 对齐问题 | 让 LLM 的行为与人类意图和价值观一致 |
-| SFT | 在人类示范数据上微调，让模型初步遵循指令 |
-| 奖励模型 | 训练一个模型来预测人类对回复的偏好排序 |
-| PPO | 用裁剪替代目标稳定训练，防止策略突然崩溃 |
-| KL 惩罚 | 在奖励中减去与参考模型的 KL 散度，防止奖励黑客 |
-| GAE | 平衡偏差和方差的优势估计方法，TD(λ) 的泛化 |
-| DPO | 绕过奖励模型，直接从偏好数据中优化策略 |
-| Bradley-Terry | 偏好建模的基础概率模型，DPO 的理论基础 |
+| 概念 | 一句话 | 公式在哪 |
+|------|--------|----------|
+| 对齐 / HHH | 有用、诚实、无害 | 本章 |
+| SFT | 示范数据上先学会听指令 | 本章 |
+| 奖励模型 | Bradley-Terry 拟合人类排序 | 本章 |
+| token-MDP | 前缀是状态，token 是动作 | 本章 |
+| $L^{\mathrm{CLIP}}$、GAE | 接到 LLM 上的优化器 | [PPO](/nn-decision/rl/ppo/) |
+| 组相对优势 | 可验证任务上可以不训 $V$ | [GRPO](/nn-decision/rl/grpo/) |
+| KL 橡皮筋 | $R_{\mathrm{total}}=R_\phi-\beta\,\mathrm{KL}$ | 本章（接到 PPO/GRPO 上） |
+| DPO | 离线偏好，不显式训 RM | 本章 |
 
-> RLHF 是强化学习在现代 AI 中最具影响力的应用。它展示了 RL 不再是"下棋和打游戏"的工具，而是构建有用、安全 AI 系统的关键基础设施。
+> RLHF 不是一种新算法，是「人类反馈 → 标量奖励 → 已经学过的策略优化器」。棋上的自我对弈见 [AlphaGo](/nn-decision/rl/alphago/)；更新别迈太大见 PPO；组内相对见 GRPO。
 
 ## 📥 Code
 
@@ -266,9 +203,9 @@ GAE 平衡了"用更多数据降低方差"和"引入偏差"之间的权衡，是
 
 ## 参考
 
-1. Christiano, P., et al. (2017). Deep Reinforcement Learning from Human Preferences. *NeurIPS 2017*. (RLHF) [[arXiv:1706.03741](https://arxiv.org/abs/1706.03741)]
-2. Ouyang, L., et al. (2022). Training language models to follow instructions with human feedback. *NeurIPS 2022*. (InstructGPT) [[arXiv:2203.02155](https://arxiv.org/abs/2203.02155)]
-3. Schulman, J., et al. (2017). Proximal Policy Optimization Algorithms. (PPO) [[arXiv:1707.06347](https://arxiv.org/abs/1707.06347)]
-4. Rafailov, R., et al. (2023). Direct Preference Optimization: Your Language Model is Secretly a Reward Model. *NeurIPS 2023*. (DPO) [[arXiv:2305.18290](https://arxiv.org/abs/2305.18290)]
-5. Schulman, J., et al. (2016). High-Dimensional Continuous Control Using Generalized Advantage Estimation. *ICLR 2016*. (GAE) [[arXiv:1506.02438](https://arxiv.org/abs/1506.02438)]
-
+1. Christiano, P., et al. (2017). Deep Reinforcement Learning from Human Preferences. *NeurIPS*. [[arXiv:1706.03741](https://arxiv.org/abs/1706.03741)]
+2. Ouyang, L., et al. (2022). Training language models to follow instructions with human feedback. *NeurIPS*. (InstructGPT) [[arXiv:2203.02155](https://arxiv.org/abs/2203.02155)]
+3. Schulman, J., et al. (2017). Proximal Policy Optimization Algorithms. [[arXiv:1707.06347](https://arxiv.org/abs/1707.06347)] — 推导见 [PPO](/nn-decision/rl/ppo/)
+4. Shao, Z., et al. (2024). DeepSeekMath. [[arXiv:2402.03300](https://arxiv.org/abs/2402.03300)] — GRPO，见 [GRPO](/nn-decision/rl/grpo/)
+5. DeepSeek-AI (2025). DeepSeek-R1. [[arXiv:2501.12948](https://arxiv.org/abs/2501.12948)]
+6. Rafailov, R., et al. (2023). Direct Preference Optimization. *NeurIPS*. [[arXiv:2305.18290](https://arxiv.org/abs/2305.18290)]
