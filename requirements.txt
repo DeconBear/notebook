@@ -62,3 +62,7 @@ librosa>=0.10.0
 # API 调用（可选）
 openai>=1.6.0
 httpx>=0.25.0
+
+# 量子机器学习（可选，不装也不影响其它章节）
+# 本源 VQNet / pyvqnet 需按其官方文档安装，不要 pip install 进本清单
+# https://qcloud.originqc.com.cn/zh/programming/VQNet

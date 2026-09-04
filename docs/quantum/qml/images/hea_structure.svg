@@ -1,0 +1,187 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980">
+  <defs>
+    <style>
+      .bg { fill: #f8fbff; }
+      .title { font: 700 34px "Microsoft YaHei", "SimHei", sans-serif; fill: #17324d; }
+      .sub { font: 600 22px "Microsoft YaHei", "SimHei", sans-serif; fill: #315a7a; }
+      .label { font: 700 20px "Microsoft YaHei", "SimHei", sans-serif; fill: #17324d; }
+      .text { font: 500 18px "Microsoft YaHei", "SimHei", sans-serif; fill: #284b63; }
+      .small { font: 500 16px "Microsoft YaHei", "SimHei", sans-serif; fill: #5b7992; }
+      .boxA { fill: #eef7ff; stroke: #6aa9d8; stroke-width: 2; rx: 18; }
+      .boxB { fill: #fff5e6; stroke: #d0a24d; stroke-width: 2; rx: 18; }
+      .boxC { fill: #eff8ef; stroke: #77b46f; stroke-width: 2; rx: 18; }
+      .note { fill: #ffffff; stroke: #c9d8e6; stroke-width: 1.5; rx: 12; }
+      .arrow { stroke: #4c708f; stroke-width: 3; fill: none; marker-end: url(#arrowHead); }
+      .wire { stroke: #6b7f92; stroke-width: 2; }
+      .gate1 { fill: #e3f1ff; stroke: #6aa9d8; stroke-width: 2; rx: 8; }
+      .gate2 { fill: #ffeecf; stroke: #d0a24d; stroke-width: 2; rx: 8; }
+      .cnot { fill: #dff2df; stroke: #77b46f; stroke-width: 2; }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4c708f"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="980" class="bg"/>
+  <text x="48" y="58" class="title">HEA 结构图：固定 Hardware Efficient Ansatz 在模型里做什么</text>
+  <text x="48" y="92" class="small">对应 qml_core.py 中的 self.ansatz = VQC_HardwareEfficientAnsatz(...)</text>
+
+  <rect x="50" y="130" width="390" height="190" class="boxA"/>
+  <text x="78" y="175" class="label">1. HEA 的创建参数</text>
+  <text x="78" y="212" class="text">NUM_QUBITS = 8</text>
+  <text x="78" y="246" class="text">旋转门集合：Rx / Ry / Rz</text>
+  <text x="78" y="280" class="text">纠缠门：CNOT</text>
+  <text x="78" y="314" class="text">连接方式：linear</text>
+  <text x="250" y="314" class="small">即 q0-q1-q2-...-q7</text>
+
+  <rect x="490" y="130" width="520" height="190" class="boxA"/>
+  <text x="518" y="175" class="label">2. 代码里的定义</text>
+  <rect x="526" y="202" width="448" height="90" class="note"/>
+  <text x="548" y="232" class="small">self.ansatz = VQC_HardwareEfficientAnsatz(</text>
+  <text x="548" y="257" class="small">    NUM_QUBITS, ["rx", "ry", "rz"],</text>
+  <text x="548" y="282" class="small">    entangle_gate="CNOT", entangle_rules="linear", depth=2)</text>
+
+  <rect x="1060" y="130" width="490" height="190" class="boxA"/>
+  <text x="1088" y="175" class="label">3. HEA 不是自定义编码</text>
+  <text x="1088" y="212" class="text">它是题目固定给定的后端模块</text>
+  <text x="1088" y="246" class="text">我们的 Encoder 先把图片写入量子态</text>
+  <text x="1088" y="280" class="text">HEA 再对这个量子态做进一步旋转与纠缠</text>
+
+  <line x1="440" y1="225" x2="490" y2="225" class="arrow"/>
+  <line x1="1010" y1="225" x2="1060" y2="225" class="arrow"/>
+
+  <rect x="50" y="380" width="1500" height="520" class="boxB"/>
+  <text x="78" y="426" class="label">4. 当前 HEA 的结构：depth = 2</text>
+  <text x="78" y="460" class="text">每个 depth block 都包含两步：先所有 qubit 做单比特旋转，再做线性 CNOT 纠缠链</text>
+
+  <text x="110" y="560" class="text">q0</text>
+  <text x="110" y="610" class="text">q1</text>
+  <text x="110" y="660" class="text">q2</text>
+  <text x="110" y="710" class="text">q3</text>
+  <text x="110" y="760" class="text">q4</text>
+  <text x="110" y="810" class="text">q5</text>
+  <text x="110" y="860" class="text">q6</text>
+  <text x="110" y="910" class="text">q7</text>
+
+  <line x1="150" y1="554" x2="1480" y2="554" class="wire"/>
+  <line x1="150" y1="604" x2="1480" y2="604" class="wire"/>
+  <line x1="150" y1="654" x2="1480" y2="654" class="wire"/>
+  <line x1="150" y1="704" x2="1480" y2="704" class="wire"/>
+  <line x1="150" y1="754" x2="1480" y2="754" class="wire"/>
+  <line x1="150" y1="804" x2="1480" y2="804" class="wire"/>
+  <line x1="150" y1="854" x2="1480" y2="854" class="wire"/>
+  <line x1="150" y1="904" x2="1480" y2="904" class="wire"/>
+
+  <rect x="220" y="500" width="240" height="360" class="note"/>
+  <text x="340" y="535" text-anchor="middle" class="label">Block 1: 单比特旋转</text>
+  <rect x="250" y="545" width="52" height="28" class="gate1"/><text x="276" y="564" text-anchor="middle" class="small">Rx</text>
+  <rect x="314" y="545" width="52" height="28" class="gate1"/><text x="340" y="564" text-anchor="middle" class="small">Ry</text>
+  <rect x="378" y="545" width="52" height="28" class="gate1"/><text x="404" y="564" text-anchor="middle" class="small">Rz</text>
+  <rect x="250" y="595" width="52" height="28" class="gate1"/><text x="276" y="614" text-anchor="middle" class="small">Rx</text>
+  <rect x="314" y="595" width="52" height="28" class="gate1"/><text x="340" y="614" text-anchor="middle" class="small">Ry</text>
+  <rect x="378" y="595" width="52" height="28" class="gate1"/><text x="404" y="614" text-anchor="middle" class="small">Rz</text>
+  <rect x="250" y="645" width="52" height="28" class="gate1"/><text x="276" y="664" text-anchor="middle" class="small">Rx</text>
+  <rect x="314" y="645" width="52" height="28" class="gate1"/><text x="340" y="664" text-anchor="middle" class="small">Ry</text>
+  <rect x="378" y="645" width="52" height="28" class="gate1"/><text x="404" y="664" text-anchor="middle" class="small">Rz</text>
+  <rect x="250" y="695" width="52" height="28" class="gate1"/><text x="276" y="714" text-anchor="middle" class="small">Rx</text>
+  <rect x="314" y="695" width="52" height="28" class="gate1"/><text x="340" y="714" text-anchor="middle" class="small">Ry</text>
+  <rect x="378" y="695" width="52" height="28" class="gate1"/><text x="404" y="714" text-anchor="middle" class="small">Rz</text>
+  <rect x="250" y="745" width="52" height="28" class="gate1"/><text x="276" y="764" text-anchor="middle" class="small">Rx</text>
+  <rect x="314" y="745" width="52" height="28" class="gate1"/><text x="340" y="764" text-anchor="middle" class="small">Ry</text>
+  <rect x="378" y="745" width="52" height="28" class="gate1"/><text x="404" y="764" text-anchor="middle" class="small">Rz</text>
+  <rect x="250" y="795" width="52" height="28" class="gate1"/><text x="276" y="814" text-anchor="middle" class="small">Rx</text>
+  <rect x="314" y="795" width="52" height="28" class="gate1"/><text x="340" y="814" text-anchor="middle" class="small">Ry</text>
+  <rect x="378" y="795" width="52" height="28" class="gate1"/><text x="404" y="814" text-anchor="middle" class="small">Rz</text>
+  <rect x="250" y="845" width="52" height="28" class="gate1"/><text x="276" y="864" text-anchor="middle" class="small">Rx</text>
+  <rect x="314" y="845" width="52" height="28" class="gate1"/><text x="340" y="864" text-anchor="middle" class="small">Ry</text>
+  <rect x="378" y="845" width="52" height="28" class="gate1"/><text x="404" y="864" text-anchor="middle" class="small">Rz</text>
+  <text x="340" y="893" text-anchor="middle" class="small">每个 qubit 都做一遍 Rx/Ry/Rz</text>
+
+  <rect x="510" y="500" width="220" height="360" class="note"/>
+  <text x="620" y="535" text-anchor="middle" class="label">Block 1: 线性 CNOT</text>
+  <circle cx="620" cy="554" r="7" class="cnot"/>
+  <line x1="620" y1="554" x2="620" y2="604" class="wire"/>
+  <rect x="606" y="592" width="28" height="24" class="cnot"/>
+  <circle cx="620" cy="604" r="2" fill="#17324d"/>
+  <circle cx="620" cy="604" r="7" fill="none" stroke="#17324d" stroke-width="1.5"/>
+  <circle cx="620" cy="654" r="7" class="cnot"/>
+  <line x1="620" y1="654" x2="620" y2="704" class="wire"/>
+  <rect x="606" y="692" width="28" height="24" class="cnot"/>
+  <circle cx="620" cy="704" r="2" fill="#17324d"/>
+  <circle cx="620" cy="704" r="7" fill="none" stroke="#17324d" stroke-width="1.5"/>
+  <circle cx="620" cy="754" r="7" class="cnot"/>
+  <line x1="620" y1="754" x2="620" y2="804" class="wire"/>
+  <rect x="606" y="792" width="28" height="24" class="cnot"/>
+  <circle cx="620" cy="804" r="2" fill="#17324d"/>
+  <circle cx="620" cy="804" r="7" fill="none" stroke="#17324d" stroke-width="1.5"/>
+  <circle cx="620" cy="854" r="7" class="cnot"/>
+  <line x1="620" y1="854" x2="620" y2="904" class="wire"/>
+  <rect x="606" y="892" width="28" height="24" class="cnot"/>
+  <circle cx="620" cy="904" r="2" fill="#17324d"/>
+  <circle cx="620" cy="904" r="7" fill="none" stroke="#17324d" stroke-width="1.5"/>
+  <text x="620" y="893" text-anchor="middle" class="small">真实结构是 q0-q1, q1-q2, ... , q6-q7</text>
+
+  <rect x="790" y="500" width="240" height="360" class="note"/>
+  <text x="910" y="535" text-anchor="middle" class="label">Block 2: 单比特旋转</text>
+  <rect x="820" y="545" width="52" height="28" class="gate2"/><text x="846" y="564" text-anchor="middle" class="small">Rx</text>
+  <rect x="884" y="545" width="52" height="28" class="gate2"/><text x="910" y="564" text-anchor="middle" class="small">Ry</text>
+  <rect x="948" y="545" width="52" height="28" class="gate2"/><text x="974" y="564" text-anchor="middle" class="small">Rz</text>
+  <rect x="820" y="595" width="52" height="28" class="gate2"/><text x="846" y="614" text-anchor="middle" class="small">Rx</text>
+  <rect x="884" y="595" width="52" height="28" class="gate2"/><text x="910" y="614" text-anchor="middle" class="small">Ry</text>
+  <rect x="948" y="595" width="52" height="28" class="gate2"/><text x="974" y="614" text-anchor="middle" class="small">Rz</text>
+  <rect x="820" y="645" width="52" height="28" class="gate2"/><text x="846" y="664" text-anchor="middle" class="small">Rx</text>
+  <rect x="884" y="645" width="52" height="28" class="gate2"/><text x="910" y="664" text-anchor="middle" class="small">Ry</text>
+  <rect x="948" y="645" width="52" height="28" class="gate2"/><text x="974" y="664" text-anchor="middle" class="small">Rz</text>
+  <rect x="820" y="695" width="52" height="28" class="gate2"/><text x="846" y="714" text-anchor="middle" class="small">Rx</text>
+  <rect x="884" y="695" width="52" height="28" class="gate2"/><text x="910" y="714" text-anchor="middle" class="small">Ry</text>
+  <rect x="948" y="695" width="52" height="28" class="gate2"/><text x="974" y="714" text-anchor="middle" class="small">Rz</text>
+  <rect x="820" y="745" width="52" height="28" class="gate2"/><text x="846" y="764" text-anchor="middle" class="small">Rx</text>
+  <rect x="884" y="745" width="52" height="28" class="gate2"/><text x="910" y="764" text-anchor="middle" class="small">Ry</text>
+  <rect x="948" y="745" width="52" height="28" class="gate2"/><text x="974" y="764" text-anchor="middle" class="small">Rz</text>
+  <rect x="820" y="795" width="52" height="28" class="gate2"/><text x="846" y="814" text-anchor="middle" class="small">Rx</text>
+  <rect x="884" y="795" width="52" height="28" class="gate2"/><text x="910" y="814" text-anchor="middle" class="small">Ry</text>
+  <rect x="948" y="795" width="52" height="28" class="gate2"/><text x="974" y="814" text-anchor="middle" class="small">Rz</text>
+  <rect x="820" y="845" width="52" height="28" class="gate2"/><text x="846" y="864" text-anchor="middle" class="small">Rx</text>
+  <rect x="884" y="845" width="52" height="28" class="gate2"/><text x="910" y="864" text-anchor="middle" class="small">Ry</text>
+  <rect x="948" y="845" width="52" height="28" class="gate2"/><text x="974" y="864" text-anchor="middle" class="small">Rz</text>
+  <text x="910" y="893" text-anchor="middle" class="small">因为 depth=2，所以这个结构重复第二次</text>
+
+  <rect x="1080" y="500" width="220" height="360" class="note"/>
+  <text x="1190" y="535" text-anchor="middle" class="label">Block 2: 线性 CNOT</text>
+  <circle cx="1190" cy="554" r="7" class="cnot"/>
+  <line x1="1190" y1="554" x2="1190" y2="604" class="wire"/>
+  <rect x="1176" y="592" width="28" height="24" class="cnot"/>
+  <circle cx="1190" cy="604" r="2" fill="#17324d"/>
+  <circle cx="1190" cy="604" r="7" fill="none" stroke="#17324d" stroke-width="1.5"/>
+  <circle cx="1190" cy="654" r="7" class="cnot"/>
+  <line x1="1190" y1="654" x2="1190" y2="704" class="wire"/>
+  <rect x="1176" y="692" width="28" height="24" class="cnot"/>
+  <circle cx="1190" cy="704" r="2" fill="#17324d"/>
+  <circle cx="1190" cy="704" r="7" fill="none" stroke="#17324d" stroke-width="1.5"/>
+  <circle cx="1190" cy="754" r="7" class="cnot"/>
+  <line x1="1190" y1="754" x2="1190" y2="804" class="wire"/>
+  <rect x="1176" y="792" width="28" height="24" class="cnot"/>
+  <circle cx="1190" cy="804" r="2" fill="#17324d"/>
+  <circle cx="1190" cy="804" r="7" fill="none" stroke="#17324d" stroke-width="1.5"/>
+  <circle cx="1190" cy="854" r="7" class="cnot"/>
+  <line x1="1190" y1="854" x2="1190" y2="904" class="wire"/>
+  <rect x="1176" y="892" width="28" height="24" class="cnot"/>
+  <circle cx="1190" cy="904" r="2" fill="#17324d"/>
+  <circle cx="1190" cy="904" r="7" fill="none" stroke="#17324d" stroke-width="1.5"/>
+  <text x="1190" y="893" text-anchor="middle" class="small">第二轮纠缠，继续混合量子特征</text>
+
+  <line x1="460" y1="680" x2="510" y2="680" class="arrow"/>
+  <line x1="730" y1="680" x2="790" y2="680" class="arrow"/>
+  <line x1="1030" y1="680" x2="1080" y2="680" class="arrow"/>
+
+  <rect x="1325" y="500" width="190" height="250" class="boxC"/>
+  <text x="1353" y="545" class="label">5. HEA 之后</text>
+  <text x="1353" y="582" class="text">MeasureAll</text>
+  <text x="1353" y="616" class="text">得到 8 维量子特征</text>
+  <text x="1353" y="650" class="text">再接 Linear(8, 2)</text>
+  <text x="1353" y="684" class="text">输出分类 logits</text>
+  <text x="1353" y="726" class="small">也就是说：HEA 不是终点，后面还有测量和分类</text>
+
+  <rect x="50" y="930" width="1500" height="32" class="note"/>
+  <text x="800" y="951" text-anchor="middle" class="small">一句话总结：HEA 是题目固定给定的量子变分后端，它接在自定义 Encoder 后面，用重复的“单比特旋转 + 线性 CNOT”结构进一步变换量子态。</text>
+</svg>
