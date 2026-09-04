@@ -1,0 +1,13 @@
+/* 正文配图：可点击放大（链接里的图仍走原链接） */
+.vp-doc :not(a) > img {
+  cursor: zoom-in;
+}
+
+.medium-zoom-overlay {
+  z-index: 100;
+}
+
+.medium-zoom-image--opened {
+  z-index: 101;
+  cursor: zoom-out;
+}

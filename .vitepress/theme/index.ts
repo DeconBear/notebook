@@ -1,17 +1,36 @@
 import DefaultTheme from 'vitepress/theme'
 import type { Theme } from 'vitepress'
-import { h } from 'vue'
+import { h, nextTick, onMounted } from 'vue'
+import { inBrowser, onContentUpdated } from 'vitepress'
+import mediumZoom from 'medium-zoom'
+import './style.css'
 
-// 自定义主题，添加 MathJax 支持
 export default {
   extends: DefaultTheme,
-  enhanceApp({ app, router, siteData }) {
+  enhanceApp() {
     // MathJax 会在客户端自动渲染
   },
   Layout: () => {
-    // 扩展默认布局，注入 MathJax
-    return h(DefaultTheme.Layout, null, {
-      // 可以在这里扩展插槽
-    })
-  }
+    return h(DefaultTheme.Layout)
+  },
+  setup() {
+    let zoom: ReturnType<typeof mediumZoom> | undefined
+
+    const initZoom = () => {
+      if (!inBrowser) return
+      zoom?.detach()
+      const images = Array.from(
+        document.querySelectorAll<HTMLImageElement>('.vp-doc img'),
+      ).filter((img) => !img.closest('a'))
+      if (!images.length) return
+      zoom = mediumZoom(images, {
+        background: 'var(--vp-c-bg)',
+        margin: 24,
+        scrollOffset: 0,
+      })
+    }
+
+    onMounted(() => nextTick(initZoom))
+    onContentUpdated(() => nextTick(initZoom))
+  },
 } satisfies Theme
