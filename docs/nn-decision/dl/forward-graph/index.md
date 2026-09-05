@@ -44,8 +44,6 @@ $$
 
 ![感知机结构拆解：左侧 n 个输入特征 x₁ 到 xₙ，每条连线标注对应权重 w₁ 到 wₙ，中间是加权求和节点 Σ（标注"加权和 + 偏置 b"），右侧是阶跃激活函数 f(z)，上方标注 "z = Σwᵢxᵢ + b"，最终输出 0 或 1。整个结构用不同颜色区分：输入层（蓝色）、计算单元（橙色）、输出（绿色），并在底部用一行小字解释："如果加权和 ≥ 0，输出 1；否则输出 0"](./images/05-05-perceptron-anatomy.png)
 
-> **生图提示词（图 05-05）**：A clean educational diagram of a single perceptron (artificial neuron). Left side: 4 input nodes labeled x₁, x₂, x₃, x₄ in blue circles. Each has an arrow pointing to a central circular node. The arrows are labeled with weights w₁, w₂, w₃, w₄. The central node shows "Σ" (summation symbol) with a separate small "+ b" (bias) input entering from the top. Below the summation, show the formula "z = w₁x₁ + w₂x₂ + w₃x₃ + w₄x₄ + b". An arrow leads from the summation node to a small rectangular block labeled "Step Function f(z)". The block outputs either 0 or 1. Right side: a single output node in green labeled "Output: 0 or 1". The entire diagram should have clear color-coded sections: input features (blue), weighted sum + bias (orange), activation function (gray), output (green). Use a clean flat design style suitable for a textbook. White background, no grid, no title text on the image itself. English labels only. Professional, minimal, easy to understand at a glance.
-
 ### 1.2 几何直觉：一条直线划分空间
 
 感知机有一个非常直观的几何解释。方程 $w_1 x_1 + w_2 x_2 + b = 0$（以二维为例）定义的是一条直线，这条直线将空间划分为两半：
@@ -77,8 +75,6 @@ XOR 的真值表：
 **出路在哪？** 把多个感知机堆叠起来，构成多层网络。中间层（隐藏层）可以将原始输入空间映射到一个新的特征空间，在新的空间中，XOR 变得线性可分。
 
 ![XOR 问题：二维平面上标出四个点——(0,0) 和 (1,1) 为空心圆（类别 0），(0,1) 和 (1,0) 为实心圆（类别 1）。画一条尝试分隔的虚线，但它无法将两种颜色分开（标签"单条直线无法分隔 XOR"）。右侧小图：隐藏层变换后的空间中，四个点被重新排列，现在可以用一条直线分开（标签"经过隐藏层变换后线性可分"）](./images/05-06-xor-problem.png)
-
-> **生图提示词（图 05-06）**：A two-panel educational diagram explaining the XOR problem. LEFT PANEL: A clean 2D coordinate grid (x₁ horizontal, x₂ vertical, range -0.5 to 1.5). Four data points: (0,0) as hollow circle, (1,1) as hollow circle, (0,1) as solid filled circle, (1,0) as solid filled circle. A dashed diagonal line is drawn attempting to separate them. A red X or strike-through symbol over the line indicates failure. Label bottom: "XOR: Not Linearly Separable". RIGHT PANEL: Same four points but now in a transformed space (axes labeled h₁ and h₂ instead of x₁ and x₂). The hollow points are clustered together (bottom-left), solid points clustered together (top-right). A clean separating line divides them successfully with a green checkmark. Label bottom: "After Hidden Layer: Linearly Separable". The dividing line from the left panel can be gray and marked with ✗, while the right panel's line should be green with ✓. Clean flat design, white background, no grid on the transformed space, English labels only.
 
 ---
 
@@ -289,8 +285,6 @@ $$
 **ReLU 的胜利**：正区间的导数为 1，20 层连乘后…仍然是 1。这就是为什么 AlexNet（2012）用 ReLU 替代 sigmoid 后，训练速度快了 6 倍。
 
 ![五种激活函数的导数曲线并排对比：Sigmoid 导数钟形（最高 0.25）、Tanh 导数钟形（最高 1.0）、ReLU 导数阶跃形（0 和 1）、Leaky ReLU 导数阶跃形（0.01 和 1）、GELU 导数 S 形渐近线。每条曲线下方标注最大值和典型值域，用虚线标出 y=0 和 y=1 参考线。底部总结语："Sigmoid 导数 max=0.25 → 深层梯度指数消失；ReLU 导数恒为 1(正区间) → 梯度无损传播"](./images/05-07-activation-derivatives.png)
-
-> **生图提示词（图 05-07）**：A clean educational figure showing the derivatives of 5 activation functions side by side in a row. Five small panels, each showing one derivative curve: (1) Sigmoid derivative - bell-shaped curve peaking at 0.25 at z=0, approaching 0 at z=±5, label "max=0.25". (2) Tanh derivative - bell-shaped curve peaking at 1.0 at z=0, approaching 0 at z=±3, label "max=1.0". (3) ReLU derivative - step function: 0 for z<0, 1 for z>0, label "0 or 1". (4) Leaky ReLU derivative - step function: 0.01 for z<0, 1 for z>0, label "0.01 or 1". (5) GELU derivative - smooth S-shaped curve approaching 0 for z<<0 and 1 for z>>0, label "0 to 1 (smooth)". Each panel has z on x-axis (range -4 to 4), derivative value on y-axis (range 0 to 1.2). Dashed horizontal reference lines at y=0 and y=1 in each panel. A bottom text annotation reads: "Sigmoid max gradient = 0.25 → gradient vanishes exponentially in deep networks. ReLU gradient = 1 (positive side) → gradient propagates without decay." Clean white background, flat design, English labels only. No title on the image.
 
 ### 5.4 演进逻辑
 
