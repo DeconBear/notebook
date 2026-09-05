@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "notebook"
   text: "图解笔记 · 一个文件夹就是一章"
-  tagline: AI、计算神经科学、量子信息、算法、ROS 2……用图解 + 可运行代码，把概念一个一个拆给你看
+  tagline: AI、控制论、机器人学、世界模型、信息论、量子信息、算法、ROS 2……用图解 + 可运行代码，把概念一个一个拆给你看
   actions:
     - theme: brand
       text: 开始学习
@@ -25,7 +25,7 @@ features:
     details: LaTeX 公式推导，从链式法则到 Attention，每一步都有推导过程，不留黑盒
   - icon: 🗺️
     title: 体系完整
-    details: 覆盖数学基础 → 机器学习 → 神经网络与决策 → 感知、语言与系统 → AI4S / 计算神经科学 / 量子信息 / 世界模型 → 算法附录 → ROS 2，适合不同学习路径
+    details: 覆盖数学基础 → 机器学习 → 神经网络与决策 → 感知、语言与系统 → 控制论 / 机器人学 → 世界模型 → 科学计算 / 计算神经科学 / 信息论 / 量子信息 → 算法附录 → ROS 2，适合不同学习路径
   - icon: 🇨🇳
     title: 中文原创
     details: 全部内容用中文撰写，术语保留英文对照，适合中文读者系统学习
@@ -43,11 +43,14 @@ flowchart TB
     math["数学基础"] --> ml["机器学习"]
     ml --> nn["神经网络与决策"]
     nn --> applied["感知、语言与系统"]
-    applied --> sci["科学计算"]
+    applied --> ctrl["控制论"]
+    ctrl --> robot["机器人学"]
+    robot --> wm["世界模型"]
+    wm --> sci["科学计算"]
     sci --> neuro["计算神经科学"]
-    sci --> qi["量子信息"]
-    applied --> wm["世界模型"]
-    applied --> ros2["ROS 2"]
+    sci --> info["信息论"]
+    info --> qi["量子信息"]
+    robot --> ros2["ROS 2"]
     ml --> algo["算法与数据结构"]
     applied --> papers["论文精读"]
 ```
@@ -67,9 +70,10 @@ flowchart TB
 | 🔴 **算法竞赛** | 只关注算法与数据结构 | 直接看附录 algo01 → algo16，其余章节按需查阅 |
 | 🟤 **科研向 / AI4S** | 做科学计算、生物、芯片等交叉 | 阶段三~五 → 进阶一（as01–as08） |
 | 🟩 **计算神经科学** | 细胞方程、编码、回路、连接组、NeuroAI | 侧栏 **计算神经科学**（`docs/neuro/`） |
-| 🟦 **量子信息** | 计算 / 网络 / 存储 / 模拟 / QML | 侧栏 **量子信息**（`docs/quantum/`，QML 可选本源 VQNet） |
-| ⬛ **世界模型** | 关注具身智能 / 生成式模拟 | 阶段六 → 进阶二（五路径：视频 / 交互·3D / 抽象状态 / 因果 / 符号） |
-| 🟠 **ROS 2 / 机器人** | 要在 Ubuntu 上跑 Humble | 侧栏 **ROS 2**（`docs/ros2/`，工作区 `workspaces/ros2-humble/`） |
+| ⬛ **世界模型** | 关注具身智能 / 生成式模拟 | 控制论 → 机器人学 → 世界模型五路径 |
+| 🟧 **控制论 / 机器人学** | 反馈、状态空间、运动学与李群 | 侧栏 **控制论**、**机器人学**（`docs/control/`、`docs/robotics/`） |
+| 🟦 **信息论 → 量子信息** | 先熵与容量，再量子比特 | 侧栏 **信息论**（`docs/information/`，不止香农一章）然后 **量子信息** |
+| 🟠 **ROS 2** | 要在 Ubuntu 上跑 Humble | 侧栏 **ROS 2**（`docs/ros2/`，工作区 `workspaces/ros2-humble/`） |
 
 > 💡 **番外一**在阶段二之后默认折叠；**进阶一 / 进阶二**在阶段七之后默认折叠；**番外二**为论文精读占位。详细路径说明见 [README](https://github.com/DeconBear/notebook#%E5%AD%A6%E4%B9%A0%E8%B7%AF%E5%BE%84%E6%8E%A8%E8%8D%90)。
 

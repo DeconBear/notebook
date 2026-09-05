@@ -17,63 +17,119 @@ cd docs/world-models/intro/code
 python demo.py
 ```
 
-只依赖 NumPy 和 Matplotlib，CPU 秒级运行完毕。
+CPU、NumPy、Matplotlib。三张图：`wm01-01-taxonomy.png`（五条路径地图）、`rollout_error_comparison.png`（像素 vs 潜空间误差累积）、`world_model_radar_comparison.png`（主观雷达）。没有神经网络。`TAXONOMY` 写「五条」，雷达字典也是五条；注释里偶尔写「六条」是笔误，以列表长度为准。
 
 ## 代码逐段详解
 
-### 第1步：五条技术路径的元数据表
+### 第1步：`TAXONOMY` — 数据与画图分开
+
+每条路径一个 `dict`：`key`（简称）、`full`（一句话）、`methods`（叶子上的代表方法）、`color`、`note`（斜体关键词）。
 
 ```python
 TAXONOMY = [
-    dict(key='RSSM/Dreamer', full='隐式动力学 + 想象规划', methods=['PlaNet (RSSM)', 'DreamerV1→V3'], ...),
-    dict(key='MuZero', full='隐式模型 + 树搜索', methods=['MuZero', 'EfficientZero'], ...),
+    dict(key='路径一 视频生成', full='GAN / VAE / 扩散 / Sora',
+         methods=['GAN→VAE→DiT', 'Sora / Cosmos'], color='#C1666B', ...),
     ...
 ]
 ```
 
-用一个列表把五条技术路径的简称、全称、代表方法、颜色统一管理，后面绘制分类地图和雷达图都直接遍历这个数据结构——把"数据"和"绘图逻辑"分开，方便后续增删路径。
+后面 `plot_taxonomy_map` 和雷达图都 **遍历这份表**，改一条路径只改这里。五条对应后续章节：视频生成、交互/3D、抽象状态、因果、符号。
 
-### 第2步：绘制分类地图 `plot_taxonomy_map()`
+`set_seed(42)` 只调 `np.random.seed`。分类图是确定性的；误差仿真才用到高斯噪声。
 
-```python
-arrow = FancyArrowPatch(root_xy, branch_xy, connectionstyle=f"arc3,rad={(y - root_xy[1]) * 0.06}", ...)
-```
+---
 
-以"World Model"为根节点，向右延伸出五条分支（每条技术路径一个节点），再向右延伸出代表方法（叶子节点）。`connectionstyle="arc3,rad=..."` 让连接线根据纵向偏移量自动弯曲成弧线，视觉上更像一张"思维导图"，而不是死板的直线连接。
-
-### 第3步：为什么在潜空间里做梦？—— rollout 误差累积仿真
+### 第2步：分类地图 — 弧线 `rad` 跟纵向偏移走
 
 ```python
-def simulate_rollout_error(horizon=30, pixel_step_error=0.045, latent_step_error=0.018, n_trials=200):
-    for trial in range(n_trials):
-        e_pixel = 0.02
-        e_latent = 0.02
-        for t in range(horizon):
-            noise_p = np.random.normal(0, 0.003)
-            e_pixel = e_pixel * (1 + pixel_step_error) + abs(noise_p)
-            ...
+root_xy = (1.1, 4.0)
+y_positions = np.linspace(7.1, 0.9, n)
+arrow = FancyArrowPatch(
+    root_xy, branch_xy,
+    connectionstyle=f"arc3,rad={(y - root_xy[1]) * 0.06}",
+    ...
+)
 ```
 
-这是一个**简化的类比仿真**，不是真实的世界模型训练：用 `error_t = error_{t-1} * (1 + step_error) + noise` 这样一个复合增长的随机游走，模拟"多步预测误差会随 rollout 步数累积"这个现象。像素空间用更大的 `step_error`（因为要建模大量与决策无关的高频视觉细节，误差更容易被放大），潜空间用更小的 `step_error`。跑 `n_trials=200` 次取平均，得到平滑的误差增长曲线用于对比，这解释了为什么 RSSM/Dreamer 选择在潜空间而不是像素空间做多步"想象"。
+- **`linspace(7.1, 0.9, n)`**：从上到下均匀 $n$ 个 $y$。根在 $y=4$，上下分支对称。
+- **`arc3,rad=...`**：贝塞尔弯曲。分支比根高则 `rad>0` 往一侧弯，比根低则反号，避免五条直线叠在一起。系数 `0.06` 是手调的视觉量。
+- **`FancyBboxPatch((x-1.55, y-0.42), 3.1, 0.84)`**：盒子以 `branch_xy` 为中心。`item['key']` 写在偏上，`full` 偏下。
+- 叶子：`leaf_ys = linspace(y+0.28*(n_leaves-1), y-0.28*(n_leaves-1), n_leaves)`。一条方法时 `n_leaves=1`，`linspace(y,y,1)` 就是 $y$ 本身；两条则上下各偏 0.28。
+- **`bbox=dict(boxstyle='round,...')` 包在 `ax.text` 里**：叶子是文字+浅色底，不是第二套 Patch。
 
-### 第4步：五条路径的多维度雷达图
+`axis('off')` + 自定义 `xlim/ylim`：整张图当画布。
+
+---
+
+### 第3步：`simulate_rollout_error` — 复合增长，不是真世界模型
+
+直觉：多步想象时，误差会进下一步输入。像素空间要拟合高频纹理，`step_error` 取得更大。
+
+$$
+e_{t}=e_{t-1}(1+\eta)+|\xi_t|
+$$
 
 ```python
-RADAR_DIMENSIONS = ['样本效率', '规划能力', '生成质量', '计算成本(越低越好)', '可解释性', '通用性']
-RADAR_SCORES = {'RSSM/Dreamer': [4, 5, 3, 3, 3, 3], 'MuZero': [3, 5, 1, 2, 2, 2], ...}
+e_pixel = 0.02
+e_latent = 0.02
+for t in range(horizon):
+    noise_p = np.random.normal(0, 0.003)
+    e_pixel = e_pixel * (1 + pixel_step_error) + abs(noise_p)
+    e_latent = e_latent * (1 + latent_step_error) + abs(noise_l)
 ```
 
-这些分数是**教学用的主观定性打分**（1-5），不是严格的评测结果——目的是帮助建立"没有一条路径全面占优，需要按任务需求取舍"的直觉。`angles += angles[:1]` 和 `values = scores + scores[:1]` 是绘制雷达图的标准技巧：把第一个维度复制到末尾，让折线闭合成一个封闭多边形。
+- **同一起点 `0.02`**：公平。差别只在 `pixel_step_error=0.045` vs `latent_step_error=0.018`。
+- **`abs(noise)`**：噪声只往上加，误差曲线单调涨，读图简单。这**不是**无偏随机游走。
+- **`n_trials=200`**：`pixel_curves[trial, t] = e_pixel`，返回 `mean(axis=0)` 和 `std(axis=0)`。`axis=0` 对试验维塌缩，留下长度 `horizon` 的均值曲线。
+
+`main` 打印第 10、30 步和「像素/潜空间」倍数。第 30 步下标是 `[29]`（0-based）。
+
+---
+
+### 第4步：误差图上的置信带
+
+```python
+steps = np.arange(1, horizon + 1)   # 横轴从 1 画到 30
+ax.fill_between(steps, pixel_errors - pixel_std, pixel_errors + pixel_std, alpha=0.15)
+```
+
+`fill_between` 在均值 ± 标准差之间填色。`alpha=0.15` 半透明，两条带重叠仍能分色。纵轴注释写明「玩具尺度，非真实单位」——不要把数值读成像素 RMSE。
+
+---
+
+### 第5步：雷达图 — 首尾相接才能闭合
+
+```python
+angles = np.linspace(0, 2 * np.pi, n_dims, endpoint=False).tolist()
+angles += angles[:1]
+values = scores + scores[:1]
+ax.plot(angles, values, ...)
+ax.fill(angles, values, alpha=0.06, color=color)
+```
+
+- **`endpoint=False`**：6 个角点均匀占满一圈，不重复 $0$ 与 $2\pi$。
+- **`angles += angles[:1]`**：把第一个角再接到末尾。`scores + scores[:1]` 同样。否则折线缺一边。
+- **`subplot_kw=dict(polar=True)`**：极坐标轴。`set_ylim(0,5)` 与打分 1–5 对齐。
+- **`RADAR_SCORES` 是教学主观分**，不是评测。视频生成「生成质量=5、样本效率=1」；符号路径「可解释性=5」。颜色取 `TAXONOMY` 里同一套，图例才能对上。
+
+`legend(..., bbox_to_anchor=(1.3, 1.1))`：图例放到极坐标外面，避免挡住轴标签。`set_xticks(angles[:-1])` 必须丢掉闭合用的最后一个角，否则最外一圈标签会重复第一个维度。`colors = [item['color'] for item in TAXONOMY]` 与 `RADAR_SCORES.items()` 靠**插入顺序**配对：两个 dict/list 都按路径一到五写，不要只改其中一份的顺序。
+
+`main` 在误差仿真后打印 `pixel_err[9]`、`[29]`：第 10 步、第 30 步（下标从 0）。比值 `pixel_err[29] / latent_err[29]` 应明显大于 1，对应「为什么在潜空间做梦」。这是玩具随机游走，换一组 `step_error` 倍数会变，不要当论文数据。
+
+---
 
 ### 关键概念速查表
 
-| 概念 | 一句话解释 | 代码位置 |
-|------|-----------|---------|
-| 分类地图 | 五条技术路径的树状可视化 | `plot_taxonomy_map()` |
-| rollout 误差累积 | 用复合增长随机游走类比多步预测误差 | `simulate_rollout_error()` |
-| 潜空间 vs 像素空间 | 潜空间每步误差增长率更小，能安全规划更长视野 | `simulate_rollout_error()` 参数设置 |
-| 雷达图对比 | 六个维度上的主观定性打分，非严格评测 | `plot_radar_comparison()` |
-
+| 概念 | 直觉 | 代码 |
+|------|------|------|
+| 五条路径 | 视频 / 交互 / 抽象 / 因果 / 符号 | `TAXONOMY` |
+| `arc3,rad` | 按纵向偏移弯箭头 | `FancyArrowPatch` |
+| rollout 误差 | $e(1+\eta)+\|\xi\|$ | `simulate_rollout_error` |
+| `mean(axis=0)` | 对试验平均 | 平滑曲线 |
+| `fill_between` | ±1σ 带 | 误差图 |
+| 雷达闭合 | 复制第一个点到末尾 | `angles += angles[:1]` |
+| `endpoint=False` | 一圈不重复 | `linspace` |
+| 主观打分 | 非评测 | `RADAR_SCORES` |
 
 ## 源码位置
 

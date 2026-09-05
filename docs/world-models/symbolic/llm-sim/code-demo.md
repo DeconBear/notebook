@@ -6,44 +6,33 @@ title: "wm08 LLM 世界模型与路径对比 — demo.py"
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
-# wm08 LLM 世界模型与路径对比 — demo.py 代码详解
+# LLM 世界模型 — demo.py 代码详解
 
 <a href="/notebook/code/world-models/symbolic/llm-sim/demo.py" target="_blank" download>Download demo.py</a>
-
-## 运行方式
 
 ```bash
 cd docs/world-models/symbolic/llm-sim/code
 python demo.py
 ```
 
+**没有**字符级 MLP。二元语法计数 + 抽样，模拟「语言模型当转移核」。
+
 ## 代码逐段详解
 
-### 第1步：八路径对比图
-
-`plot_path_comparison()` 输出 `wm08-01-path-compare.png`：左侧为 Dreamer / JEPA / Genie / LLM 四条代表路径的雷达图，右侧为 wm01–wm08 在六维能力上的分组柱状图。评分是教学向相对尺度。
-
-### 第2步：文本世界转移表
-
-5 个状态 × 5 个动作，用字典 `TRANSITIONS[(s,a)] -> s'` 定义合法转移；非法动作则状态不变。这是"可验证的真实世界动力学"，用来对照模型预测。
-
-### 第3步：字符级 TextWorldModel
+`defaultdict(Counter)`：`trans[a][b] += 1` 记 bigram。`zip(seq, seq[1:])` 把相邻词配成对。
 
 ```python
-s = embed(state_ids).mean(1)
-a = embed(action_ids).mean(1)
-logits = head(mlp(cat([s, a]))).view(B, max_state_len, vocab_size)
+items, counts = zip(*opts.items())
+p = np.array(counts, dtype=float); p /= p.sum()
+s = np.random.choice(items, p=p)
 ```
 
-用均值池化把变长字符序列压成向量，再预测下一状态每个字符位置的分布。这是 LLM 下一状态预测的**最小玩具近似**。
+`zip(*dict.items())` 把键和值拆成两条元组。概率与计数成正比——最简 n-gram。未见过的词 `opts` 空则 `break`。
 
-### 第4步：多步推演
+柱状图分数是教学主观分，不是评测。
 
-按「拿起钥匙 → 开门 → 出门 → 放下钥匙」执行，打印真实 vs 预测，并导出训练曲线与结果表。
-
+规则世界对比见 [符号导论](/world-models/symbolic/overview/code-demo)。
 
 ## 源码位置
-
-clone 后打开（相对仓库根目录）：
 
 `docs/world-models/symbolic/llm-sim/code/demo.py`

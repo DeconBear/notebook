@@ -1,7 +1,7 @@
 {
   "name": "notebook",
   "version": "1.0.0",
-  "description": "图解笔记——AI、算法、ROS 2",
+  "description": "图解笔记——AI、控制论、机器人学、世界模型、信息论、量子信息、算法、ROS 2",
   "scripts": {
     "sync-code": "node scripts/sync-public-code.mjs",
     "new-chapter": "node scripts/new-chapter.mjs",

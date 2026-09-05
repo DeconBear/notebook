@@ -9,7 +9,7 @@ order: 10
 
 > 量子信息不是「把电脑换成量子的」一句话，而是一套关于**如何编码、传送、保存、模拟和用量子系统学习**的共同语言。
 
-本领域放在 [科学计算](/science/overview/) 与 [世界模型](/world-models/intro/) 之间：一边连物理与硬件，一边连机器学习。线性代数是硬前置，请先有 [向量 / 矩阵 / 内积](/math/linear-algebra/) 的几何直觉。
+本领域紧接 [信息论](/information/overview/)：经典熵、信道与容量说清楚以后，再把比特换成量子比特。线性代数是硬前置，请先有 [向量 / 矩阵 / 内积](/math/linear-algebra/) 的几何直觉。具身与规划见 [控制论](/control/overview/) 与 [世界模型](/world-models/intro/)。
 
 ---
 

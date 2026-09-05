@@ -17,82 +17,121 @@ cd docs/world-models/interactive/genie/code
 python demo.py
 ```
 
+PyTorch、CPU。6×6 网格上无监督发现 4 个离散潜在动作。真实动作标签**只用于最后评估**。图：`wm06-01-genie.png`、`genie_training_curves.png`、`genie_latent_action_alignment.png`、`genie_rollout_demo.png`。
+
 ## 代码逐段详解
 
-### 第1步：Genie 架构示意图
-
-`plot_genie_architecture()` 手绘训练阶段（视频→分词器→LAM→动态模型）与推理阶段（用户指定潜在动作→逐帧生成）两段流程，输出 `wm06-01-genie.png`。
-
-### 第2步：网格世界数据
+### 第1步：内部格子，避免动作歧义
 
 ```python
-def make_transition_dataset(n_transitions, size=6):
-    for i in range(n_transitions):
-        pos = (np.random.randint(1, size-1), np.random.randint(1, size-1))  # 只用内部格子
-        action = np.random.randint(0, 4)
-        new_pos = step_grid(pos, action, size)
-        ...
+pos = (np.random.randint(1, size - 1), np.random.randint(1, size - 1))
 ```
 
-**为什么只用内部格子？** 边界上存在动作歧义——在第 0 行时"向上"和"原地不动"效果相同，同一个 $(frame_t, frame_{t+1})$ 对应两种真实动作。内部格子保证 4 个动作 ↔ 4 种转移效果一一对应，方便观察"潜在动作发现"是否成功。
+`randint(1, size-1)` 是半开区间，得到 $1\ldots 4$。贴边时「往墙上走」和「原地」同一对帧，一个 $(x_t,x_{t+1})$ 会对应两种真动作，LAM 无法辨识。内部四向位移一一对应。`true_actions` 写入数据集，**从不进 `forward` / `loss`**。
 
-**关键点**：`true_actions` 只在最终评估时使用，**从不进入训练循环**。
+`make_grid_frame`：one-hot 平面，智能体格为 1。`step_grid`：0 上 1 下 2 左 3 右，越界 `max`/`min` 贴墙。
 
-### 第3步：动作编码器
+---
+
+### 第2步：`ActionEncoder` — 只看帧对
 
 ```python
-class ActionEncoder(nn.Module):
-    def forward(self, frame_t, frame_tp1):
-        x = torch.cat([frame_t.view(B, -1), frame_tp1.view(B, -1)], dim=1)
-        return self.net(x)   # (B, latent_dim) 连续潜向量
+x = torch.cat([frame_t.view(B, -1), frame_tp1.view(B, -1)], dim=1)
+return self.net(x)   # (B, latent_dim)
 ```
 
-编码器看到的是**帧对**，而不是带标签的动作。它必须从"两帧之间发生了什么变化"中自行提取动作信息——这正是 Genie LAM 的核心设定。
+`view(B,-1)` 把 $6\times6$ 拉成 36 维，两帧拼接 72 维，MLP 出 8 维连续 $z$。没有动作整数输入。差异里应藏着「往哪走」。
 
-### 第4步：向量量化（VQ）+ 直通估计器
+---
+
+### 第3步：VQ + 直通 — 前向量化、反向当恒等
+
+码表 `codebook` 是 `(K, d)` 的 `nn.Parameter`，$K=4$。
+
+$$
+k=\arg\min_j\|z-e_j\|_2,\quad z_q=e_k
+$$
 
 ```python
 dist = torch.cdist(z.unsqueeze(1), self.codebook.unsqueeze(0)).squeeze(1)
 code_idx = dist.argmin(dim=1)
 z_q = self.codebook[code_idx]
-z_q_st = z + (z_q - z).detach()   # 直通估计器
 ```
 
+- **`z.unsqueeze(1)`**：`(B,d)→(B,1,d)`；`codebook.unsqueeze(0)`：`(K,d)→(1,K,d)`。`cdist` 得到 `(B,K)` 两两欧氏距离。
+- **`argmin(dim=1)`**：每行最近码。这一步 **不可微**。
+
+直通估计器：
+
 $$
-z_q^{\text{st}} = z + \mathrm{sg}[z_q - z]
+z_q^{\mathrm{st}}=z+\mathrm{sg}[z_q-z]
 $$
 
-前向用量化值，反向梯度直接传给 $z$，绕过不可微的 $\arg\min$。另加：
-
-$$
-\mathcal{L}_{\text{VQ}} = \|z_q - \mathrm{sg}[z]\|^2 + 0.25\, \|z - \mathrm{sg}[z_q]\|^2
-$$
-
-（码本损失 + 承诺损失）
-
-### 第5步：动态模型与总损失
+前向值等于 $z_q$（因为 $z+(z_q-z)=z_q$），反向 $\partial z_q^{\mathrm{st}}/\partial z=I$，梯度绕过 $\arg\min$ 传到编码器。
 
 ```python
-logits = self.dynamics(frame_t, z_q)          # 预测智能体新位置的分布
+z_q_st = z + (z_q - z).detach()
+```
+
+`.detach()` 就是 stop-gradient。解码器吃的是 `z_q_st`，不是裸 `z_q`（否则编码器收不到重建梯度）。
+
+VQ 损失（码本 + 承诺）：
+
+$$
+\mathcal{L}_{\mathrm{VQ}}=\|z_q-\mathrm{sg}[z]\|^2+0.25\,\|z-\mathrm{sg}[z_q]\|^2
+$$
+
+```python
+codebook_loss = F.mse_loss(z_q, z.detach())      # 码字去追编码器
+commitment_loss = F.mse_loss(z, z_q.detach())    # 编码器去承诺靠近码字
+vq_loss = codebook_loss + 0.25 * commitment_loss
+```
+
+- **`z.detach()` 进码本损失**：更新码字时当 $z$ 为常数。
+- **`z_q.detach()` 进承诺损失**：更新编码器时当码字为常数。两边不要抢着对同一条边求梯度，否则会抖。
+- **`0.25`**：承诺项较弱，避免编码器被码表拖死、重建学不好。
+
+---
+
+### 第4步：动态模型是「下一格分类」，不是像素解码
+
+```python
+logits = self.dynamics(frame_t, z_q)          # (B, 36)
+target_idx = frames_tp1.reshape(n, -1).argmax(axis=1)
 recon_loss = F.cross_entropy(logits, target_idx)
 loss = recon_loss + vq_loss
 ```
 
-玩具规模下，"预测下一帧"被简化为"预测智能体在哪个格子"的分类问题。真实 Genie 会对每个空间 token 做自回归/掩码生成，但教学要点相同：**训练信号只有重建/预测损失，没有动作标签**。
+one-hot 帧的 `argmax` 就是智能体格子编号。玩具里「预测下一帧」= 36 类分类。真实 Genie 对空间 token 做自回归；教学要点相同：**唯一监督是预测准不准，没有动作交叉熵**。
 
-### 第6步：对齐评估
+`LatentActionWorldModel.forward`：`encoder → vq → dynamics`，返回 `logits, code_idx, vq_loss`。
 
-训练结束后，统计混淆矩阵：每个潜在码 $k$ 最常对应哪个真实动作。若对齐准确率接近 100%，说明模型无监督地"发明"了与真实动作语义一致的离散码表。
+---
+
+### 第5步：对齐评估与交互式指定码
+
+`evaluate_latent_action_alignment`：混淆矩阵 `confusion[k, a] += 1`，每行 `argmax` 得到「码 $k$ 最常对应的真动作」，再算最优匹配准确率。接近 100% 说明 4 个码自发对齐上/下/左/右（排列可以任意）。
+
+`plot_rollout_demo`：**推理时绕过编码器**，直接 `model.vq.codebook[k]` 当动作向量喂给 `dynamics`。这就是「手柄上的离散键」：用户指定码，世界走一步。蓝格起点、红格预测落点。
+
+`frame_t = torch.from_numpy(frame).float().unsqueeze(0)`：加 batch 维，`Linear` 才接受。`pred_pos_idx // size` 与 `% size` 把 0…35 拆回 `(行, 列)`。语法 `//` 是整数除，不要写成 `/` 再 `int`（负索引时行为不同，这里下标非负）。
+
+训练循环 `np.random.choice(n_data, batch_size, replace=False)`：无放回 mini-batch。`true_actions` 传进 `train_latent_action_model` 的签名但函数体**从未读取**——留下是为了调用处接口整齐，不要误以为交叉熵用了动作标签。
+
+---
 
 ### 关键概念速查表
 
-| 概念 | 一句话解释 | 代码位置 |
-|------|-----------|---------|
-| 潜在动作 | 从帧对推断的离散码，解释"发生了什么变化" | `ActionEncoder` + `VectorQuantizer` |
-| 直通估计器 | 前向量化、反向恒等，使 VQ 可微 | `z + (z_q - z).detach()` |
-| 承诺损失 | 强迫编码器输出靠近码字，防止码字被忽略 | `0.25 * MSE(z, z_q.detach())` |
-| 交互式生成 | 推理时直接查码表指定潜在码，驱动世界演化 | `plot_rollout_demo` |
-
+| 概念 | 数学 / 直觉 | 代码 |
+|------|-------------|------|
+| 帧对编码器 | $(x_t,x_{t+1})\to z$ | `ActionEncoder` |
+| `cdist` + `argmin` | 最近码 | `VectorQuantizer` |
+| 直通 | $z+\mathrm{sg}[z_q-z]$ | `z + (z_q-z).detach()` |
+| 码本损失 | $\|z_q-\mathrm{sg}[z]\|^2$ | `mse(z_q, z.detach())` |
+| 承诺损失 | $0.25\|z-\mathrm{sg}[z_q]\|^2$ | `0.25 * mse(z, z_q.detach())` |
+| 动态模型 | $x_t,z_q\to$ 下一格 logits | `DynamicsModel` |
+| 无动作标签 | 损失里没有 `true_actions` | `train_latent_action_model` |
+| 交互 | 直接查码表 | `codebook[k]` |
 
 ## 源码位置
 

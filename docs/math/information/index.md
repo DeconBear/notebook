@@ -7,7 +7,7 @@ order: 40
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
-> 分类损失、VAE/RSSM 的正则、Dreamer 的 KL balancing——背后都是同一套语言。本章只建立三个量：**熵**、**交叉熵**、**KL 散度**，并说明它们如何接到「最大似然」。
+> 分类损失、VAE/RSSM 的正则、Dreamer 的 KL balancing——背后都是同一套语言。本章只建立三个量：**熵**、**交叉熵**、**KL 散度**，并说明它们如何接到「最大似然」。信道、互信息、容量、Huffman / Hamming、高斯信道与率失真，见领域 [信息论](/information/)（从 [导论](/information/overview/) 进）。量子信息的前置是香农容量，不是交叉熵损失。
 
 ---
 

@@ -6,6 +6,8 @@ order: 1
 
 边做边记。环境：**Ubuntu 22.04 + ROS 2 Humble**。`$ROS_WS` 指 notebook 仓库里的 colcon 工作区 `workspaces/ros2-humble/`（源码在 `src/`，笔记在站点 `/ros2/`）。
 
+运动学、DH、李群等几何先看侧栏 **[机器人学](/robotics/kinematics/)**；反馈与状态空间看 **[控制论](/control/overview/)**。本课把这些接到话题、TF 和仿真。
+
 本课来自 [ros2-humble-notes](https://github.com/DeconBear/ros2-humble-notes)，已并入本仓库。
 
 ## 怎么用这些笔记

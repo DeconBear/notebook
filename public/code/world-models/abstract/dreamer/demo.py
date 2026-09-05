@@ -1,22 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-wm03 Dreamer 家族 —— 演示代码
-======================================================
-功能：
-  1. 构造一个离散网格玩具 MDP（类似简化 CartPole / 走廊平衡）：
-     Agent 在一维位置上左右移动，目标是尽量靠近中心并保持平衡。
-  2. 实现一个微型"潜空间想象循环"（Dreamer 的核心思想）：
-     - 世界模型：离散表格 + 小型神经网络混合的潜动力学（简化 RSSM）
-     - Actor：在潜状态上输出动作分布
-     - Critic：在潜状态上估计价值
-     - 训练：先用真实交互更新世界模型，再在想象轨迹上更新 Actor-Critic
-  3. 对比"只用真实经验的 model-free 基线" vs "在想象中多练几轮的 Dreamer 风格"
-  4. 可视化：训练回报曲线、想象轨迹上的价值估计、策略热力图
-
-设计目标：CPU 上 1-2 分钟内跑完，seed=42 可复现。
-
-运行方式：在 wm03_dreamer/ 目录下执行 python code/demo.py
-依赖: pip install numpy matplotlib torch
+=== Dreamer 演示：想象 Actor-Critic ===
+1) 倒立摆（与 PETS/LeWM 同一物理）：潜动力学 + V_λ，在想象里学力矩策略。
+2) 离散走廊附录：对照「想象多练」相对 model-free REINFORCE。
+运行: python demo.py
 """
 
 import os
@@ -545,33 +532,320 @@ def plot_policy_bars(world: TinyWorldModel, actor: Actor, env: CorridorBalance):
 
 
 # ============================================================================
+# 倒立摆：与 PETS / LeWM 同一套物理（θ=0 竖直向上）
+# ============================================================================
+
+def _wrap_pi(angle):
+    return float((angle + np.pi) % (2.0 * np.pi) - np.pi)
+
+
+class Pendulum:
+    """观测 [cosθ, sinθ, ω]，动作 u∈[-1,1]。不依赖 Gymnasium。"""
+
+    def __init__(self, max_torque=2.0, dt=0.05):
+        self.g, self.m, self.l = 10.0, 1.0, 1.0
+        self.dt, self.max_torque, self.max_speed = dt, max_torque, 8.0
+        self.theta, self.omega = 0.0, 0.0
+
+    def obs(self):
+        return np.array(
+            [np.cos(self.theta), np.sin(self.theta), self.omega],
+            dtype=np.float32,
+        )
+
+    def reset(self):
+        self.theta = float(np.random.uniform(-0.35, 0.35))
+        self.omega = float(np.random.uniform(-0.5, 0.5))
+        return self.obs()
+
+    def step(self, action):
+        u = float(np.clip(action, -1.0, 1.0)) * self.max_torque
+        theta, omega = self.theta, self.omega
+        theta_acc = (3.0 * self.g / (2.0 * self.l)) * np.sin(theta) + (
+            3.0 / (self.m * self.l ** 2)
+        ) * u
+        omega = np.clip(omega + self.dt * theta_acc, -self.max_speed, self.max_speed)
+        theta = _wrap_pi(theta + self.dt * omega)
+        self.theta, self.omega = theta, omega
+        reward = float(
+            np.exp(-8.0 * theta ** 2) * np.exp(-0.05 * omega ** 2)
+            - 0.01 * (u / self.max_torque) ** 2
+        )
+        done = False
+        return self.obs(), reward, done
+
+
+class PendulumWorld(nn.Module):
+    """向量观测上的确定性潜动力学：编码 → 想象一步 → 奖励头。"""
+
+    def __init__(self, obs_dim=3, z_dim=24):
+        super().__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(obs_dim, 32), nn.ELU(), nn.Linear(32, z_dim),
+        )
+        self.dynamics = nn.Sequential(
+            nn.Linear(z_dim + 1, 48), nn.ELU(), nn.Linear(48, z_dim),
+        )
+        self.reward_head = nn.Linear(z_dim, 1)
+
+    def encode(self, obs):
+        return self.encoder(obs)
+
+    def imagine_step(self, z, action):
+        z_next = self.dynamics(torch.cat([z, action], dim=-1))
+        reward = self.reward_head(z_next).squeeze(-1)
+        return z_next, reward
+
+
+class GaussianActor(nn.Module):
+    """tanh-Gaussian 力矩，输出 ∈[-1,1]。"""
+
+    def __init__(self, z_dim=24):
+        super().__init__()
+        self.net = nn.Sequential(nn.Linear(z_dim, 32), nn.ELU(), nn.Linear(32, 2))
+
+    def forward(self, z):
+        h = self.net(z)
+        mu = torch.tanh(h[..., :1])
+        std = F.softplus(h[..., 1:2]) + 0.08
+        return mu, std
+
+
+class PendulumCritic(nn.Module):
+    def __init__(self, z_dim=24):
+        super().__init__()
+        self.net = nn.Sequential(nn.Linear(z_dim, 32), nn.ELU(), nn.Linear(32, 1))
+
+    def forward(self, z):
+        return self.net(z).squeeze(-1)
+
+
+def _pendulum_v_lambda(rewards, values, bootstrap, gamma=0.99, lam=0.95):
+    """想象轨迹上的 V_λ（Dreamer V1）：混合 n-step + bootstrap。"""
+    horizon = len(rewards)
+    gae = torch.zeros_like(bootstrap)
+    out = []
+    next_v = bootstrap
+    for t in reversed(range(horizon)):
+        delta = rewards[t] + gamma * next_v - values[t]
+        gae = delta + gamma * lam * gae
+        out.insert(0, gae + values[t])
+        next_v = values[t]
+    return torch.stack(out)
+
+
+def collect_pendulum_episodes(env, actor, world, n_episodes, max_steps=40, noise=0.25):
+    episodes = []
+    for _ in range(n_episodes):
+        obs = env.reset()
+        traj = {'obs': [], 'act': [], 'rew': [], 'next_obs': [], 'done': []}
+        done = False
+        t = 0
+        while (not done) and t < max_steps:
+            obs_t = torch.from_numpy(obs).unsqueeze(0)
+            with torch.no_grad():
+                z = world.encode(obs_t)
+                mu, std = actor(z)
+                a = torch.clamp(mu + noise * torch.randn_like(mu), -1.0, 1.0)
+            action = float(a.item())
+            next_obs, reward, done = env.step(action)
+            traj['obs'].append(obs)
+            traj['act'].append([action])
+            traj['rew'].append(reward)
+            traj['next_obs'].append(next_obs)
+            traj['done'].append(float(done))
+            obs = next_obs
+            t += 1
+        episodes.append(traj)
+    return episodes
+
+
+def train_pendulum_world(world, optimizer, episodes, n_steps=25):
+    obs, act, rew, next_obs = [], [], [], []
+    for ep in episodes:
+        obs.extend(ep['obs'])
+        act.extend(ep['act'])
+        rew.extend(ep['rew'])
+        next_obs.extend(ep['next_obs'])
+    obs_t = torch.tensor(np.array(obs), dtype=torch.float32)
+    next_t = torch.tensor(np.array(next_obs), dtype=torch.float32)
+    act_t = torch.tensor(np.array(act), dtype=torch.float32)
+    rew_t = torch.tensor(rew, dtype=torch.float32)
+    losses = []
+    n = obs_t.shape[0]
+    for _ in range(n_steps):
+        idx = np.random.choice(n, size=min(64, n), replace=False)
+        z = world.encode(obs_t[idx])
+        z_tgt = world.encode(next_t[idx]).detach()
+        z_pred, r_pred = world.imagine_step(z, act_t[idx])
+        loss = F.mse_loss(z_pred, z_tgt) + F.mse_loss(r_pred, rew_t[idx])
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        losses.append(loss.item())
+    return float(np.mean(losses))
+
+
+def imagine_train_pendulum_ac(
+    world, actor, critic, actor_opt, critic_opt, start_obs,
+    horizon=8, n_updates=12, gamma=0.99, lam=0.95,
+):
+    """世界模型参数冻结；梯度沿想象动力学回到 Actor（Dreamer V1 直通）。"""
+    actor_losses, critic_losses = [], []
+    for _ in range(n_updates):
+        idx = np.random.choice(start_obs.shape[0], size=min(32, start_obs.shape[0]), replace=False)
+        with torch.no_grad():
+            z = world.encode(start_obs[idx])
+        rewards, values, zs = [], [], [z]
+        for _t in range(horizon):
+            mu, std = actor(z)
+            a = torch.clamp(mu + std * torch.randn_like(mu), -1.0, 1.0)
+            z, r = world.imagine_step(z, a)
+            rewards.append(r)
+            values.append(critic(zs[-1]))
+            zs.append(z)
+        bootstrap = critic(zs[-1]).detach()
+        values_t = torch.stack(values)
+        rewards_t = torch.stack(rewards)
+        v_lam = _pendulum_v_lambda(list(rewards_t), list(values_t.detach()), bootstrap, gamma, lam)
+        v_lam = torch.clamp(v_lam, -15.0, 15.0)
+        critic_loss = F.mse_loss(values_t, v_lam.detach())
+        critic_opt.zero_grad()
+        critic_loss.backward()
+        critic_opt.step()
+
+        # 再想象一次，让 Actor 最大化 V_λ（世界模型参数不进 actor_opt）
+        with torch.no_grad():
+            z = world.encode(start_obs[idx])
+        rewards, values = [], []
+        zs = [z]
+        for _t in range(horizon):
+            mu, std = actor(z)
+            a = torch.clamp(mu + std * torch.randn_like(mu), -1.0, 1.0)
+            z, r = world.imagine_step(z, a)
+            rewards.append(r)
+            values.append(critic(zs[-1]))
+            zs.append(z)
+        bootstrap = critic(zs[-1]).detach()
+        values_t = torch.stack(values)
+        v_lam = _pendulum_v_lambda(
+            list(torch.stack(rewards)), list(values_t.detach()), bootstrap, gamma, lam,
+        )
+        v_lam = torch.clamp(v_lam, -15.0, 15.0)
+        actor_loss = -v_lam.mean()
+        actor_opt.zero_grad()
+        actor_loss.backward()
+        actor_opt.step()
+        actor_losses.append(actor_loss.item())
+        critic_losses.append(critic_loss.item())
+    return float(np.mean(actor_losses)), float(np.mean(critic_losses))
+
+
+def eval_pendulum(env, actor, world, n_episodes=8, max_steps=40):
+    rets, angs = [], []
+    last_thetas = None
+    for _ in range(n_episodes):
+        obs = env.reset()
+        ep_ret, thetas = 0.0, [env.theta]
+        for _t in range(max_steps):
+            with torch.no_grad():
+                z = world.encode(torch.from_numpy(obs).unsqueeze(0))
+                mu, _std = actor(z)
+            obs, r, done = env.step(float(mu.item()))
+            ep_ret += r
+            thetas.append(env.theta)
+            if done:
+                break
+        rets.append(ep_ret)
+        angs.append(abs(thetas[-1]))
+        last_thetas = thetas
+    return float(np.mean(rets)), float(np.mean(angs)), last_thetas
+
+
+def train_dreamer_pendulum(n_iters=14, episodes_per_iter=4, max_steps=36):
+    print('\n=== Dreamer · 倒立摆（想象 Actor-Critic）===')
+    env = Pendulum()
+    z_dim = 24
+    world = PendulumWorld(z_dim=z_dim)
+    actor = GaussianActor(z_dim)
+    critic = PendulumCritic(z_dim)
+    world_opt = optim.Adam(world.parameters(), lr=3e-3)
+    actor_opt = optim.Adam(actor.parameters(), lr=1e-3)
+    critic_opt = optim.Adam(critic.parameters(), lr=3e-3)
+
+    eval_rets, eval_angs, all_obs = [], [], []
+    for it in range(n_iters):
+        noise = max(0.08, 0.4 * (1.0 - it / n_iters))
+        episodes = collect_pendulum_episodes(
+            env, actor, world, episodes_per_iter, max_steps=max_steps, noise=noise,
+        )
+        for ep in episodes:
+            all_obs.extend(ep['obs'])
+        wm_loss = train_pendulum_world(world, world_opt, episodes, n_steps=20)
+        start = torch.tensor(np.array(all_obs[-400:]), dtype=torch.float32)
+        a_loss, c_loss = imagine_train_pendulum_ac(
+            world, actor, critic, actor_opt, critic_opt, start, horizon=8, n_updates=10,
+        )
+        ret, ang, _ = eval_pendulum(env, actor, world, n_episodes=6, max_steps=max_steps)
+        eval_rets.append(ret)
+        eval_angs.append(ang)
+        if (it + 1) % 6 == 0 or it == 0:
+            print(f'  iter {it+1:2d}/{n_iters}  eval_ret={ret:6.2f}  |θ|={ang:.3f}  '
+                  f'wm={wm_loss:.3f}  actor={a_loss:.3f}  critic={c_loss:.3f}')
+
+    _, _, last_thetas = eval_pendulum(env, actor, world, n_episodes=1, max_steps=max_steps)
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+    axes[0].plot(eval_rets, color='#2E86AB', lw=2)
+    axes[0].set_xlabel('训练轮次')
+    axes[0].set_ylabel('评估回报')
+    axes[0].set_title('倒立摆：想象中学策略')
+    axes[0].grid(True, alpha=0.3)
+    axes[1].plot(eval_angs, color='#C1666B', lw=2)
+    axes[1].set_xlabel('训练轮次')
+    axes[1].set_ylabel(r'评估 $|θ|$ (rad)')
+    axes[1].set_title('偏离直立（越低越好）')
+    axes[1].grid(True, alpha=0.3)
+    fig.tight_layout()
+    out = os.path.join(_IMAGES_DIR, 'dreamer_pendulum.png')
+    fig.savefig(out, dpi=140)
+    plt.close(fig)
+    print('保存', out)
+
+    fig2, ax = plt.subplots(figsize=(6, 3.2))
+    ax.plot(last_thetas, color='#1a7f37', lw=2)
+    ax.axhline(0.0, color='gray', ls='--', alpha=0.6)
+    ax.set_xlabel('时间步')
+    ax.set_ylabel(r'$θ$ (rad)')
+    ax.set_title('评估回合：角度轨迹（0 = 直立）')
+    ax.grid(True, alpha=0.3)
+    fig2.tight_layout()
+    out2 = os.path.join(_IMAGES_DIR, 'dreamer_pendulum_rollout.png')
+    fig2.savefig(out2, dpi=140)
+    plt.close(fig2)
+    print('保存', out2)
+    return eval_rets, eval_angs
+
+
+# ============================================================================
 # 主程序
 # ============================================================================
 
 def main():
     print("\n" + "=" * 70)
-    print("    wm03 Dreamer 家族 —— 完整演示")
+    print("    Dreamer：倒立摆想象循环 + 离散走廊附录")
     print("=" * 70)
 
     set_seed(42)
+    train_dreamer_pendulum()
+
+    print("\n[附录] 离散走廊：短跑刷新策略/价值图（对应 V1 骨架的离散版）...")
     env = CorridorBalance(n_pos=11, max_steps=30)
-
-    # ---- 1. Dreamer 风格训练 ----
-    print("\n[步骤 1] Dreamer 风格训练（真实交互 → 更新世界模型 → 想象中练策略）...")
     dreamer_returns, world, actor, critic = train_dreamer_style(
-        env, n_iters=40, episodes_per_iter=8,
+        env, n_iters=10, episodes_per_iter=4,
     )
-    print(f"  最终评估回报: {dreamer_returns[-1]:.2f}")
-
-    # ---- 2. Model-free 基线 ----
-    print("\n[步骤 2] Model-free REINFORCE 基线训练...")
     set_seed(42)
     env2 = CorridorBalance(n_pos=11, max_steps=30)
-    baseline_returns = train_reinforce_baseline(env2, n_episodes=320)
-    print(f"  最后 50 ep 平均回报: {np.mean(baseline_returns[-50:]):.2f}")
-
-    # ---- 3. 可视化 ----
-    print("\n[步骤 3] 绘制对比图与策略/价值可视化...")
+    baseline_returns = train_reinforce_baseline(env2, n_episodes=80)
     plot_return_comparison(dreamer_returns, baseline_returns)
     plot_value_heatmap(world, critic, env)
     plot_policy_bars(world, actor, env)
@@ -579,12 +853,9 @@ def main():
     print("\n" + "=" * 70)
     print("【总结】")
     print("=" * 70)
-    print("  Dreamer 的核心循环:")
-    print("    1. 与真实环境交互，收集少量数据")
-    print("    2. 用真实数据更新世界模型（学动力学 + 奖励）")
-    print("    3. 在世界模型的潜空间里'想象'多步轨迹")
-    print("    4. 用想象轨迹上的奖励训练 Actor-Critic —— 不必每次都真交互")
-    print("  本演示在离散走廊任务上验证了：想象训练可以提升样本效率。")
+    print("  倒立摆演示对应 Dreamer V1：真实交互拟合世界模型，")
+    print("  再在潜空间想象轨迹上用 V_λ 更新 Actor-Critic。")
+    print("  走廊附录用来对照离散动作上的同一套循环。")
     print(f"\n  所有图片已保存至 {_IMAGES_DIR}")
     print("=" * 70)
     print("\n  运行完成！\n")

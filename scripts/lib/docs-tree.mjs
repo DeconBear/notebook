@@ -20,8 +20,9 @@ export function unquote(value) {
 export function parseSimpleYaml(text) {
   const data = {}
   let currentKey = null
-  for (const rawLine of String(text).split(/\r?\n/)) {
-    const line = rawLine.replace(/\t/g, '  ')
+  const src = String(text).replace(/^\uFEFF/, '')
+  for (const rawLine of src.split(/\r?\n/)) {
+    const line = rawLine.replace(/^\uFEFF/, '').replace(/\t/g, '  ')
     const trimmed = line.replace(/#.*$/, '')
     if (!trimmed.trim()) continue
     const listItem = trimmed.match(/^\s*-\s+(.*)$/)
@@ -110,6 +111,7 @@ function walkNode(docsDir, rel) {
       title: meta.title || path.basename(rel),
       order: meta.order ?? 999,
       collapsed: Boolean(meta.collapsed),
+      hasIndex,
       children,
     }
   }
@@ -140,6 +142,7 @@ function walkNode(docsDir, rel) {
       title: path.basename(rel),
       order: 999,
       collapsed: false,
+      hasIndex,
       children,
     }
   }
@@ -149,11 +152,14 @@ function walkNode(docsDir, rel) {
 export function toSidebarItems(nodes) {
   return nodes.map((node) => {
     if (node.kind === 'group') {
-      return {
+      const item = {
         text: node.title,
         collapsed: node.collapsed,
         items: toSidebarItems(node.children || []),
       }
+      // 分组目录下若有 index.md，标题可点进落地页（否则 /control/ 这类 URL 会 404）
+      if (node.hasIndex && node.rel) item.link = `/${node.rel}/`
+      return item
     }
     return {
       text: node.title,
@@ -207,7 +213,7 @@ export function findCodeFiles(docsDir = DOCS_DIR) {
       if (ent.isDirectory()) {
         if (ent.name === 'code') {
           for (const f of fs.readdirSync(abs, { withFileTypes: true })) {
-            if (f.isFile() && f.name.endsWith('.py')) {
+            if (f.isFile() && (f.name.endsWith('.py') || f.name.endsWith('.cpp') || f.name.endsWith('.hpp') || f.name.endsWith('.h'))) {
               files.push({
                 abs: path.join(abs, f.name),
                 rel: `${childRel}/${f.name}`,
