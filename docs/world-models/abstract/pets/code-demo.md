@@ -13,7 +13,7 @@ cd docs/world-models/abstract/pets/code
 python demo.py
 ```
 
-玩具一维质点 + 线性集成 + CEM-MPC。看两张图：闭环是否靠近目标、CEM 迭代中动作均值是否收、方差是否缩。
+玩具一维质点（看 CEM 收缩）+ **倒立摆直立稳定**（概率 MLP 集成 + TS∞ + CEM-MPC，不依赖 Gymnasium）。跑完应看到 `pets_cem_mpc.png` 与 `pets_pendulum.png`。CPU 约 1–2 分钟。
 
 ## 完整代码
 
