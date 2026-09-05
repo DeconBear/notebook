@@ -468,6 +468,115 @@ def plot_prediction_error_map(ctx_encoder, tgt_encoder, predictor, images, patch
     return avg_error.mean()
 
 
+def _wrap_pi(angle):
+    return float((angle + np.pi) % (2.0 * np.pi) - np.pi)
+
+
+def render_stick(theta, size=20, noise=0.05):
+    """θ=0 向上的火柴杆帧，叠加不可预测的像素噪声。"""
+    img = np.zeros((size, size), dtype=np.float32)
+    cx = cy = size // 2
+    n = max(size // 2 - 1, 4)
+    ts = np.linspace(0.0, 1.0, n)
+    xs = (cx + ts * n * np.sin(theta)).astype(int)
+    ys = (cy - ts * n * np.cos(theta)).astype(int)
+    m = (xs >= 0) & (xs < size) & (ys >= 0) & (ys < size)
+    img[ys[m], xs[m]] = 1.0
+    img += noise * np.random.randn(size, size).astype(np.float32)
+    return np.clip(img, 0.0, 1.0)
+
+
+def collect_pendulum_frames(n=400, dt=0.05):
+    """随机力矩下采集 (帧_t, 动作, 帧_{t+1})。"""
+    g, m, length, max_torque, max_speed = 10.0, 1.0, 1.0, 2.0, 8.0
+    theta = float(np.random.uniform(-0.5, 0.5))
+    omega = float(np.random.uniform(-0.4, 0.4))
+    frames_t, frames_n, acts = [], [], []
+    for _ in range(n):
+        a = float(np.random.uniform(-1, 1))
+        img_t = render_stick(theta)
+        u = a * max_torque
+        theta_acc = (3.0 * g / (2.0 * length)) * np.sin(theta) + (3.0 / (m * length ** 2)) * u
+        omega = float(np.clip(omega + dt * theta_acc, -max_speed, max_speed))
+        theta = _wrap_pi(theta + dt * omega)
+        img_n = render_stick(theta)
+        frames_t.append(img_t)
+        frames_n.append(img_n)
+        acts.append(a)
+        if abs(theta) > np.pi / 2:
+            theta = float(np.random.uniform(-0.5, 0.5))
+            omega = float(np.random.uniform(-0.4, 0.4))
+    return np.stack(frames_t), np.array(acts, dtype=np.float32), np.stack(frames_n)
+
+
+class TinyActionJEPA(nn.Module):
+    """上下文帧 → z；动作条件预测下一帧 z（V-JEPA 2-AC 的玩具版）。"""
+
+    def __init__(self, img_dim=400, z_dim=16):
+        super().__init__()
+        self.enc = nn.Sequential(nn.Linear(img_dim, 64), nn.ELU(), nn.Linear(64, z_dim))
+        self.pred = nn.Sequential(nn.Linear(z_dim + 1, 32), nn.ELU(), nn.Linear(32, z_dim))
+
+    def encode(self, x):
+        return self.enc(x)
+
+    def predict(self, z, a):
+        return self.pred(torch.cat([z, a], dim=-1))
+
+
+def run_pendulum_frame_jepa(n_steps=200):
+    """对比：像素重建 vs 表征预测。目标编码器 EMA，避免靶子跟着学生一起漂。"""
+    frames_t, acts, frames_n = collect_pendulum_frames()
+    xt = torch.from_numpy(frames_t.reshape(len(frames_t), -1))
+    xn = torch.from_numpy(frames_n.reshape(len(frames_n), -1))
+    at = torch.from_numpy(acts).unsqueeze(-1)
+    model = TinyActionJEPA(img_dim=xt.shape[1])
+    tgt_enc = TinyActionJEPA(img_dim=xt.shape[1]).enc
+    tgt_enc.load_state_dict(model.enc.state_dict())
+    for p in tgt_enc.parameters():
+        p.requires_grad_(False)
+    opt = torch.optim.Adam(model.parameters(), lr=3e-3)
+    latent_hist, pixel_hist = [], []
+    for step in range(n_steps):
+        idx = np.random.choice(len(xt), size=32, replace=False)
+        z = model.encode(xt[idx])
+        with torch.no_grad():
+            z_tgt = tgt_enc(xn[idx])
+        z_hat = model.predict(z, at[idx])
+        loss_lat = F.mse_loss(z_hat, z_tgt)
+        loss_pix = F.mse_loss(xn[idx], xt[idx])
+        opt.zero_grad()
+        loss_lat.backward()
+        opt.step()
+        with torch.no_grad():
+            for p_t, p_s in zip(tgt_enc.parameters(), model.enc.parameters()):
+                p_t.data.mul_(0.99).add_(p_s.data, alpha=0.01)
+        latent_hist.append(float(loss_lat.item()))
+        pixel_hist.append(float(loss_pix.item()))
+        if step % 50 == 0:
+            print(f'  step {step:3d}  latent_MSE={loss_lat.item():.4f}  '
+                  f'pixel_copy_MSE={loss_pix.item():.4f}')
+
+    fig, axes = plt.subplots(1, 3, figsize=(11, 3.4))
+    axes[0].imshow(frames_t[0], cmap='gray', vmin=0, vmax=1)
+    axes[0].set_title('上下文帧 $o_t$（含噪声）')
+    axes[0].axis('off')
+    axes[1].imshow(frames_n[0], cmap='gray', vmin=0, vmax=1)
+    axes[1].set_title('目标帧 $o_{t+1}$')
+    axes[1].axis('off')
+    axes[2].plot(latent_hist, label='表征 MSE（JEPA）', color='#2E86AB', lw=2)
+    axes[2].plot(pixel_hist, label='像素复制 MSE（对照）', color='#C1666B', lw=1.5, ls='--')
+    axes[2].set_title('预测下一帧：表征 vs 像素')
+    axes[2].set_xlabel('step')
+    axes[2].legend(fontsize=8)
+    axes[2].grid(True, alpha=0.3)
+    fig.tight_layout()
+    out = os.path.join(_IMAGES, 'jepa_pendulum_frames.png')
+    fig.savefig(out, dpi=140, bbox_inches='tight')
+    plt.close(fig)
+    print('[可视化] 倒立摆帧 JEPA 已保存至 images/jepa_pendulum_frames.png')
+
+
 # ============================================================================
 # 主程序
 # ============================================================================
@@ -503,6 +612,9 @@ def main():
     avg_err = plot_prediction_error_map(
         ctx_encoder, tgt_encoder, predictor, images, patch_size, n_h, n_w)
 
+    print('\n[第5步] 倒立摆帧：预测下一帧嵌入（V-JEPA 直觉，不重建像素）...')
+    run_pendulum_frame_jepa()
+
     print('\n' + '=' * 70)
     print('【总结】')
     print('=' * 70)
@@ -513,7 +625,8 @@ def main():
     print('  - 预测表征而非像素：损失定义在表征空间，天然过滤像素级噪声')
     print('  - 非对称编码器：上下文编码器可训练，目标编码器只做 EMA 动量更新')
     print('  - 停止梯度 + EMA：防止表征坍缩到常数解的关键设计')
-    print('  - I-JEPA(图像) → V-JEPA(视频,预测时空 patch) → V-JEPA 2(更大规模+机器人)')
+    print('  - I-JEPA(图像) → V-JEPA(视频,预测时空 patch) → V-JEPA 2(动作条件+机器人 MPC)')
+    print('  - 倒立摆火柴杆：同一物理下，表征 MSE 对准下一帧语义，不必拟合像素噪声')
     print('\n  所有图片已保存至 images/ 目录')
     print('=' * 70)
     print('\n  运行完成！\n')

@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  AI · 计算神经科学 · 量子信息 · 算法 · ROS 2 · 图解 + 可运行代码
+  AI · 控制论 · 机器人学 · 世界模型 · 信息论 · 量子信息 · 算法 · ROS 2 · 图解 + 可运行代码
 </p>
 
 <p align="center">
@@ -139,36 +139,32 @@ https://deconbear.github.io/notebook/
 - [s24 部署与推理优化](docs/applied/systems/deployment/)
 - [s25 AI 安全与对齐](docs/applied/systems/safety/)
 
-### 科学计算
+### 控制论
 
-- [as01 AI4S 全景](docs/science/overview/)
-- [as02 PINN](docs/science/pinn/)
-- [as03 Neural Operator 与 FNO](docs/science/fno/)
-- [as04 PINO](docs/science/pino/)
-- [as05 科学计算中的 GNN](docs/science/gnn/)
-- [as06 蛋白质结构预测与 AlphaFold](docs/science/alphafold/)
-- [as07 AlphaChip 与电路设计中的神经网络](docs/science/alphachip/)
-- [as08 AI4S 综合与前沿](docs/science/frontier/)
+- [控制论导论](docs/control/overview/)
 
-### 计算神经科学
+#### 经典控制
 
-- [导论：从膜电位到 NeuroAI](docs/neuro/overview/)
-- [神经元与突触](docs/neuro/neuron/)
-- [HH 与 LIF：把细胞写成方程](docs/neuro/hh-lif/)
-- [神经编码：速率、时间与群体](docs/neuro/encoding/)
-- [Hebb 与 STDP](docs/neuro/stdp/)
-- [回路：方向选择性与 E–I 平衡](docs/neuro/circuits/)
-- [连接组学与全脑模拟入口](docs/neuro/connectomics/)
-- [NeuroAI：启发、对齐与约束](docs/neuro/neuroai/)
+- [传递函数与时域响应](docs/control/classical/transfer/)
+- [PID 控制](docs/control/classical/pid/)
+- [根轨迹](docs/control/classical/root-locus/)
+- [频域分析](docs/control/classical/frequency/)
 
-### 量子信息
+#### 现代控制
 
-- [量子信息全景](docs/quantum/overview/)
-- [量子计算](docs/quantum/computing/)
-- [量子网络](docs/quantum/network/)
-- [量子存储](docs/quantum/memory/)
-- [量子模拟](docs/quantum/simulation/)
-- [量子机器学习](docs/quantum/qml/)
+- [状态空间](docs/control/modern/state-space/)
+- [LQR 与最优控制](docs/control/modern/lqr/)
+- [观测器与卡尔曼](docs/control/modern/kalman/)
+- [非线性与李雅普诺夫](docs/control/modern/nonlinear/)
+
+### 机器人学
+
+- [机器人运动学](docs/robotics/kinematics/)
+- [机器人动力学](docs/robotics/dynamics/)
+- [机器人建模方法](docs/robotics/modeling/)
+- [李群与李代数](docs/robotics/lie-groups/)
+- [机构学](docs/robotics/mechanisms/)
+- [旋量代数](docs/robotics/screw/)
 
 ### 世界模型
 
@@ -210,6 +206,47 @@ https://deconbear.github.io/notebook/
 - [程序化世界模型：PDDL、专家乘积与随机定律](docs/world-models/symbolic/programs/)
 - [世界对齐：规则约束下的 LLM 世界模型](docs/world-models/symbolic/alignment/)
 - [LLM 作为世界模型：语言接口与幻觉](docs/world-models/symbolic/llm-sim/)
+
+### 科学计算
+
+- [as01 AI4S 全景](docs/science/overview/)
+- [as02 PINN](docs/science/pinn/)
+- [as03 Neural Operator 与 FNO](docs/science/fno/)
+- [as04 PINO](docs/science/pino/)
+- [as05 科学计算中的 GNN](docs/science/gnn/)
+- [as06 蛋白质结构预测与 AlphaFold](docs/science/alphafold/)
+- [as07 AlphaChip 与电路设计中的神经网络](docs/science/alphachip/)
+- [as08 AI4S 综合与前沿](docs/science/frontier/)
+
+### 计算神经科学
+
+- [导论：从膜电位到 NeuroAI](docs/neuro/overview/)
+- [神经元与突触](docs/neuro/neuron/)
+- [HH 与 LIF：把细胞写成方程](docs/neuro/hh-lif/)
+- [神经编码：速率、时间与群体](docs/neuro/encoding/)
+- [Hebb 与 STDP](docs/neuro/stdp/)
+- [回路：方向选择性与 E–I 平衡](docs/neuro/circuits/)
+- [连接组学与全脑模拟入口](docs/neuro/connectomics/)
+- [NeuroAI：启发、对齐与约束](docs/neuro/neuroai/)
+
+### 信息论
+
+- [信息论导论](docs/information/overview/)
+- [熵与条件熵](docs/information/entropy/)
+- [香农信息论](docs/information/shannon/)
+- [信源编码](docs/information/source-coding/)
+- [信道编码](docs/information/channel-coding/)
+- [高斯信道](docs/information/awgn/)
+- [率失真](docs/information/rate-distortion/)
+
+### 量子信息
+
+- [量子信息全景](docs/quantum/overview/)
+- [量子计算](docs/quantum/computing/)
+- [量子网络](docs/quantum/network/)
+- [量子存储](docs/quantum/memory/)
+- [量子模拟](docs/quantum/simulation/)
+- [量子机器学习](docs/quantum/qml/)
 
 ### ROS 2
 
@@ -279,9 +316,10 @@ https://deconbear.github.io/notebook/
 | 🔴 **算法竞赛** | 只关注算法与数据结构 | 直接看附录 algo01 → algo16，其余章节按需查阅 |
 | 🟤 **科研向 / AI4S** | 做科学计算、生物、芯片等交叉 | 阶段三~五 → 进阶一（as01–as08） |
 | 🟩 **计算神经科学** | 细胞方程、编码、回路、连接组、NeuroAI | 侧栏 **计算神经科学**（`docs/neuro/`） |
-| 🟦 **量子信息** | 计算 / 网络 / 存储 / 模拟 / QML | 侧栏 **量子信息**（`docs/quantum/`）；QML 可选本源 VQNet |
-| ⬛ **世界模型** | 关注具身智能 / 生成式模拟 | 阶段六 → 进阶二（五路径：视频 / 交互·3D / 抽象状态 / 因果 / 符号） |
-| 🟠 **ROS 2 / 机器人** | 要在本机跑 Humble | 侧栏 ROS 2；工作区 `workspaces/ros2-humble/` |
+| ⬛ **世界模型** | 关注具身智能 / 生成式模拟 | 控制论 → 机器人学 → 世界模型五路径 |
+| 🟧 **控制论 / 机器人学** | 反馈、状态空间、运动学与李群 | 侧栏 **控制论**、**机器人学** |
+| 🟦 **信息论 → 量子信息** | 先香农容量，再量子比特 | 侧栏 **信息论** 然后 **量子信息** |
+| 🟠 **ROS 2** | 要在本机跑 Humble | 侧栏 ROS 2；工作区 `workspaces/ros2-humble/` |
 
 > 💡 **番外一**（集成学习、聚类、降维、蒙特卡洛、HMM、EM、概率图、高斯过程）在阶段二之后，默认折叠。内容独立、互不依赖，可按需跳读。**进阶一 / 进阶二**在阶段七之后，默认折叠；**番外二**为论文精读占位，敬请期待。
 

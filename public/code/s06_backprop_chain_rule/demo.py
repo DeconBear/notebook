@@ -11,7 +11,8 @@ s06 反向传播与链式法则 — 演示代码
   - _backward: 该节点的局部反向传播函数
   - _prev: 该节点的前驱节点（用于拓扑排序）
 
-运行方式：在 s06_backprop_chain_rule/ 目录下执行 python code/demo.py
+运行方式：在本目录执行 python demo.py
+      配图（MSE 与对权重的梯度）见同目录 plot_demo.py。
 """
 
 import os
@@ -62,8 +63,9 @@ class Value:
         """
         加法操作: self + other
 
-        局部梯度: ∂(self+other)/∂self = 1, ∂(self+other)/∂other = 1
-        反向传播: 上游梯度原样传递给两个输入（加法门）
+        左输入 p = self，右输入 q = other，输出 u = out（return 给调用者）。
+        局部梯度: ∂u/∂p = 1, ∂u/∂q = 1
+        反向: 把下游送来的 out.grad 原样累加回两个输入（加法门）
         """
         # 如果 other 不是 Value，先转换为 Value（支持 Value + 数值）
         other = other if isinstance(other, Value) else Value(other)
@@ -72,9 +74,9 @@ class Value:
 
         # 定义加法门的局部反向传播
         def _backward():
-            # 加法门：梯度原样传递
-            self.grad += 1.0 * out.grad   # ∂out/∂self = 1
-            other.grad += 1.0 * out.grad  # ∂out/∂other = 1
+            # 加法门：梯度原样还给两个输入（p=self, q=other, u=out）
+            self.grad += 1.0 * out.grad   # ∂u/∂p = 1，out.grad 从下游来
+            other.grad += 1.0 * out.grad  # ∂u/∂q = 1
 
         out._backward = _backward  # 绑定反向传播函数
         return out
@@ -83,16 +85,17 @@ class Value:
         """
         乘法操作: self * other
 
-        局部梯度: ∂(self*other)/∂self = other, ∂(self*other)/∂other = self
-        反向传播: 梯度交换（乘以对方的 data 值）
+        左输入 p = self，右输入 q = other，输出 u = out（return 给调用者）。
+        局部梯度: ∂u/∂p = q, ∂u/∂q = p
+        反向: 还给 p 时乘 q 的前向值（梯度交换）
         """
         other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data * other.data, (self, other), '*')
 
         def _backward():
-            # 乘法门：梯度交换（gradient switcheroo）
-            self.grad += other.data * out.grad   # ∂out/∂self = other.data
-            other.grad += self.data * out.grad   # ∂out/∂other = self.data
+            # 乘法门：还给 p 时乘 q 的前向值，还给 q 时乘 p 的前向值
+            self.grad += other.data * out.grad   # ∂u/∂p = q
+            other.grad += self.data * out.grad   # ∂u/∂q = p
 
         out._backward = _backward
         return out
@@ -612,6 +615,8 @@ def demo_fanout():
 
 def demo_mini_neural_network():
     """演示 4: 使用 mini autograd 训练一个小神经网络"""
+    import random
+    random.seed(42)  # 固定初始化，方便对照讲解里的损失数字
     print("\n" + "╔" + "═" * 68 + "╗")
     print("║" + " " * 10 + "演示 4: 小神经网络完整训练 (正向+反向+更新)" + " " * 16 + "║")
     print("╚" + "═" * 68 + "╝")
@@ -647,18 +652,20 @@ def demo_mini_neural_network():
         y_preds = [model(x) for x in xs]  # 对每个样本进行预测
 
         # ---- 计算损失 (MSE) ----
-        # L = (1/N) * Σ (y_pred - y_true)²
+        # 残差平方：正负误差不会抵消，且处处可导。
+        # 正文公式是 (1/N)·Σ ½(ŷ-y)²；这里省略 1/N 和 1/2，
+        # 极小值位置不变，梯度只差一个正倍数，学习率可以吸收。
         losses = [(yp - Value(y_true)) ** 2 for yp, y_true in zip(y_preds, ys)]
-        total_loss = sum(losses[1:], losses[0])  # 对损失求和
-        # 注意：这里没有除以 N，实际训练时除以 N 不影响优化方向
+        total_loss = sum(losses[1:], losses[0])  # 对损失求和（标量，backward 的起点）
 
         # ---- 反向传播 ----
         # 先清零所有参数的梯度
         for p in model.parameters():
             p.grad = 0.0
-        total_loss.backward()  # 反向传播，计算所有梯度
+        total_loss.backward()  # 从 MSE 出发，给每个权重算出 ∂L/∂w
 
         # ---- 参数更新 (梯度下降) ----
+        # 梯度指向 L 上升的方向；减号表示沿下坡改权重（输入/标签不能改）
         for p in model.parameters():
             p.data -= learning_rate * p.grad  # θ := θ - α·∇L
 

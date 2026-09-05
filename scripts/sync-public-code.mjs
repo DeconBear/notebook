@@ -15,7 +15,7 @@ function collectPy(dir, relBase, out) {
     if (ent.isDirectory()) {
       if (ent.name === 'code') {
         for (const f of fs.readdirSync(abs, { withFileTypes: true })) {
-          if (f.isFile() && f.name.endsWith('.py')) {
+          if (f.isFile() && (f.name.endsWith('.py') || f.name.endsWith('.cpp') || f.name.endsWith('.hpp') || f.name.endsWith('.h') || f.name.endsWith('.cc'))) {
             out.push({
               abs: path.join(abs, f.name),
               relPath: `${relBase}/${f.name}`,

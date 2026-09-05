@@ -20,3 +20,11 @@ redirects:
   - from: /world-models/llm/code-exercise to: /world-models/symbolic/llm-sim/code-exercise
   - from: /code/world-models/llm/demo.py to: /code/world-models/symbolic/llm-sim/demo.py
   - from: /code/world-models/llm/exercise.py to: /code/world-models/symbolic/llm-sim/exercise.py
+  - from: /control/classical/code-demo to: /control/classical/pid/code-demo
+  - from: /control/classical/code-exercise to: /control/classical/pid/code-exercise
+  - from: /code/control/classical/demo.py to: /code/control/classical/pid/demo.py
+  - from: /code/control/classical/exercise.py to: /code/control/classical/pid/exercise.py
+  - from: /control/modern/code-demo to: /control/modern/lqr/code-demo
+  - from: /control/modern/code-exercise to: /control/modern/lqr/code-exercise
+  - from: /code/control/modern/demo.py to: /code/control/modern/lqr/demo.py
+  - from: /code/control/modern/exercise.py to: /code/control/modern/lqr/exercise.py
