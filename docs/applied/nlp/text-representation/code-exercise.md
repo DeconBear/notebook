@@ -193,6 +193,9 @@ def cosine_similarity(v1, v2):
 
 **为什么余弦相似度在 NLP 中比欧氏距离更好？** 词向量的长度与词频相关——高频词的向量更长。如果用欧氏距离，高频词的空间位置影响了所有距离计算。余弦相似度只关心方向，消除了频率偏差，更准确地反映了语义相似性。
 
-## 完整代码
 
-<<< @/applied/nlp/text-representation/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/nlp/text-representation/code/exercise.py`

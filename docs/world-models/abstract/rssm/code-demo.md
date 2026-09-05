@@ -87,6 +87,9 @@ loss = recon_loss + kl_beta * kl_penalty
 | Free-nats | KL 下限裁剪，防后验坍缩 | `torch.clamp(kl, min=...)` |
 | 想象 rollout | 热启动后纯先验多步预测 | `imagine()` |
 
-## 完整代码
 
-<<< @/world-models/abstract/rssm/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/abstract/rssm/code/demo.py`

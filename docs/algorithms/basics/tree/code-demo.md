@@ -74,6 +74,9 @@ else:
 | 后序 | 左-右-根 | O(n), O(h)空间 | 双栈 | 计算子树大小、后缀表达式 |
 | 层序 | 逐层从左到右 | - | 队列 O(n), O(w)空间 | BFS、最短路径 |
 
-## 完整代码
 
-<<< @/algorithms/basics/tree/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/basics/tree/code/demo.py`

@@ -139,6 +139,9 @@ u_pred = model(a_t, grid_t)
 | 分辨率不变性 | 参数与 $N$ 无关，换网格可直接推理 | `plot_resolution_invariance()` |
 | Lift / Project | 进出高维特征空间的线性层 | `FNO1d.fc0` / `fc1,fc2` |
 
-## 完整代码
 
-<<< @/science/fno/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/fno/code/demo.py`

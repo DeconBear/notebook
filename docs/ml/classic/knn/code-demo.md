@@ -271,6 +271,9 @@ def plot_sklearn_comparison():
 | 决策边界 | 网格预测 + `contourf` | `plot_decision_boundary()` | Voronoi 图 |
 | 维数灾难 | `min/max dist → 1` | `plot_curse_of_dimensionality()` | 高维中距离失效 |
 
-## 完整代码
 
-<<< @/ml/classic/knn/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/classic/knn/code/demo.py`

@@ -51,6 +51,9 @@ title: "ml12 EM算法与高斯混合模型 — exercise.py"
 - 最简单但重要的任务：`np.argmax(resp, axis=1)`
 - 这体现了 K-Means 与 GMM 的核心差异——GMM 保留概率信息，K-Means 只做 0/1 分配
 
-## 完整代码
 
-<<< @/ml/advanced/em-gmm/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/em-gmm/code/exercise.py`

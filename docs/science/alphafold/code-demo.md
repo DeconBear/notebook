@@ -231,6 +231,9 @@ def kabsch_align(mobile, target):
 | 距离几何重建 | 把耦合分数转为目标距离，梯度下降求 3D 坐标 | `reconstruct_structure()` |
 | Kabsch 对齐 + RMSD | 消除整体旋转平移后比较两个结构的差异 | `kabsch_align()` |
 
-## 完整代码
 
-<<< @/science/alphafold/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/alphafold/code/demo.py`

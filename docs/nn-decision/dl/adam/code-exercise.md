@@ -148,6 +148,9 @@ Loss: 2.3 → 1.8 → 1.2 → 0.9 → NaN
 | TODO 3: Warmup | $lr = target * step / warmup\_steps$ | 忘记在 warmup 结束后固定 lr |
 | TODO 4: 诊断 | 观察梯度范数增长趋势 | 太快下结论，不分析数据规律 |
 
-## 完整代码
 
-<<< @/nn-decision/dl/adam/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/dl/adam/code/exercise.py`

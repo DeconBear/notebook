@@ -54,6 +54,9 @@ title: "ml14 核方法与高斯过程 — exercise.py"
 - **采样方法**：$\mathbf{f} = \mathbf{L}\mathbf{z}$，$\mathbf{K} = \mathbf{L}\mathbf{L}^T$
 - **直观理解**：$\mathbf{L}$ 本质上是对核矩阵进行"平方根"分解，然后通过 $\mathbf{L}\mathbf{z}$ 将独立高斯噪声 $\mathbf{z}$ 转换为具有 $\mathbf{K}$ 协方差结构的函数值
 
-## 完整代码
 
-<<< @/ml/advanced/kernel-gp/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/kernel-gp/code/exercise.py`

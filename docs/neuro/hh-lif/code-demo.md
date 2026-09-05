@@ -17,6 +17,9 @@ python demo.py
 
 经典枪乌贼 HH：阶跃电流下的超射轨迹，以及电流–发放率（I–f）。对照电流型 LIF 的积分–复位轨迹和流变阈值。
 
-## 完整代码
 
-<<< @/neuro/hh-lif/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/hh-lif/code/demo.py`

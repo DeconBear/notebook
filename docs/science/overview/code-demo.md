@@ -142,6 +142,9 @@ _draw_arrow(ax, (x0, 6.7), (x0, 6.95), color='gray')
 | 维度灾难 | 经典网格法自由度 $\sim N^d$，随维度指数爆炸 | `plot_discretization_cost()` |
 | 算子学习光谱 | FDM/FEM ↔ PINN ↔ FNO/PINO ↔ GNN 的方法论地图 | `plot_ai4s_landscape_map()` |
 
-## 完整代码
 
-<<< @/science/overview/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/overview/code/demo.py`

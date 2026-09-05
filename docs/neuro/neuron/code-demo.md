@@ -17,6 +17,9 @@ python demo.py
 
 多条指数 EPSP 在阈值下叠加；够了就记一次尖峰事件。这是树突整合的教学示意，不是 Hodgkin–Huxley。
 
-## 完整代码
 
-<<< @/neuro/neuron/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/neuron/code/demo.py`

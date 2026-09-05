@@ -60,6 +60,9 @@ title: "wm01 世界模型导论 — exercise.py"
 - min-max 归一化对异常值（某个方法在某维度上极端地高或低）很敏感。如果换成基于排名的归一化，结果会有什么不同？
 - 尝试把 `noise_scale` 从 0.003 调到 0.02，观察误差累积曲线的方差如何变化，这对应真实世界模型训练中"环境随机性"的影响。
 
-## 完整代码
 
-<<< @/world-models/intro/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/intro/code/exercise.py`

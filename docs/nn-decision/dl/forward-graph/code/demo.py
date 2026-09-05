@@ -3,24 +3,15 @@
 s05 计算图与前向传播 — 演示代码
 ==================================
 功能：用纯 NumPy 构建一个 3 层 MLP，展示完整的前向传播过程，
-      包括中间值存储、计算图可视化（打印张量形状）、
-      以及不同激活函数的对比。
+      包括中间值存储、逐层张量形状打印。
+      配图（激活函数曲线、网络结构、激活分布）见同目录 plot_demo.py。
 
 每个函数都有中文 docstring，每行逻辑代码都有中文注释。
-运行方式：在 s05_forward_computation_graph/ 目录下执行 python code/demo.py
+运行方式：在本目录执行 python demo.py
 """
 
-import os
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.rcParams['axes.unicode_minus'] = False
-import matplotlib.patches as mpatches
 from typing import Dict, List, Tuple, Callable
-
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_IMAGES = os.path.join(_HERE, '..', 'images')
-os.makedirs(_IMAGES, exist_ok=True)
 
 # ============================================================================
 # 第一部分：激活函数及其导数
@@ -47,7 +38,9 @@ def relu_derivative(z: np.ndarray) -> np.ndarray:
     返回:
         逐元素的导数，形状与 z 相同
     """
-    return (z > 0).astype(np.float64)  # z>0 处导数为 1，其余为 0
+    # z > 0 得到 bool 数组（True/False）；astype 改成数字类型。
+    # np.float64 是 64 位浮点（日常的 float），True→1.0、False→0.0，才能和梯度相乘。
+    return (z > 0).astype(np.float64)
 
 
 def sigmoid(z: np.ndarray) -> np.ndarray:
@@ -122,7 +115,7 @@ def gelu_approximate(z: np.ndarray) -> np.ndarray:
 # 第二部分：参数初始化
 # ============================================================================
 
-def initialize_parameters(layer_dims: List[int], seed: int = 42) -> Dict[str, np.ndarray]:
+def initialize_parameters(layer_dims: List[int], seed: int = 42, verbose: bool = True) -> Dict[str, np.ndarray]:
     """
     使用 He 初始化方法为每一层创建权重和偏置。
 
@@ -144,13 +137,14 @@ def initialize_parameters(layer_dims: List[int], seed: int = 42) -> Dict[str, np
     L = len(layer_dims)  # 总层数（包含输入层）
 
     for l in range(1, L):  # 遍历每一层（跳过输入层 l=0）
-        n_in = layer_dims[l - 1]   # 当前层的输入维度
-        n_out = layer_dims[l]      # 当前层的输出维度
-        # He 初始化：标准差为 sqrt(2/n_in)
-        parameters[f"W{l}"] = np.random.randn(n_out, n_in) * np.sqrt(2.0 / n_in)  # 权重矩阵 (n_out x n_in)
-        parameters[f"b{l}"] = np.zeros((n_out, 1))  # 偏置向量初始化为 0 (n_out x 1)
-        print(f"  初始化 W{l}: shape={parameters[f'W{l}'].shape}, He init (std={np.sqrt(2.0/n_in):.4f})")
-        print(f"  初始化 b{l}: shape={parameters[f'b{l}'].shape}, 全零初始化")
+        n_in = layer_dims[l - 1]   # 扇入：每个神经元接几个输入（决定 std，不是取值上下界）
+        n_out = layer_dims[l]      # 扇出：这一层有几个神经元（决定矩阵有几行）
+        # 形状 (n_out, n_in)；每个元素独立 ~ N(0, sqrt(2/n_in))，彼此不同。
+        parameters[f"W{l}"] = np.random.randn(n_out, n_in) * np.sqrt(2.0 / n_in)
+        parameters[f"b{l}"] = np.zeros((n_out, 1))  # 偏置整层都是 0；打破对称靠的是上面各不相同的 W
+        if verbose:
+            print(f"  初始化 W{l}: shape={parameters[f'W{l}'].shape}, He init (std={np.sqrt(2.0/n_in):.4f})")
+            print(f"  初始化 b{l}: shape={parameters[f'b{l}'].shape}, 全零初始化")
 
     return parameters
 
@@ -237,151 +231,8 @@ def forward_pass(
 
 
 # ============================================================================
-# 第四部分：可视化
+# 第四部分：张量形状表
 # ============================================================================
-
-def plot_network_structure(parameters: Dict[str, np.ndarray], X_sample: np.ndarray):
-    """
-    绘制网络结构图，显示每层的神经元数量和连接关系。
-    左侧显示网络架构，右侧标注对应的数据维度。
-
-    参数:
-        parameters: 参数字典
-        X_sample: 单个样本输入 (n_features, 1)，用于确定输入维度
-    """
-    L = len(parameters) // 2  # 层数
-    layer_sizes = [X_sample.shape[0]]  # 输入层神经元数
-    for l in range(1, L + 1):
-        layer_sizes.append(parameters[f"W{l}"].shape[0])  # 第 l 层的输出神经元数
-
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.set_xlim(-0.5, L + 0.5)  # x 轴范围：层索引
-    max_neurons = max(layer_sizes)  # 最大神经元数量，用于确定 y 轴范围
-    ax.set_ylim(-max_neurons - 0.5, max_neurons + 0.5)
-
-    # 存储每层神经元的位置
-    neuron_positions = []
-
-    # ---- 绘制神经元和连接 ----
-    for l_idx, n_neurons in enumerate(layer_sizes):  # 遍历每一层
-        # 计算该层神经元在 y 轴上的均匀分布位置
-        y_positions = np.linspace(max_neurons / 2 - n_neurons / 2,
-                                   -max_neurons / 2 + n_neurons / 2,
-                                   max(n_neurons, 1))
-        positions = []
-        for n_idx, y in enumerate(y_positions):  # 遍历该层每个神经元
-            # 确定颜色：输入层=蓝，隐藏层=橙，输出层=红
-            if l_idx == 0:
-                color = '#4A90D9'  # 蓝色：输入层
-                label = f'x{n_idx+1}'  # 标签：x1, x2, ...
-            elif l_idx == L:
-                color = '#E74C3C'  # 红色：输出层
-                label = f'ŷ{n_idx+1}'  # 标签：ŷ1, ŷ2, ...
-            else:
-                color = '#F39C12'  # 橙色：隐藏层
-                label = f'h{l_idx},{n_idx+1}'
-
-            # 绘制神经元（圆点）
-            circle = plt.Circle((l_idx, y), 0.25, color=color, ec='white', linewidth=1.5, zorder=5)
-            ax.add_patch(circle)
-            # 标注神经元名称
-            ax.text(l_idx, y, label, ha='center', va='center', fontsize=7,
-                    color='white', fontweight='bold', zorder=6)
-            positions.append(y)
-
-        neuron_positions.append((l_idx, positions))
-
-        # ---- 绘制层之间的连接线 ----
-        if l_idx > 0:  # 非第一层需要绘制入边
-            prev_positions = neuron_positions[l_idx - 1][1]  # 上一层神经元位置
-            for prev_y in prev_positions:  # 遍历前一层每个神经元
-                for curr_y in positions:  # 遍历当前层每个神经元
-                    ax.plot([l_idx - 1, l_idx], [prev_y, curr_y],
-                            color='gray', alpha=0.2, linewidth=0.5, zorder=1)
-
-        # ---- 标注层名 ----
-        if l_idx == 0:
-            layer_name = f'Input Layer\n({n_neurons} neurons)'
-        elif l_idx == L:
-            layer_name = f'Output Layer\n({n_neurons} neurons)'
-        else:
-            layer_name = f'Hidden Layer {l_idx}\n({n_neurons} neurons)'
-        ax.text(l_idx, max_neurons / 2 + 0.8, layer_name,
-                ha='center', fontsize=9, fontweight='bold')
-
-    # ---- 绘制权重矩阵标注 ----
-    for l in range(1, L + 1):
-        W = parameters[f"W{l}"]
-        x_pos = l - 0.5  # 标注在两层之间的位置
-        ax.annotate(f'W[{l}]\n{W.shape[0]}×{W.shape[1]}',
-                    xy=(x_pos, -max_neurons / 2 - 0.3),
-                    fontsize=7, ha='center', color='#2C3E50',
-                    bbox=dict(boxstyle='round,pad=0.3', facecolor='#E8F8F5', alpha=0.8))
-
-    ax.set_title('Neural Network Structure - Computation Graph View', fontsize=14, fontweight='bold')
-    ax.axis('equal')
-    ax.axis('off')
-
-    # 图例
-    legend_elements = [
-        mpatches.Patch(color='#4A90D9', label='Input Layer'),
-        mpatches.Patch(color='#F39C12', label='Hidden Layer'),
-        mpatches.Patch(color='#E74C3C', label='Output Layer'),
-    ]
-    ax.legend(handles=legend_elements, loc='lower right', fontsize=9)
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(_IMAGES, 'network_structure.png'), dpi=150, bbox_inches='tight')
-    plt.close()
-    print("\n[可视化] 网络结构图已保存至 " + os.path.join(_IMAGES, 'network_structure.png'))
-
-
-def plot_activation_functions():
-    """
-    绘制四种常见激活函数及其导数的对比图。
-    包含：ReLU, Sigmoid, Tanh, Leaky ReLU
-    """
-    z = np.linspace(-5, 5, 1000)  # 在 [-5, 5] 区间生成 1000 个点
-
-    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-    axes = axes.flatten()  # 展平为 1D 数组，方便索引
-
-    # ---- 定义要绘制的激活函数 ----
-    funcs = [
-        ("ReLU", relu, relu_derivative, "max(0, z)", "#2E86AB"),
-        ("Sigmoid", sigmoid, sigmoid_derivative, "1/(1+e^{-z})", "#A23B72"),
-        ("Tanh", tanh, tanh_derivative, "tanh(z)", "#F18F01"),
-        ("Leaky ReLU (α=0.01)", lambda z: np.maximum(0, z) + 0.01 * np.minimum(0, z),
-         lambda z: np.where(z > 0, 1.0, 0.01), "max(0,z)+0.01*min(0,z)", "#C73E1D"),
-    ]
-
-    for ax, (name, fn, fn_prime, formula, color) in zip(axes, funcs):
-        y = fn(z)        # 计算函数值
-        dy = fn_prime(z) # 计算导数值
-
-        # 绘制函数曲线（蓝色实线）
-        ax.plot(z, y, 'b-', linewidth=2.5, label=f'{name}: f(z)')
-        # 绘制导数曲线（红色虚线）
-        ax.plot(z, dy, 'r--', linewidth=2, label=f"{name}: f'(z)")
-
-        # 标记饱和区（导数接近 0 的区域）
-        ax.axhline(y=0, color='gray', linestyle=':', alpha=0.5)  # y=0 参考线
-        ax.axhline(y=1, color='gray', linestyle=':', alpha=0.5)  # y=1 参考线
-
-        # 设置坐标轴和标题
-        ax.set_xlim(-5, 5)
-        ax.set_title(f'{name}\n{formula}', fontsize=12, fontweight='bold')
-        ax.set_xlabel('z', fontsize=10)
-        ax.set_ylabel('f(z) / f\'(z)', fontsize=10)
-        ax.legend(loc='best', fontsize=8)
-        ax.grid(True, alpha=0.3)
-
-    plt.suptitle('Common Activation Functions and Their Derivatives', fontsize=16, fontweight='bold', y=1.01)
-    plt.tight_layout()
-    plt.savefig(os.path.join(_IMAGES, 'activation_functions.png'), dpi=150, bbox_inches='tight')
-    plt.close()
-    print("[可视化] 激活函数对比图已保存至 " + os.path.join(_IMAGES, 'activation_functions.png'))
-
 
 def print_tensor_shape_table(caches: List[Dict], parameters: Dict[str, np.ndarray]):
     """
@@ -424,41 +275,6 @@ def print_tensor_shape_table(caches: List[Dict], parameters: Dict[str, np.ndarra
     print("=" * 70)
 
 
-def plot_forward_data_flow(caches: List[Dict]):
-    """
-    可视化前向传播中激活值的流动变化。
-    绘制每层激活值的分布直方图，观察数据在网络中的演变。
-
-    参数:
-        caches: 前向传播的缓存列表
-    """
-    L = len(caches)  # 层数
-    fig, axes = plt.subplots(1, L + 1, figsize=(4 * (L + 1), 4))
-
-    # ---- 绘制输入分布 ----
-    a_prev_vals = caches[0]['a_prev'].flatten()  # 输入数据展开为一维
-    axes[0].hist(a_prev_vals, bins=30, color='#4A90D9', alpha=0.7, edgecolor='white')
-    axes[0].set_title(f'Input Layer a[0]\nshape={caches[0]["a_prev"].shape}', fontsize=10)
-    axes[0].set_xlabel('Value')
-    axes[0].set_ylabel('Frequency')
-    axes[0].axvline(x=0, color='red', linestyle='--', alpha=0.5)  # 零参考线
-
-    # ---- 绘制每层激活分布 ----
-    for l in range(L):
-        a_vals = caches[l]['a'].flatten()  # 第 l 层激活值展开
-        axes[l + 1].hist(a_vals, bins=30, color='#F39C12', alpha=0.7, edgecolor='white')
-        axes[l + 1].set_title(f'Layer {l+1} a[{l+1}]\nshape={caches[l]["a"].shape}', fontsize=10)
-        axes[l + 1].set_xlabel('Value')
-        axes[l + 1].set_ylabel('Frequency')
-        axes[l + 1].axvline(x=0, color='red', linestyle='--', alpha=0.5)  # 零参考线
-
-    plt.suptitle('Layer-wise Evolution of Activation Distribution During Forward Propagation', fontsize=14, fontweight='bold')
-    plt.tight_layout()
-    plt.savefig(os.path.join(_IMAGES, 'forward_data_flow.png'), dpi=150, bbox_inches='tight')
-    plt.close()
-    print("[可视化] 前向传播数据流图已保存至 " + os.path.join(_IMAGES, 'forward_data_flow.png'))
-
-
 # ============================================================================
 # 第五部分：主程序
 # ============================================================================
@@ -471,7 +287,6 @@ def main():
     2. 初始化一个 3 层 MLP
     3. 执行前向传播，存储所有中间值
     4. 打印张量形状表格
-    5. 可视化网络结构和激活函数
     """
     print("╔══════════════════════════════════════════════════════════════════╗")
     print("║        s05 计算图与前向传播 — NumPy 从头实现 MLP 前向传播       ║")
@@ -510,32 +325,20 @@ def main():
     # ---- 6. 打印张量形状表格 ----
     print_tensor_shape_table(caches, parameters)
 
-    # ---- 7. 可视化 ----
-    print("\n[可视化] 生成图形...")
-
-    # 绘制网络结构图
-    X_single = X[:, 0:1]  # 取第一个样本 (3, 1)
-    plot_network_structure(parameters, X_single)
-
-    # 绘制激活函数对比图
-    plot_activation_functions()
-
-    # 绘制前向传播数据流
-    plot_forward_data_flow(caches)
-
-    # ---- 8. 最终总结 ----
+    # ---- 7. 最终总结 ----
     print("\n" + "=" * 70)
     print("【总结】")
     print("=" * 70)
-    print(f"  ✓ 完成了 {len(caches)} 层 MLP 的前向传播")
-    print(f"  ✓ 输入: {X.shape} → 输出: {y_pred.shape}")
-    print(f"  ✓ 共存储了 {len(caches)} 个 cache（每个含 z, a_prev, a）")
-    print(f"  ✓ 总参数量: {sum(p.size for p in parameters.values())}")
+    print(f"  完成了 {len(caches)} 层 MLP 的前向传播")
+    print(f"  输入: {X.shape} → 输出: {y_pred.shape}")
+    print(f"  共存储了 {len(caches)} 个 cache（每个含 z, a_prev, a）")
+    print(f"  总参数量: {sum(p.size for p in parameters.values())}")
     print(f"\n  这些中间值将在反向传播中被使用——")
     print(f"  - z[l] 用于计算激活函数的导数 φ'(z[l])")
     print(f"  - a[l-1] 用于计算权重梯度 dW[l] = δ[l] · (a[l-1])^T")
     print(f"  - a[l] 作为下一层的输入继续前向传播")
-    print(f"\n  下一节 s06 将讲解如何利用这些缓存进行反向传播。")
+    print(f"\n  配图请运行同目录: python plot_demo.py")
+    print(f"  下一节 s06 将讲解如何利用这些缓存进行反向传播。")
     print("=" * 70)
 
 

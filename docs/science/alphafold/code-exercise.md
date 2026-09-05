@@ -110,6 +110,9 @@ grad[0, 0] < 0，grad[1, 0] > 0
 2. CASP 式 precision@L / L/2 / L/5 精度指标
 3. 从耦合矩阵重建的 3D 结构与真实骨架的对比（含 RMSD）
 
-## 完整代码
 
-<<< @/science/alphafold/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/alphafold/code/exercise.py`

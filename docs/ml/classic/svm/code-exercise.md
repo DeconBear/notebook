@@ -55,6 +55,9 @@ title: "ml04 支持向量机 — exercise.py"
 2. `test_sgd_step()`：执行一轮 SGD 后损失应下降
 3. `test_rbf_kernel()`：相同向量的 RBF 核值为 1，远距离向量核值接近 0
 
-## 完整代码
 
-<<< @/ml/classic/svm/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/classic/svm/code/exercise.py`

@@ -162,6 +162,9 @@ cum_stride *= s
 | TODO 3: 感受野 | `rf += (k-1) * cum_stride` | 先更新 rf 再更新 cum_stride |
 | TODO 4: 手动卷积 | 提取 patch，与核逐元素乘加 | padding 后的索引计算 |
 
-## 完整代码
 
-<<< @/applied/cv/cnn/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/cv/cnn/code/exercise.py`

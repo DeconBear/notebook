@@ -13,6 +13,9 @@ cd docs/math/linear-algebra/code
 python exercise.py
 ```
 
-## 完整代码
 
-<<< @/math/linear-algebra/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/math/linear-algebra/code/exercise.py`

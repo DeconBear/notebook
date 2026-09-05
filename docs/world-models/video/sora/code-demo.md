@@ -60,6 +60,9 @@ for _ in range(n_roll):
 | 教师强制 | 每步用真实历史（本 demo 训练时使用） | `build_supervised_pairs` |
 | 质心误差 | 物理位置层面的偏离度量 | `blob_centroid` |
 
-## 完整代码
 
-<<< @/world-models/video/sora/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/video/sora/code/demo.py`

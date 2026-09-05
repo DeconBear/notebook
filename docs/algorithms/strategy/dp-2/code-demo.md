@@ -130,6 +130,9 @@ def dfs(pos, tight, has_leading_zero):
 | TSP (Held-Karp) | $dp[mask][i]$, $O(n^2 2^n)$ | $O(n^2 2^n)$ |
 | 数位 DP | DFS + 记忆化, tight 约束 | O(位数 * 状态数) |
 
-## 完整代码
 
-<<< @/algorithms/strategy/dp-2/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/strategy/dp-2/code/demo.py`

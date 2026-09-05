@@ -190,6 +190,9 @@ def compare_polysemous_embeddings(sentence_pairs, get_bert_embedding):
 
 完成练习后，返回 demo.py 观察这些概念在完整 pipeline 中的应用——BERT 分类微调（练习 1 的概念）、MLM 演示（练习 2 的概念）和上下文嵌入对比（练习 3 的概念）。
 
-## 完整代码
 
-<<< @/applied/nlp/pretrained/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/nlp/pretrained/code/exercise.py`

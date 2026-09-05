@@ -92,6 +92,9 @@ python exercise.py
 - 任务4的势能法均摊代价恒为 3
 - 所有 assert 断言通过
 
-## 完整代码
 
-<<< @/algorithms/basics/complexity/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/basics/complexity/code/exercise.py`

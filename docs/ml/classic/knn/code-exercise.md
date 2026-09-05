@@ -78,6 +78,9 @@ title: "ml01 k-近邻与距离度量 — exercise.py"
 2. `test_weighted_voting()`：距离加权投票应正确选出权重最大的类别
 3. `test_kfold()`：交叉验证应返回有效的 $k$ 值和与之对应的交叉验证分数
 
-## 完整代码
 
-<<< @/ml/classic/knn/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/classic/knn/code/exercise.py`

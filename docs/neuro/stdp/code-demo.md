@@ -17,6 +17,9 @@ python demo.py
 
 画出 pairwise STDP 的指数学习窗，再让一对突触以固定 $\Delta t=+10\,\mathrm{ms}$ 重复配对，看权重被推向上界。
 
-## 完整代码
 
-<<< @/neuro/stdp/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/stdp/code/demo.py`

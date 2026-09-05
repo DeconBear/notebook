@@ -13,6 +13,9 @@ cd docs/nn-decision/rl/alphago/code
 python exercise.py
 ```
 
-## 完整代码
 
-<<< @/nn-decision/rl/alphago/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/rl/alphago/code/exercise.py`

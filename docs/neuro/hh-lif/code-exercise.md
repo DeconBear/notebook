@@ -17,6 +17,9 @@ python exercise.py
 
 实现流变阈值 $I_{\mathrm{rh}}=(V_{\mathrm{th}}-V_{\mathrm{rest}})/R$（忽略不应期）。
 
-## 完整代码
 
-<<< @/neuro/hh-lif/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/hh-lif/code/exercise.py`

@@ -117,6 +117,9 @@ l2_rel_error = np.linalg.norm(u_pred - u_exact) / np.linalg.norm(u_exact)
 | 复合损失 | $L = L_{\text{pde}} + \lambda_{\text{bc}} L_{\text{bc}}$ | `train_pinn()` |
 | 相对 L2 误差 | $\|\hat u - u\|_2 / \|u\|_2$，评估整体拟合精度 | `plot_solution_comparison()` |
 
-## 完整代码
 
-<<< @/science/pinn/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/pinn/code/demo.py`

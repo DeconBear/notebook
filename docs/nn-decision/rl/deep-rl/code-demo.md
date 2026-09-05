@@ -317,6 +317,9 @@ def finish_episode(self):
 | 回报标准化 | 减均值除标准差，降低梯度方差 | `returns = (returns - mean) / (std + 1e-8)` |
 | 策略梯度损失 | $L = -\sum \log\pi_\theta(a_t\mid s_t) \cdot G_t$ | `policy_loss.append(-log_prob * G_t)` |
 
-## 完整代码
 
-<<< @/nn-decision/rl/deep-rl/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/rl/deep-rl/code/demo.py`

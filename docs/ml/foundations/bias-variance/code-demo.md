@@ -241,6 +241,9 @@ def kfold_cross_validation(X, y, k=5, degree=3, lambda_=0.0, reg_type='none'):
 | 系数路径 | $\theta_j(\lambda)$ | `plot_coefficient_paths()` | 观察正则化强度的效果 |
 | 伪逆 | `np.linalg.pinv()` | `fit_polynomial()` | 稳定求解近似奇异矩阵 |
 
-## 完整代码
 
-<<< @/ml/foundations/bias-variance/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/foundations/bias-variance/code/demo.py`

@@ -22,6 +22,9 @@ NumPy 态矢量演示两件事：
 
 门矩阵与正文 [量子计算](/quantum/computing/) 一致。没有用 Qiskit / PennyLane，方便默认环境。
 
-## 完整代码
 
-<<< @/quantum/computing/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/quantum/computing/code/demo.py`

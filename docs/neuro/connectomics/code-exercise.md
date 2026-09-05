@@ -17,6 +17,9 @@ python exercise.py
 
 从边列表重建邻接：`W[target, source] = syn_weight`。
 
-## 完整代码
 
-<<< @/neuro/connectomics/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/connectomics/code/exercise.py`

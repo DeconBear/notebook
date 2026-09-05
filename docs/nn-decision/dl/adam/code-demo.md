@@ -328,6 +328,9 @@ history_with_clip = train_model(..., clip_grad_norm=1.0)   # 有裁剪
 | 梯度裁剪 | $\tilde{g} = g \cdot \min(1, \text{max\_norm} / \|g\|)$ | `scale = max_norm / total_norm` → `grad * scale` |
 | 梯度范数 | $\|g\|_2 = \sqrt{\sum \|g_i\|^2}$ | `np.sqrt(sum(np.sum(g**2) for g in grads.values()))` |
 
-## 完整代码
 
-<<< @/nn-decision/dl/adam/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/dl/adam/code/demo.py`

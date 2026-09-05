@@ -22,6 +22,9 @@ def fidelity(a, b):
     return float(np.abs(np.vdot(a, b)) ** 2)
 ```
 
-## 完整代码
 
-<<< @/quantum/network/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/quantum/network/code/exercise.py`

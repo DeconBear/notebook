@@ -112,6 +112,9 @@ $$
 2. **TODO 2**：$\text{GELU}(0) = 0$，$\text{GELU}(z) \approx z$ for $z \gg 0$（如 $z=2$ 时约等于 $1.95$）
 3. **TODO 3**：打印出 7 个节点的计算图，最终输出 `u7` 是一个在 $(0, 1)$ 之间的值（因为经过了 Sigmoid）
 
-## 完整代码
 
-<<< @/nn-decision/dl/forward-graph/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/dl/forward-graph/code/exercise.py`

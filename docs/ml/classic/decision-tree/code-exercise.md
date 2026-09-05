@@ -58,6 +58,9 @@ title: "ml05 决策树 — exercise.py"
 2. `test_information_gain()`：完美分裂 IG=0.5
 3. `test_best_split()`：能找到正确的分裂阈值
 
-## 完整代码
 
-<<< @/ml/classic/decision-tree/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/classic/decision-tree/code/exercise.py`

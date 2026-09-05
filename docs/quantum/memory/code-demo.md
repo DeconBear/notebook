@@ -23,6 +23,9 @@ python demo.py
 
 不是某个实验室的参数拟合，只对应正文的两条钟。
 
-## 完整代码
 
-<<< @/quantum/memory/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/quantum/memory/code/demo.py`

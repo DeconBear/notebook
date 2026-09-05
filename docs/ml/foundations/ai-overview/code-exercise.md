@@ -81,6 +81,9 @@ title: "s01 AI概述 — exercise.py"
 3. 显示 `✓ 完美！你的感知机实现正确，所有样本分类正确。`
 4. 可视化图显示清晰的决策边界将红蓝两类数据完全分开
 
-## 完整代码
 
-<<< @/ml/foundations/ai-overview/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/foundations/ai-overview/code/exercise.py`

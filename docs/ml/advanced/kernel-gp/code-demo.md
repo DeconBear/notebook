@@ -111,6 +111,9 @@ f_sample = L @ np.random.randn(len(X))
 | GP 预测方差 | $k_* - \mathbf{k}_*^T\mathbf{K}^{-1}\mathbf{k}_*$ | `predict()` var 循环 | 置信带来源 |
 | GP 先验采样 | $\mathbf{f} = \mathbf{L}\mathbf{z}, \mathbf{z}\sim\mathcal{N}(0,\mathbf{I})$ | `sample_gp_prior()` | 可视化核的"个性" |
 
-## 完整代码
 
-<<< @/ml/advanced/kernel-gp/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/kernel-gp/code/demo.py`

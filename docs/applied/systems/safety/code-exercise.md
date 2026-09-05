@@ -263,6 +263,9 @@ def classify(self, text):
    - 假阴性（False Negative）：漏过有害内容 → 安全风险
    - 策略：多层分级（safe/review/unsafe），review 级别引入人工审核；对高风险场景收紧阈值，低风险场景放宽
 
-## 完整代码
 
-<<< @/applied/systems/safety/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/systems/safety/code/exercise.py`

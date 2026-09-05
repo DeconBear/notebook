@@ -148,6 +148,9 @@ Top-5 搜索结果:
 2. 图文相似度排序是否正确匹配语义
 3. PCA 可视化中图文嵌入的空间分布
 
-## 完整代码
 
-<<< @/applied/systems/multimodal/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/systems/multimodal/code/exercise.py`

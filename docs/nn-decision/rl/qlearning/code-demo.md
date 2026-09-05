@@ -339,6 +339,9 @@ alpha_configs = {"0.05": 0.05, "0.1": 0.1, "0.3": 0.3, "0.5": 0.5}
 
 ---
 
-## 完整代码
 
-<<< @/nn-decision/rl/qlearning/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/rl/qlearning/code/demo.py`

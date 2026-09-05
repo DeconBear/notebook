@@ -17,6 +17,9 @@ python exercise.py
 
 给定从左到右的权重剖面，计算 LR 探针分数 $\sum_i w_i\cdot(i+1)$。
 
-## 完整代码
 
-<<< @/neuro/circuits/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/circuits/code/exercise.py`

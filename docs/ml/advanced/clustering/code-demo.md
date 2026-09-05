@@ -202,6 +202,9 @@ K-Means 在 4 个真实簇的数据上，不同 K 值下的指标：
 | 轮廓系数 | $s = (b-a)/\max(a,b)$ | `silhouette_score()` | 聚类质量内部评估 |
 | 肘部法则 | inertia vs K 曲线 | `plot_inertia_vs_k()` | 选择最佳 K 值 |
 
-## 完整代码
 
-<<< @/ml/advanced/clustering/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/clustering/code/demo.py`

@@ -53,6 +53,9 @@ new_pred = y_current_pred + learning_rate * tree.predict(X)
 2. `test_update_weights()`：错误样本权重之和增大，权重归一化
 3. `test_adaboost_simple()`：完整的 5 轮 AdaBoost 流程能正常运行
 
-## 完整代码
 
-<<< @/ml/advanced/boosting/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/boosting/code/exercise.py`

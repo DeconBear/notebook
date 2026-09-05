@@ -40,6 +40,9 @@ $$
 
 运行后应看到开环第 10 步 MSE **大于**第 1 步 MSE——误差累积是成功标志。
 
-## 完整代码
 
-<<< @/world-models/video/sora/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/video/sora/code/exercise.py`

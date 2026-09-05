@@ -54,6 +54,9 @@ title: "ml03 朴素贝叶斯与贝叶斯网络 — exercise.py"
 2. `test_multinomial_nb()`：Laplace 平滑后所有特征概率 > 0（无 `-inf` 值）
 3. `test_alpha_selection()`：交叉验证选择出有效的平滑参数
 
-## 完整代码
 
-<<< @/ml/classic/naive-bayes/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/classic/naive-bayes/code/exercise.py`

@@ -285,6 +285,9 @@ def compute_precision_recall(pred_boxes, pred_scores, pred_classes,
 
 > **注意**：本练习是简化的单类别单阈值版本。真正的 mAP 需要对每个类别、多个 IoU 阈值和多个置信度阈值分别计算，再取平均。COCO 标准的 mAP@0.5:0.95 需要在 10 个 IoU 阈值下各算一次 AP 再取平均。
 
-## 完整代码
 
-<<< @/applied/cv/object-detection/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/cv/object-detection/code/exercise.py`

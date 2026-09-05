@@ -61,6 +61,9 @@ title: "ml02 贝叶斯决策理论 — exercise.py"
 2. `test_posteriors()`：每行后验概率之和应为 1；似然差距大 + 先验大 → 后验更大
 3. `test_risk_decision()`：对称损失下的决策应等价于最大后验；不对称损失应改变决策
 
-## 完整代码
 
-<<< @/ml/classic/bayesian-decision/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/classic/bayesian-decision/code/exercise.py`

@@ -66,6 +66,9 @@ DP 定义：$dp[k][i][j]$ = 只允许经过顶点 $0..k$ 时 $i$ 到 $j$ 的最�
 | Floyd-Warshall | DP | 矩阵 | 是 | 否(检测对角) | 是 |
 | A* | 启发式贪心 | 优先队列 | 否 | 否 | 否 |
 
-## 完整代码
 
-<<< @/algorithms/graph/shortest-path/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/graph/shortest-path/code/demo.py`

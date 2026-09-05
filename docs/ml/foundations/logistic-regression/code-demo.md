@@ -277,6 +277,9 @@ errors = proba - y_onehot
 | One-hot 编码 | 正确类别=1，其余=0 | `_compute_gradients()` | 多分类梯度的关键 |
 | 混淆矩阵 | TP/TN/FP/FN | `main()` | 分类问题精细化评估 |
 
-## 完整代码
 
-<<< @/ml/foundations/logistic-regression/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/foundations/logistic-regression/code/demo.py`

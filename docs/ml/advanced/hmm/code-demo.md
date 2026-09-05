@@ -114,6 +114,9 @@ Viterbi 解码出的路径反映了转移矩阵的结构——HMM 不可能解�
 | 平稳分布 | $\pi = \pi \mathbf{A}$ | `np.linalg.eig(A.T)` | 链的平衡状态 |
 | log 空间 | $\log(ab) = \log a + \log b$ | `np.log(...)` | 数值稳定替代乘法律 |
 
-## 完整代码
 
-<<< @/ml/advanced/hmm/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/hmm/code/demo.py`

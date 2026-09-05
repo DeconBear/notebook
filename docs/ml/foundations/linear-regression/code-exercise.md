@@ -82,6 +82,9 @@ title: "s02 线性回归 — exercise.py"
 3. Mini-batch GD 的参数也接近真实值（Bonus）
 4. 可视化图中，Full-batch GD 和 Mini-batch GD 的拟合直线都穿过数据点云的中心
 
-## 完整代码
 
-<<< @/ml/foundations/linear-regression/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/foundations/linear-regression/code/exercise.py`

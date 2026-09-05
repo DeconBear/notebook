@@ -305,6 +305,9 @@ def demo_rag_with_vs_without(rag_system, query):
 | 工具集 | Agent 可调用的外部功能（搜索、计算器、天气 API） | `MockTools` 类 |
 | 多级回退 | 语义嵌入→TF-IDF，ChromaDB→内存字典，LLM→模拟回答 | `check_environment()` |
 
-## 完整代码
 
-<<< @/applied/systems/rag-agent/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/systems/rag-agent/code/demo.py`

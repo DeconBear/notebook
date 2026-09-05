@@ -13,4 +13,9 @@ python demo.py
 
 在一维双峰混合上训练微型 DDPM：`q_sample` 闭式加噪，MLP 预测 $\epsilon$，再逐步反向采样。前向直方图应越来越像高斯，反向终态应重新出现两个峰。
 
-<<< @/world-models/video/diffusion/code/demo.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/video/diffusion/code/demo.py`

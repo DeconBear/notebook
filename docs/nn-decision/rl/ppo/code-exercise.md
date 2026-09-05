@@ -13,6 +13,9 @@ cd docs/nn-decision/rl/ppo/code
 python exercise.py
 ```
 
-## 完整代码
 
-<<< @/nn-decision/rl/ppo/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/rl/ppo/code/exercise.py`

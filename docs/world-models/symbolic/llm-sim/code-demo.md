@@ -41,6 +41,9 @@ logits = head(mlp(cat([s, a]))).view(B, max_state_len, vocab_size)
 
 按「拿起钥匙 → 开门 → 出门 → 放下钥匙」执行，打印真实 vs 预测，并导出训练曲线与结果表。
 
-## 完整代码
 
-<<< @/world-models/symbolic/llm-sim/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/symbolic/llm-sim/code/demo.py`

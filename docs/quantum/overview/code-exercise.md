@@ -24,6 +24,9 @@ def purity(rho):
     return float(np.real(np.trace(rho @ rho)))
 ```
 
-## 完整代码
 
-<<< @/quantum/overview/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/quantum/overview/code/exercise.py`

@@ -134,6 +134,9 @@ $\gamma$ 的支持向量数量也反映了过拟合程度——$\gamma$ 越大�
 | RBF 核 | $\exp(-\gamma\|\mathbf{x}-\mathbf{y}\|^2)$ | `rbf_kernel()` | 无限维映射 |
 | $\gamma$ 参数 | 影响半径 | `gamma` | 小 $\to$ 平滑, 大 $\to$ 复杂 |
 
-## 完整代码
 
-<<< @/ml/classic/svm/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/classic/svm/code/demo.py`

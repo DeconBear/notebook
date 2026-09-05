@@ -195,6 +195,9 @@ def create_lora_config(r=8, lora_alpha=16.0, target_modules=None,
 
 完成练习后，返回 demo.py 观察这些概念的完整实现和可视化。
 
-## 完整代码
 
-<<< @/applied/nlp/llm/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/nlp/llm/code/exercise.py`

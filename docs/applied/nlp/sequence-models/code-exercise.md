@@ -164,6 +164,9 @@ return z_t
 
 全部通过后，返回 demo.py 对照参考实现，理解每个细胞完整的 forward 逻辑。
 
-## 完整代码
 
-<<< @/applied/nlp/sequence-models/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/nlp/sequence-models/code/exercise.py`

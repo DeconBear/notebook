@@ -15,6 +15,9 @@ python demo.py
 
 看右图：在 $do(A)$ 分布上，「用混淆 Z 预测」误差飙升，「用动作 A 预测」保持低误差。
 
-## 完整代码
 
-<<< @/world-models/causal/ladder/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/causal/ladder/code/demo.py`

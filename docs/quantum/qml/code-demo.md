@@ -25,6 +25,9 @@ python eval.py
 - 量子 / 同任务 CNN：`dataset/*.npz`（16×16，数字 3 vs 6）
 - LeNet-5 对照：`lenet.py` 从 torchvision 筛 MNIST 的 0 与 1，**不使用 PNG 目录**
 
-## 完整代码
 
-<<< @/quantum/qml/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/quantum/qml/code/demo.py`

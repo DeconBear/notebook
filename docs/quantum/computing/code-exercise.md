@@ -29,6 +29,9 @@ def bell_state():
     return CNOT @ np.kron(H, I2) @ zero
 ```
 
-## 完整代码
 
-<<< @/quantum/computing/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/quantum/computing/code/exercise.py`

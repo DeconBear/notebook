@@ -17,6 +17,9 @@ python demo.py
 
 余弦调谐的泊松神经元 + 群体向量解码方向；同一套底层速率下，连续激活很少严格为 0，短窗口里的伯努利尖峰则大部分细胞沉默。
 
-## 完整代码
 
-<<< @/neuro/encoding/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/encoding/code/demo.py`

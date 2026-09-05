@@ -93,6 +93,9 @@ loss = recon_loss + vq_loss
 | 承诺损失 | 强迫编码器输出靠近码字，防止码字被忽略 | `0.25 * MSE(z, z_q.detach())` |
 | 交互式生成 | 推理时直接查码表指定潜在码，驱动世界演化 | `plot_rollout_demo` |
 
-## 完整代码
 
-<<< @/world-models/interactive/genie/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/interactive/genie/code/demo.py`

@@ -63,6 +63,9 @@ h' = ReLU(W_self(h) + agg)
 | 过平滑 | 多层后节点趋同 | 网格方差下降 |
 | 读出 | 节点 → 任务输出 | `TinyGNN.head` |
 
-## 完整代码
 
-<<< @/science/gnn/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/gnn/code/demo.py`

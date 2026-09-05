@@ -17,6 +17,9 @@ python demo.py
 
 用玩具节点/边表（SONATA-lite 心态）生成随机有向图，画出邻接矩阵：行是突触后、列是突触前，密度随连接概率变。
 
-## 完整代码
 
-<<< @/neuro/connectomics/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/connectomics/code/demo.py`

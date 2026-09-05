@@ -129,6 +129,9 @@ def belief_propagation_chain(potentials, evidence=None):
 | BP 消息 | $\sum \psi \cdot \mu_{\text{in}}$ | `belief_propagation_chain()` | 链/树上精确 |
 | 解释消除 | $P(R \mid W,S) < P(R \mid W)$ | Sprinkler 网络 | Collider 标志行为 |
 
-## 完整代码
 
-<<< @/ml/advanced/probabilistic-graphical-models/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/probabilistic-graphical-models/code/demo.py`

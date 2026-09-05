@@ -83,6 +83,9 @@ title: "s04 偏差-方差权衡 — exercise.py"
 2. `test_kfold()`：应生成恰好 5 个验证误差值
 3. `test_bias_variance()`（Bonus）：Bias² 和 Variance 均为正值，预测形状为 `(n_trials, n_test)`
 
-## 完整代码
 
-<<< @/ml/foundations/bias-variance/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/foundations/bias-variance/code/exercise.py`

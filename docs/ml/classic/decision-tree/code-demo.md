@@ -134,6 +134,9 @@ def _traverse(self, x, node):
 | 预剪枝 | max_depth, min_samples_* | `_build_tree()` 的条件 | 提前停止生长 |
 | 叶节点值 | `np.bincount(y).argmax()` | `_majority_vote()` | 多数类标签 |
 
-## 完整代码
 
-<<< @/ml/classic/decision-tree/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/classic/decision-tree/code/demo.py`

@@ -116,6 +116,9 @@ def kth_smallest(self, k):
 | 持久化更新 | Copy-on-Write | $O(\log n)$ | `PersistentSegTree._update()` |
 | 第 K 小 | BIT 上二分 | $O(\log^2 n)$ | `OrderStatistics.kth_smallest()` |
 
-## 完整代码
 
-<<< @/algorithms/topics/segment-tree/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/topics/segment-tree/code/demo.py`

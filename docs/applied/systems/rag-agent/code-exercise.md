@@ -186,6 +186,9 @@ Top-3 搜索结果按相似度降序排列
 2. RAG vs 纯 LLM 回答的差异（事实准确性 vs 流畅度）
 3. ReAct Agent 的 Thought→Action→Observation 完整推理链
 
-## 完整代码
 
-<<< @/applied/systems/rag-agent/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/systems/rag-agent/code/exercise.py`

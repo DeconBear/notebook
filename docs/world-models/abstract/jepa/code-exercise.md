@@ -60,6 +60,9 @@ title: "wm05 JEPA — exercise.py"
 - 本练习的掩码策略是"随机选一段连续区间"，比真实 I-JEPA 的"多个矩形块掩码"更简单。你觉得这种简化会让任务变得更容易还是更难？
 - 如果把 `momentum` 从 0.996 调到 0.9（更新更快），训练还能稳定收敛吗？动量太小会有什么风险？
 
-## 完整代码
 
-<<< @/world-models/abstract/jepa/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/abstract/jepa/code/exercise.py`

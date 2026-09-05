@@ -11,6 +11,9 @@ cd docs/world-models/interactive/scene-3d/code
 python demo.py
 ```
 
-## 完整代码
 
-<<< @/world-models/interactive/scene-3d/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/interactive/scene-3d/code/demo.py`

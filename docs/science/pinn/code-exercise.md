@@ -63,6 +63,9 @@ title: "as02 PINN — exercise.py"
 - 如果把激活函数从 `Tanh` 换成 `ReLU`，`compute_total_loss` 还能正常训练吗？为什么？（提示：想想 ReLU 的二阶导数是什么）
 - 本练习的配点是固定的均匀网格。如果改成每个 epoch **随机重新采样**配点（而不是固定同一批），你觉得对最终精度会有什么影响？这在处理高维问题时通常是必需的技巧。
 
-## 完整代码
 
-<<< @/science/pinn/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/pinn/code/exercise.py`

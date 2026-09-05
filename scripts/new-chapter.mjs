@@ -64,9 +64,11 @@ cd docs/${parent}/${slug}/code
 python demo.py
 \`\`\`
 
-## 完整代码
+## 源码位置
 
-<<< @/${parent}/${slug}/code/demo.py
+clone 后打开（相对仓库根目录）：
+
+\`docs/${parent}/${slug}/code/demo.py\`
 `, 'utf8')
 
 fs.writeFileSync(path.join(dest, 'code-exercise.md'), `---
@@ -84,9 +86,11 @@ cd docs/${parent}/${slug}/code
 python exercise.py
 \`\`\`
 
-## 完整代码
+## 源码位置
 
-<<< @/${parent}/${slug}/code/exercise.py
+clone 后打开（相对仓库根目录）：
+
+\`docs/${parent}/${slug}/code/exercise.py\`
 `, 'utf8')
 
 fs.writeFileSync(path.join(dest, 'code', 'demo.py'), `# -*- coding: utf-8 -*-

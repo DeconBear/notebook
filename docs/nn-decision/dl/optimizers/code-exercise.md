@@ -134,6 +134,9 @@ $$
 | Adam | 方向 + 步长 + 修正 | `m` + `v` + 偏差修正 |
 | NAG | "会思考的"Momentum | 先在 lookahead 处算梯度 |
 
-## 完整代码
 
-<<< @/nn-decision/dl/optimizers/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/dl/optimizers/code/exercise.py`

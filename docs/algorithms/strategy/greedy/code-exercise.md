@@ -75,4 +75,9 @@ title: "algo09 贪心算法 — exercise.py"
 2. **区间覆盖**：先排序是关键，排序后才能用贪心高效扫描。
 3. **贪心正确性**：失败案例通常出现在小面额上——测试 max_amount=100 基本能覆盖所有常见非规范系统的反例。
 
-<<< @/algorithms/strategy/greedy/code/exercise.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/strategy/greedy/code/exercise.py`

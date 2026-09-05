@@ -158,6 +158,9 @@ $$
 | TODO 2: 梯度裁剪 | $\tilde{g} = g \cdot \min(1, \text{max\_norm} / \|g\|)$ | 忘记 $\min(1, x)$——小梯度不应该被放大 |
 | TODO 3: 梯度检查 | $\frac{L(\theta+\epsilon) - L(\theta-\epsilon)}{2\epsilon}$ | 忘记恢复参数原始值 |
 
-## 完整代码
 
-<<< @/nn-decision/dl/matrix-backprop/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/dl/matrix-backprop/code/exercise.py`

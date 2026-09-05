@@ -9,12 +9,15 @@ title: "s05 前向传播与计算图 — demo.py"
 # s05 前向传播与计算图 — demo.py 代码详解
 
 <a href="/notebook/code/nn-decision/dl/forward-graph/demo.py" target="_blank" download>Download demo.py</a>
+　
+<a href="/notebook/code/nn-decision/dl/forward-graph/plot_demo.py" target="_blank" download>Download plot_demo.py</a>
 
 ## 运行方式
 
 ```bash
 cd docs/nn-decision/dl/forward-graph/code
-python demo.py
+python demo.py          # 前向传播主线（形状打印，不画图）
+python plot_demo.py     # 激活函数 / 网络结构 / 激活分布配图
 ```
 
 ## 代码逐段详解
@@ -57,7 +60,15 @@ $$
 $$
 
 - `np.maximum(0, z)` 是逐元素操作：对数组的每个元素，保留大于 0 的值，小于 0 的值替换为 0
-- `(z > 0).astype(np.float64)` 利用布尔索引：`z > 0` 生成一个布尔数组，`.astype(np.float64)` 将 `True` 转为 `1.0`，`False` 转为 `0.0`
+- `(z > 0)` 先做比较，得到的是 **布尔数组**（`True` / `False`），dtype 是 `bool`。例如 `z = [-1, 2]` → `[False, True]`。布尔值不能直接拿去乘梯度，所以要转成数字。
+- **`astype`**：NumPy 数组的「改类型」方法。`arr.astype(新类型)` 生成一份指定类型的新数组，原数组不变。
+- **`np.float64`**：64 位浮点数，就是日常说的 `float`（双精度）。科学计算默认用它，和后面的权重、梯度类型一致。转完之后 `True → 1.0`，`False → 0.0`，正好对应 $\mathrm{ReLU}'(z)\in\{0,1\}$。
+
+```python
+z = np.array([-1.0, 0.5, 2.0])
+mask = z > 0                  # array([False,  True,  True])  ← 还是 bool
+grad = mask.astype(np.float64)  # array([0., 1., 1.])         ← 才能当导数用
+```
 
 **为什么 ReLU 是深度学习革命的英雄？** 正区间的导数恒为 1，这意味着在反向传播中梯度可以**无损传播**——20 层 ReLU 网络连乘梯度后仍是 1，而 Sigmoid 网络连乘 20 个最大 0.25 的导数后梯度只剩 $0.25^{20} \approx 9 \times 10^{-13}$（消失殆尽）。
 
@@ -156,9 +167,13 @@ $$
 W \sim \mathcal{N}\left(0, \sqrt{\frac{2}{n_{\text{in}}}}\right)
 $$
 
-- $\sqrt{2/n_{\text{in}}}$ 是标准差：$n_{\text{in}}$ 是当前层的输入维度（前一层神经元数）
+- $\sqrt{2/n_{\text{in}}}$ 是标准差：$n_{\text{in}}$ 是当前层的**输入个数**（前一层神经元数），不是权重取值区间
 - 因子 2 是为了补偿 ReLU 将一半输入置零造成的方差减半效应
 - 这个初始化使得每层输出的方差保持稳定，无论网络有多深
+
+**不要把形状和取值混在一起。** `layer_dims = [3, 4, …]` 时，第一层权重是形状 `(4, 3)` 的矩阵：4 个神经元，每个接 3 个输入，一共 $4\times 3=12$ 个数。每个数独立抽自 $\mathcal{N}(0, \sqrt{2/3})$，标准差约 $0.82$，典型取值在 $-2$～$2$ 附近，**不是**「3 到 4 之间的随机数」。
+
+同一层共用同一个标准差（因为每个神经元的扇入 $n_{\text{in}}$ 相同），但 **12 个权重彼此不同**。如果同一层所有神经元的权重完全一样，它们永远算同一个函数，堆再多神经元也等于 1 个——这叫对称性没被打破。`np.random.seed(42)` 只保证你下次再跑还是这组数，不是让同一层抄同一份权重。偏置才是整层都初始化成 0。
 
 **Xavier 初始化**（配合 Tanh/Sigmoid）使用 $\sqrt{1/n_{\text{in}}}$ 作为标准差，因为 Sigmoid/Tanh 不会像 ReLU 那样丢弃负半轴。
 
@@ -183,13 +198,83 @@ def forward_pass(X, parameters, activations, verbose=True):
     return a, caches
 ```
 
+最后一个参数 **`verbose`**（英语里就是「话多、啰嗦」）**不参与计算**，只决定要不要往终端打调试信息。默认 `True`：每层打印 $a,W,b,z$ 的形状，以及激活值的 min/max/mean/std。主程序里写的是 `forward_pass(..., verbose=True)`，所以你跑 `demo.py` 会看到「第 1 层 / 第 2 层 / …」那一大段。改成 `verbose=False`，前向结果完全一样，只是屏幕安静。真正改网络输出的是 `W @ a + b` 和激活函数；`verbose` 只是教学用的「打开形状字幕」。
+
 这是前向传播的核心循环。每一层执行完全相同的两步操作：
 
 **子步骤 1：线性变换** $z^{[l]} = W^{[l]} a^{[l-1]} + b^{[l]}$
 
-数学上，$W^{[l]}$ 是一个 $n^{[l]} \times n^{[l-1]}$ 的矩阵，它将 $n^{[l-1]}$ 维的输入映射到 $n^{[l]}$ 维的中间表示。
+数学上，$W^{[l]}$ 是一个 $n^{[l]} \times n^{[l-1]}$ 的矩阵，它将 $n^{[l-1]}$ 维的输入映射到 $n^{[l]}$ 维的中间表示。代码里写成一行 NumPy：
 
-代码中 `W @ a` 是矩阵乘法：$W_{(n_{\text{out}} \times n_{\text{in}})} \cdot a_{(n_{\text{in}} \times m)} = z_{(n_{\text{out}} \times m)}$。然后 `+ b` 利用 NumPy 的**广播（broadcasting）**机制自动将偏置向量加到每一列。
+```python
+z = W @ a + b
+```
+
+**`@` 是矩阵乘法**（Python 3.5+ 运算符，NumPy 里等价于 `np.matmul(W, a)`），不是 `*`。`W * a` 是逐元素相乘，两边形状必须能对齐；`@` 才是「行乘列再求和」。
+
+以第一层为例：`W` 形状 `(4, 3)`（4 个神经元 × 3 个输入），`a` 形状 `(3, 32)`（3 个特征 × 32 个样本），则
+
+$$
+W_{(4\times 3)}\,a_{(3\times 32)} = (W @ a)_{(4\times 32)}
+$$
+
+每个样本得到 4 个数。
+
+**`+ b` 是广播加法。** `b` 形状 `(4, 1)`，NumPy 会把它加到全部 32 列上，等于每个样本共用同一份偏置，结果仍是 `(4, 32)`。整行的含义：先做 $Wa$，再给每个神经元加 $b$，此时还没有过 ReLU。
+
+**手算小例子：batch 从 32 缩成 4。** 3 个特征、2 个隐藏神经元、4 个样本（整数，方便纸上乘）。每一列仍是一个样本，不是「4 维向量」。
+
+$$
+W=\begin{bmatrix}1&0&2\\0&1&1\end{bmatrix}_{2\times 3}
+\qquad
+X=\begin{bmatrix}
+1&2&0&1\\
+0&1&1&2\\
+1&0&1&0
+\end{bmatrix}_{3\times 4}
+$$
+
+| | 样本1 | 样本2 | 样本3 | 样本4 |
+|--|------|------|------|------|
+| $x_1$ | 1 | 2 | 0 | 1 |
+| $x_2$ | 0 | 1 | 1 | 2 |
+| $x_3$ | 1 | 0 | 1 | 0 |
+
+$$
+Z=WX
+=
+\begin{bmatrix}1&0&2\\0&1&1\end{bmatrix}
+\begin{bmatrix}
+1&2&0&1\\
+0&1&1&2\\
+1&0&1&0
+\end{bmatrix}
+=
+\begin{bmatrix}3&2&2&1\\1&1&2&2\end{bmatrix}_{2\times 4}
+$$
+
+只看第 1 列，就是单个样本：
+
+$$
+\begin{bmatrix}1&0&2\\0&1&1\end{bmatrix}
+\begin{bmatrix}1\\0\\1\end{bmatrix}
+=
+\begin{bmatrix}3\\1\end{bmatrix}
+$$
+
+正好是 $Z$ 的第 1 列。第 2、3、4 列同理：**同一张 $W$ 乘四次**，一次写成 $WX$。再加上 $b=\begin{bmatrix}1\\0\end{bmatrix}$（形状 $2\times 1$）会广播到 4 列：
+
+$$
+Z+b
+=
+\begin{bmatrix}3&2&2&1\\1&1&2&2\end{bmatrix}
++
+\begin{bmatrix}1\\0\end{bmatrix}
+=
+\begin{bmatrix}4&3&3&2\\1&1&2&2\end{bmatrix}
+$$
+
+本课 `demo.py` 只是把上面的 4 换成 32：`W` 仍是「隐藏神经元数 × 特征数」，`X` 变成 `(3, 32)`，乘完第二维是 32。
 
 **子步骤 2：非线性激活** $a^{[l]} = \phi^{[l]}(z^{[l]})$
 
@@ -207,7 +292,7 @@ cache = {
 
 这三个值是反向传播的"燃料"——没有它们，梯度无法从后往前传递。详细用途见下文的"为什么必须存储中间值"。
 
-**张量形状追踪**：verbose 模式下，代码打印每层的 $a^{[l-1]}$, $W^{[l]}$, $b^{[l]}$, $z^{[l]}$, $a^{[l]}$ 的形状以及激活值统计信息（min/max/mean/std）。这对于理解和调试神经网络至关重要——形状不匹配是最常见的错误来源。
+**张量形状追踪（由 `verbose` 打开）**：为 `True` 时，每层会打印 $a^{[l-1]}, W^{[l]}, b^{[l]}, z^{[l]}, a^{[l]}$ 的形状和激活值统计。形状对不上是神经网络里最常见的报错来源；教学时打开它，把这段代码嵌进更大训练循环时再关掉。
 
 ### 第5步：为什么必须存储中间值？
 
@@ -221,7 +306,15 @@ cache = {
 
 这就是为什么训练需要比推理更多的显存——前向传播的所有中间结果必须保留到反向传播完成。如果显存不够，有一个权衡技巧叫 **Checkpointing/Re-materialization**：不存储中间值，在反向传播时重新计算前向传播。这节省了显存但增加了计算量。
 
-### 第6步：可视化
+### 第6步：配图（`plot_demo.py`，与主线分开）
+
+激活函数曲线、网络结构示意图、各层激活直方图**不参与** $Wa+b$ 的教学计算，因此单独放在 `plot_demo.py`。它会 `from demo import` 激活函数和 `forward_pass`，再调用 matplotlib。看图时运行：
+
+```bash
+python plot_demo.py
+```
+
+图保存到本章 `images/`：`activation_functions.png`、`network_structure.png`、`forward_data_flow.png`。
 
 #### 6.1 网络结构图
 
@@ -287,7 +380,27 @@ def main():
 
 总参数量：$3 \times 4 + 4 \ (\text{偏置}) + 4 \times 4 + 4 \ (\text{偏置}) + 4 \times 1 + 1 \ (\text{偏置}) = 41$ 个参数。
 
-注意代码中的形状约定：输入 $X$ 是 `(n_features, n_samples)` 即 $(3, 32)$，而不是常见的 `(n_samples, n_features)`。这种约定在数学上等价，只是矩阵乘法的顺序不同。反向传播的推导通常使用这个约定。
+**为什么 `X` 长这样、又能对上这个网？** 这里的数据是**假的**：`np.random.randn(3, 32)` 抽 32 个样本、每个 3 维、服从标准正态。没有标签、没有真实任务，只为把形状走通。真正要对齐的只有两件事：
+
+1. **特征数 = 输入层宽度。** `layer_dims[0] = 3`，所以 `X` 必须有 3 行（本教程约定是「特征 × 样本」）。第一层 $W^{[1]}$ 形状是 `(4, 3)`：列数 3 必须等于每个样本的特征数，否则 `W @ X` 乘不上。
+2. **样本数是 batch，不改网络结构。** 32 只出现在 `X` 的第二维，权重形状里没有 32。换成 8 个或 128 个样本，`W` 还是 `(4,3)`，只是一次处理几列。
+
+`randn` 而不是随便填 0～100，是因为 He 初始化假定输入尺度大约是方差 1；真实数据通常要先标准化，才和这种初始化匹配。
+
+输出层 1 个神经元 + Sigmoid，在**真实任务**里表示「二分类概率」。本 demo **没有** `y`，所以还谈不上分类对不对，只是前向算出 32 个 $(0,1)$ 里的数。
+
+**什么样的数据配什么样的网（记输入/输出两端）：**
+
+| 数据 | 每个样本长什么样 | 常见网络 | 输入层 / 输出层 |
+|------|------------------|----------|-----------------|
+| 表格（房价、鸢尾花） | 一维特征向量 | MLP | 输入 = 特征数；输出 = 1（回归/二分类）或类别数 |
+| 图像 | $H\times W\times C$ 网格 | CNN（或 ViT） | 不要先压成 MLP；输出 = 类别数 |
+| 句子 / 时间序列 | 一串 token 或时间步 | RNN / Transformer | 输入是序列；输出可以是一类、一个词，或等长序列 |
+| 图（分子、路网） | 节点 + 边 | GNN | 输入在节点上，输出可以是节点或整图 |
+
+中间几层（这里的 4、4）是容量旋钮：宽一点更能拟合，也更容易过拟合。它们**不**由数据形状唯一决定；由数据形状钉死的是**第一层的扇入**和**最后一层的扇出**。
+
+注意代码中的形状约定：输入 $X$ 是 `(n_features, n_samples)` 即 $(3, 32)$，而不是常见的 `(n_samples, n_features)`。这种约定在数学上等价，只是矩阵乘法的顺序不同。反向传播的推导通常使用这个约定。若你用 PyTorch 常见的 `(batch, features)`，对应乘法是 `X @ W.T`，不要和本课的 `W @ a` 混用。
 
 ### 第8步：张量形状总览
 
@@ -318,8 +431,12 @@ def main():
 | He 初始化 | $W \sim N(0, \sqrt{2/n_{\text{in}}})$ | `initialize_parameters()` | 配合 ReLU 使用，保持方差稳定 |
 | 中间值缓存 | `{z, a_prev, a}` | `forward_pass()` cache | 反向传播的"燃料" |
 | 计算图 | DAG 节点=操作，边=数据 | 概念层 | 前向/反向传播的基础抽象 |
-| Batch 处理 | $(d, m)$ 形状约定 | 主程序 | 32 个样本并行处理 |
+| `verbose` | — | `forward_pass(..., verbose=)` | 只控制是否打印形状，不改变计算结果 |
 
-## 完整代码
 
-<<< @/nn-decision/dl/forward-graph/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+- `docs/nn-decision/dl/forward-graph/code/demo.py`（前向传播主线）
+- `docs/nn-decision/dl/forward-graph/code/plot_demo.py`（同目录配图）

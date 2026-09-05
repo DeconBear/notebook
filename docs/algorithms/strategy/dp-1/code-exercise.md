@@ -55,4 +55,9 @@ title: "algo11 动态规划（上）— exercise.py"
 2. **子序列计数**注意边界：空串的情况。dp[i][0] 总是 1。
 3. **SCS 字符串构建**的关键是：每一步不仅要看 LCS 匹配，还要确保所有字符都被包含。
 
-<<< @/algorithms/strategy/dp-1/code/exercise.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/strategy/dp-1/code/exercise.py`

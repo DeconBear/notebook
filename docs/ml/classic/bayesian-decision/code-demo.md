@@ -174,6 +174,9 @@ AUC 使用梯形积分计算：`sklearn.metrics.auc(fpr, tpr)`。AUC 的概率�
 | AUC | $\int_0^1 \text{TPR}(\text{FPR}) d\text{FPR}$ | `auc(fpr, tpr)` | 正样本得分 > 负样本得分的概率 |
 | EER | FPR = FNR 时的错误率 | 代码中 `eer_idx` | 安全与便利平衡点 |
 
-## 完整代码
 
-<<< @/ml/classic/bayesian-decision/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/classic/bayesian-decision/code/demo.py`

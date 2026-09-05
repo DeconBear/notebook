@@ -18,4 +18,9 @@ python demo.py
 
 先跑倒立摆上的想象 Actor-Critic（`dreamer_pendulum.png`），再短跑离散走廊对照图。与 PETS / LeWM 同一套摆物理；不是完整 DreamerV3。CPU 约 2–3 分钟。
 
-<<< @/world-models/abstract/dreamer/code/demo.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/abstract/dreamer/code/demo.py`

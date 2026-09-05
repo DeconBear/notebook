@@ -69,6 +69,9 @@ def add_edge(self, u, v, cap):
 | 关键结构 | - | 优先队列/并查集 | BFS层图/反向边 |
 | 复杂度 | - | O(E log E) | O(V²E) (Dinic) |
 
-## 完整代码
 
-<<< @/algorithms/graph/mst-flow/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/graph/mst-flow/code/demo.py`

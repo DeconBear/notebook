@@ -392,6 +392,9 @@ def generate(self, seed_tokens, max_new_tokens=50, temperature=0.8):
 
 ---
 
-## 完整代码
 
-<<< @/applied/nlp/transformer/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/nlp/transformer/code/demo.py`

@@ -48,6 +48,9 @@ title: "ml06 集成学习：Bagging 与随机森林 — exercise.py"
 2. `test_majority_vote()`：多数投票结果应为众数
 3. `test_oob_score()`：OOB 准确率应在 [0, 1] 范围内
 
-## 完整代码
 
-<<< @/ml/advanced/random-forest/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/random-forest/code/exercise.py`

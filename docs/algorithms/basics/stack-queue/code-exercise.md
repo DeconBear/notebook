@@ -58,6 +58,9 @@ python exercise.py
 
 预期：四任务全部 `✅ 通过`，`🎉 所有练习已完成！`
 
-## 完整代码
 
-<<< @/algorithms/basics/stack-queue/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/basics/stack-queue/code/exercise.py`

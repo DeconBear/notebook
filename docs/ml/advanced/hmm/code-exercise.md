@@ -58,6 +58,9 @@ title: "ml11 隐马尔可夫模型 — exercise.py"
 - **递推**：对每个 $t$，从 $A[z_{t-1}, :]$ 采样 $z_t$，再从 $B[z_t, :]$ 采样 $x_t$
 - **`np.random.choice` 的 `p` 参数**：指定每个元素的采样概率（必须和为 1）
 
-## 完整代码
 
-<<< @/ml/advanced/hmm/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/hmm/code/exercise.py`

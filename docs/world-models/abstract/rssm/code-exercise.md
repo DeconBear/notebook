@@ -60,6 +60,9 @@ return kl_per_dim.sum(dim=-1)
 
 全部 TODO 通过后，运行 `python code/demo.py` 观察 RSSM 训练曲线、想象 rollout 轨迹、以及开环/闭环误差对比。
 
-## 完整代码
 
-<<< @/world-models/abstract/rssm/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/abstract/rssm/code/exercise.py`

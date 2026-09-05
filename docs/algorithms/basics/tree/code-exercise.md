@@ -51,6 +51,9 @@ python exercise.py
 
 预期全部通过，并展示哈夫曼编码的压缩效果。
 
-## 完整代码
 
-<<< @/algorithms/basics/tree/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/basics/tree/code/exercise.py`

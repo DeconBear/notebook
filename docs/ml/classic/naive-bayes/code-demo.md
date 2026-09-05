@@ -119,6 +119,9 @@ alphas = [0.001, 1.0, 5.0]
 | 零概率问题 | $P(x_i\|\omega) = 0 \to P(\mathbf{x}\|\omega) = 0$ | 避免用 `alpha` | 平滑是必须的 |
 | 加权和预测 | $X \cdot \ln P_{\text{c}}^T + \ln P_{\text{prior}}$ | `MultinomialNB.predict()` | 矩阵乘法一次完成 |
 
-## 完整代码
 
-<<< @/ml/classic/naive-bayes/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/classic/naive-bayes/code/demo.py`

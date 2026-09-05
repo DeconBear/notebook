@@ -39,6 +39,9 @@ cd docs/algorithms/graph/mst-flow/code
 python exercise.py
 ```
 
-## 完整代码
 
-<<< @/algorithms/graph/mst-flow/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/graph/mst-flow/code/exercise.py`

@@ -74,6 +74,9 @@ RADAR_SCORES = {'RSSM/Dreamer': [4, 5, 3, 3, 3, 3], 'MuZero': [3, 5, 1, 2, 2, 2]
 | 潜空间 vs 像素空间 | 潜空间每步误差增长率更小，能安全规划更长视野 | `simulate_rollout_error()` 参数设置 |
 | 雷达图对比 | 六个维度上的主观定性打分，非严格评测 | `plot_radar_comparison()` |
 
-## 完整代码
 
-<<< @/world-models/intro/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/intro/code/demo.py`
