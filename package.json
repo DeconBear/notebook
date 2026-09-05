@@ -7,7 +7,7 @@
     "new-chapter": "node scripts/new-chapter.mjs",
     "gen-toc": "node scripts/gen-readme-toc.mjs",
     "dev": "npm run sync-code && vitepress dev",
-    "build": "npm run sync-code && vitepress build",
+    "build": "npm run sync-code && node --max-old-space-size=8192 ./node_modules/vitepress/bin/vitepress.js build",
     "preview": "vitepress preview"
   },
   "devDependencies": {

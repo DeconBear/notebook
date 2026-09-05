@@ -25,6 +25,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          # Site grew past Node's default ~4GB heap (OOM on neuro-track deploy).
+          NODE_OPTIONS: --max-old-space-size=8192
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .vitepress/dist
