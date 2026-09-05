@@ -11,15 +11,25 @@ order: 60
 
 它仍属路径三「抽象状态预测」，位置在 JEPA 与 PETS/PlaNet 之间：表示学习走 JEPA，决策用法回到 PETS 那套在线规划。
 
-![LeWM 训练管线：编码器、预测器与两项损失](./images/wm-lewm-01-pipeline.png)
+![LeWM 训练管线：编码器、预测器与两项损失](./images/lewm-fig1-pipeline.jpg)
 
-> **图解说明**：帧 → 编码器得 $z_t$，预测器以 $z_t,a_t$ 预测 $\hat z_{t+1}$。不需要 EMA、停梯度、预训练编码器或像素解码器；防坍缩交给 SIGReg。结构对应论文 Figure 1。
+> 来源：Maes et al., *LeWorldModel*, [arXiv:2603.19312](https://arxiv.org/abs/2603.19312), Figure 1。左：帧 $o_t,o_{t+1}$ → 编码器得 $z_t,z_{t+1}$，预测器 $(z_t,a_t)\mapsto\hat z_{t+1}$；训练只有 **MSE**（红箭头）和打在嵌入上的 **SIGReg**。右：SIGReg 把 batch 嵌入投到随机 1D 方向，让经验分布贴上标准正态。没有 EMA、停梯度、预训练编码器或像素解码器。
+
+教学示意（同构、符号更大）见下：
+
+![LeWM 教学示意](./images/wm-lewm-01-pipeline.png)
 
 ---
 
 ## 一、为什么还要再做一个 JEPA 世界模型？
 
-把现有路线画成三类（论文 Figure 2 的精神）：
+把现有路线画成四列（论文 Figure 2）：
+
+![LeWM 论文 Figure 2：与 PLDM / DINO-WM / Dreamer / TD-MPC](./images/lewm-fig2-taxonomy.jpg)
+
+> 来源：同上, Figure 2。LeWM 相对四条基线的主张：超参收到 $\lambda$、可证明的反坍缩、端到端可训、任务无关、不重建像素、不依赖奖励。
+
+对照表：
 
 | 类型 | 代表 | 优点 | 痛点 |
 |------|------|------|------|
@@ -124,9 +134,13 @@ $$
 
 用 **CEM** 采样动作序列、留下终端潜距离小的精英；用 **MPC** 只执行前 $K$ 步再重规划——和 [PETS](/world-models/abstract/pets/)、[PlaNet](/world-models/abstract/rssm/) 同构，打分空间换成「目标嵌入距离」。
 
-![LeWM 潜空间 CEM + MPC](./images/wm-lewm-02-planning.png)
+![LeWM 论文 Figure 4：潜空间规划](./images/lewm-fig4-planning.jpg)
 
-> **图解说明**：对应论文 Figure 4。世界模型参数在规划时冻结；贵的是采样滚动，不是再训一遍策略。
+> 来源：同上, Figure 4。$o_1$ 与目标帧 $o_g$ 经同一编码器得到 $z_1,z_g$；预测器开环滚到 $\hat z_H$，代价 $\|\hat z_H-z_g\|^2$，求解器（CEM）回写动作序列。规划时世界模型冻结。
+
+教学示意：
+
+![LeWM 潜空间 CEM + MPC](./images/wm-lewm-02-planning.png)
 
 相对 DINO-WM：LeWM 嵌入更短，论文报告规划可快约 **48×**，单次规划可压到约 1 秒量级（取决于 $H$ 与采样数）。相对 Dreamer：这里**没有**想象里学 Actor——更偏「任务无关动力学 + 在线规划」。
 
@@ -152,11 +166,15 @@ $$
 | 决策 | 潜空间 MPC | 潜空间 CEM-MPC | 想象 Actor-Critic |
 | 奖励 | 规划用目标距离 | 同左 | 训练需要奖励信号 |
 
-本章 `demo.py` 用低维玩具复现「MSE + 高斯正则 + 潜空间 CEM」，不是 15M ViT；手感对齐即可。
+本章 `demo.py` 分两段：低维质点复现「MSE + 高斯正则 + 潜空间 CEM」；倒立摆上编码器取**恒等**（$z=s$）、预测器学残差，CEM 对准直立状态——算法仍是论文 Figure 4，只是把 ViT 换成可在 CPU 上闭环的线性动力学。火柴杆画在图上对照像素设定。完整端到端像素 ViT 见论文与课上 `03_lewm_pendulum.ipynb`。物理与 [PETS](/world-models/abstract/pets/)、[Dreamer](/world-models/abstract/dreamer/) 相同（θ=0 向上）。
 
 ![LeWM 玩具：损失与 CEM-MPC 轨迹](./images/lewm_cem_mpc.png)
 
-> 运行 `code/demo.py` 生成。左：两项损失下降；右：潜空间规划驱动质点靠近目标。
+> 二维质点。左：两项损失下降；右：潜空间规划驱动质点靠近目标。
+
+![LeWM 倒立摆：像素嵌入上的 CEM](./images/lewm_pendulum.png)
+
+> 火柴杆为可视化。左：MSE 与 SIGReg；中：规划过程中的 $θ$（目标为 0，允许缓慢漂移）；右：终局画面。CPU 上数分钟级。完整像素 ViT 见论文，不在本 demo 里硬搬。
 
 ---
 
@@ -183,5 +201,6 @@ $$
 
 1. Maes, L., Le Lidec, Q., Scieur, D., LeCun, Y., et al. (2026). LeWorldModel: Stable End-to-End Joint-Embedding Predictive Architecture from Pixels. [[arXiv:2603.19312](https://arxiv.org/abs/2603.19312)]
 2. Assran, M., et al. (2025). V-JEPA 2. [[arXiv:2506.09985](https://arxiv.org/abs/2506.09985)]
-3. LeCun, Y. (2022). A Path Towards Autonomous Machine Intelligence. (JEPA)
-4. Chua, K., et al. (2018). PETS. [[arXiv:1805.12114](https://arxiv.org/abs/1805.12114)]（潜空间规划的祖先形态）
+3. Balestriero, R., & LeCun, Y. (2025). LeJEPA. [[arXiv:2511.08544](https://arxiv.org/abs/2511.08544)]（SIGReg）
+4. LeCun, Y. (2022). A Path Towards Autonomous Machine Intelligence. (JEPA)
+5. Chua, K., et al. (2018). PETS. [[arXiv:1805.12114](https://arxiv.org/abs/1805.12114)]（潜空间规划的祖先形态）

@@ -34,6 +34,8 @@ $$
 
 建议顺序与上表一致。MuZero 可在 Dreamer 后穿插：对比「重建观测」vs「只为搜索服务的隐式模型」。
 
+PETS、Dreamer、LeWM（以及 JEPA 的火柴杆附录）共用同一套**倒立摆物理**（θ=0 竖直向上，观测 $[\cos\theta,\sin\theta,\omega]$ 或由其渲染的帧）：先看状态空间 CEM，再看想象里的 Actor-Critic，最后看像素嵌入上的目标 CEM。
+
 ---
 
 ## 二、和其余路径

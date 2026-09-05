@@ -17,7 +17,7 @@ cd docs/world-models/abstract/jepa/code
 python demo.py
 ```
 
-依赖 PyTorch（CPU 即可），训练 300 步的玩具 JEPA，约十几秒完成。
+依赖 PyTorch（CPU 即可）。先训 300 步玩具 I-JEPA，再在倒立摆火柴杆帧上做动作条件的表征预测（`jepa_pendulum_frames.png`）。约一两分钟。
 
 ## 代码逐段详解
 

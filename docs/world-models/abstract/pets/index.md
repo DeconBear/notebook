@@ -31,7 +31,11 @@ order: 10
 
 ![PETS 三件套：概率集成、轨迹采样、滚动规划](./images/wm-pets-01-pe-ts-mpc.png)
 
-> **图解说明**：PETS 把「学一个会说不确定度的动力学」和「用粒子把不确定度传到未来」以及「MPC 只执行第一拍」焊在一起。来源结构对应论文 Fig.1（Chua et al., 2018）。
+> **图解说明**：PETS 把「学一个会说不确定度的动力学」和「用粒子把不确定度传到未来」以及「MPC 只执行第一拍」焊在一起。教学示意；论文原图见下。
+
+![PETS 论文 Figure 1：PE-TS 三块](./images/pets-paper-fig1.png)
+
+> 来源：Chua et al., *Deep Reinforcement Learning in a Handful of Trials using Probabilistic Dynamics Models*, NeurIPS 2018, [arXiv:1805.12114](https://arxiv.org/abs/1805.12114)，文中 Figure 1 所在页。从左到右：(1) **概率集成（PE）** 在数据稀疏处成员分歧（epistemic），成员内部的方差带是 aleatoric；(2) **轨迹采样（TS）** 把粒子滚到视野 $T$；(3) **MPC** 在一束想象轨迹里选计划，只执行第一拍。官方实现：[handful-of-trials](https://github.com/kchua/handful-of-trials)。
 
 ---
 
@@ -126,7 +130,9 @@ $$
 | 确定性集成 DE | 否 | 是 |
 | **概率集成 PE（PETS）** | **是** | **是** |
 
-只建模其中一种，规划都会在「数据少但任务难」的机器人接触动力学上翻车。
+![PETS 论文 Table 1：两种不确定如何组合](./images/pets-paper-table1.png)
+
+> 来源：同上，Table 1 所在页。只建模其中一种，规划都会在「数据少但任务难」的接触动力学上翻车；PETS 的主张是 **PE = 每个成员都输出 $\mathcal{N}(\mu,\Sigma)$ + bootstrap 集成**。
 
 ---
 
@@ -141,20 +147,24 @@ $$
 
 打分时，一条候选动作序列的回报 ≈ 所有粒子轨迹奖励的平均。CEM 看到的不是一条幻觉轨迹，而是**一束带不确定的未来**。
 
-规划伪代码（与论文 Algorithm 一致，略去超参）：
+规划伪代码（对应论文 Algorithm 1，符号与原文一致）：
 
 ```text
-每拍 t:
-  用当前 s_t 初始化粒子
-  初始化 CEM 的 (μ, Σ)
-  重复 M 轮:
-    采样 N 条动作序列
-    对每条序列用 PE+TS 滚 H 步，算平均回报
-    用 top-K 精英更新 (μ, Σ)
-  执行精英序列的第一个动作
-  得到真实 s_{t+1}，把 (s_t, a_t, s_{t+1}) 写入数据集
-  周期性用负对数似然重训集成
+数据集 D ← 随机探索
+for trial = 1 … T:
+  用高斯 NLL 在 D 上训练概率集成 {f_θ_b}_{b=1..B}
+  for t = 0 … τ-1:
+    初始化 CEM 分布 (μ, Σ)
+    for m = 1 … M:                          # CEM 迭代
+      采样 N 条动作序列 A ~ N(μ, Σ)
+      对每条 A：复制 P 个粒子；TS∞ 下粒子终身绑定一个成员
+        滚 H 步，回报 = 粒子平均 Σ_k r(s_k, a_k)
+      用 top-K 精英更新 (μ, Σ)
+    执行 a_t = μ 的第一拍（或最优精英的第一拍）
+    真实环境一步，把 (s_t, a_t, s_{t+1}) 写入 D
 ```
+
+本章倒立摆 demo 用的是 **TS∞**（粒子绑定成员）+ 向量化 `sample_next`，与课上 `pets_core.py` 同构，只是把 MuJoCo / Gym 换成自写的摆动力学。
 
 没有 Actor 网络。策略就是「此刻的 CEM」。这正是下一章 PlaNet 仍然采用、再下一章 Dreamer 决定放弃（太贵、难用价值函数看远）的方案。
 
@@ -171,15 +181,31 @@ $$
 
 PETS 在 HalfCheetah 等 MuJoCo 任务上用远少于 PPO / SAC 的交互达到接近 model-free 的渐近成绩——前提是**状态可观测**。像素控制要把 $s$ 自己学出来，那是 RSSM 的工作。
 
-本章 `demo.py` 在一维质点上复现最小 CEM：集成给出下一步均值，粒子传播不确定，MPC 只执行第一拍去追目标。它不是论文的 MuJoCo 实验，但足够让你看见「分布收缩」和「滚动重规划」两件事。
+---
+
+## 七、实验：一维质点 + 倒立摆
+
+### 7.1 一维质点：先看清 CEM 在收缩
+
+`demo.py` 的前半段在一维质点上复现最小 CEM：线性 bootstrap 集成给出下一步均值，粒子传播不确定，MPC 只执行第一拍去追目标。它不是论文的 MuJoCo 实验，但足够让你看见「分布收缩」和「滚动重规划」两件事。
 
 ![PETS 玩具：闭环轨迹与 CEM 收缩](./images/pets_cem_mpc.png)
 
 > 运行 `code/demo.py` 后生成。左：位置追目标；右：CEM 迭代中动作均值收敛、方差收缩。
 
+### 7.2 倒立摆：状态空间 PETS 的最小闭环
+
+与课上实验同一套物理：**θ = 0 为竖直向上**，观测 $s=[\cos\theta,\sin\theta,\omega]$，动作 $u\in[-1,1]$ 缩放成力矩。任务是在直立附近稳住（不是从底部摆起）。每个成员在论文里是输出 $(\mu_{\Delta s},\sigma_{\Delta s})$ 的概率 MLP。本章闭环为了在 CPU 数分钟内跑通，改成**岭回归 bootstrap 集成**（仍然是 PE：成员分歧 = epistemic，残差方差 = aleatoric），规划仍是 TS∞ + CEM。完整神经网络版本见课上 `pets_core.py`。
+
+这对应论文在「状态可观测的机器人」上的用法，也是后面 Dreamer / LeWM 共用的对照环境：同一物理、三种决策（CEM-MPC / 想象 Actor-Critic / 潜空间目标嵌入 CEM）。
+
+![PETS 倒立摆：trial 回报与终局 |θ|](./images/pets_pendulum.png)
+
+> 运行 `code/demo.py` 后生成。左：各 trial 回合回报（约 50 表示全程接近直立）；右：终局 $|θ|$，本实现可收到约 $0.02\,\mathrm{rad}$。不是论文 HalfCheetah 的 8× 样本效率数字。
+
 ---
 
-## 七、小结
+## 八、小结
 
 | 概念 | 一句话 |
 |------|--------|
