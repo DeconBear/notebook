@@ -242,6 +242,9 @@ $R^2$ 可以被理解为"相比于只用均值来预测，模型减少了多少�
 | 学习率 $\eta$ | 步长 | `__init__()` | 太小慢，太大震荡 |
 | $R^2$ | $1 - \frac{SS_{\text{res}}}{SS_{\text{tot}}}$ | `main()` | 模型解释方差比例 |
 
-## 完整代码
 
-<<< @/ml/foundations/linear-regression/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/foundations/linear-regression/code/demo.py`

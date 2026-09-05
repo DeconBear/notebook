@@ -328,6 +328,9 @@ optimizer = optim.AdamW([
 | AdamW | Adam + 解耦权重衰减 | `optim.AdamW(...)` |
 | 微调参数分组 | backbone 用 `lr×0.1`，head 用 `lr` | `quick_finetune()` |
 
-## 完整代码
 
-<<< @/applied/cv/vit/code/vit_demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/cv/vit/code/vit_demo.py`

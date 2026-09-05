@@ -110,6 +110,9 @@ OOB 误差通常能很好地近似测试集误差——它和交叉验证一样�
 | 集成方差 | $\rho\sigma^2 + (1-\rho)\sigma^2/B$ | 理论 | $\rho$ 越低越好 |
 | MDI 重要性 | 加权不纯度减少 | 理论 | 特征对纯度的贡献 |
 
-## 完整代码
 
-<<< @/ml/advanced/random-forest/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/random-forest/code/demo.py`

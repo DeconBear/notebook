@@ -69,6 +69,9 @@ title: "ml09 降维与特征工程 — exercise.py"
 - **需要调用的函数**：`itertools.combinations_with_replacement()`, `np.prod()`, `np.column_stack()`
 - **注意**：特征数量随 degree 和 d 快速增长——对于 d=10, degree=2，有 $1 + 10 + 55 = 66$ 个特征
 
-## 完整代码
 
-<<< @/ml/advanced/dimensionality-reduction/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/dimensionality-reduction/code/exercise.py`

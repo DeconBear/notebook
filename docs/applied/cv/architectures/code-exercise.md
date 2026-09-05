@@ -178,6 +178,9 @@ def _make_layer(self, planes, num_blocks, stride):
 }
 ```
 
-## 完整代码
 
-<<< @/applied/cv/architectures/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/cv/architectures/code/exercise.py`

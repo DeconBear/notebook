@@ -14,4 +14,9 @@ cd docs/world-models/abstract/muzero/code
 python demo.py
 ```
 
-<<< @/world-models/abstract/muzero/code/demo.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/abstract/muzero/code/demo.py`

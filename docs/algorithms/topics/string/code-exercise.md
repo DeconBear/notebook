@@ -53,4 +53,9 @@ title: "algo13 字符串算法 — exercise.py"
 3. Manacher 统计回文数时注意区分奇偶——但插入了 `#` 后就统一了。
 4. 滚动哈希虽然概率正确，但在竞赛中通常足够（冲突概率 $\approx 1/M$，用 $10^9+7$ 和 $10^9+9$ 双哈希几乎不可能冲突）。
 
-<<< @/algorithms/topics/string/code/exercise.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/topics/string/code/exercise.py`

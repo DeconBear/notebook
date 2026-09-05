@@ -13,6 +13,9 @@ cd docs/math/optimization/code
 python demo.py
 ```
 
-## 完整代码
 
-<<< @/math/optimization/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/math/optimization/code/demo.py`

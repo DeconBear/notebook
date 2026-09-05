@@ -267,8 +267,9 @@ else:
 | GELU | `nn.GELU()` | 平滑版 ReLU，梯度更好 |
 | QKV 合并 | `nn.Linear(C, 3*C)` | 一次矩阵乘法计算 Q,K,V |
 
-## 完整代码
 
-```python
-<<< @/applied/nlp/transformer/code/nanogpt.py
-```
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/nlp/transformer/code/nanogpt.py`

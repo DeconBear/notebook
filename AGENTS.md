@@ -54,13 +54,7 @@ Do **not** edit `.vitepress/config.mts` to register chapters. The sidebar is gen
 
 ## Code: one source, generated downloads
 
-Canonical Python lives only in the chapter folder (`docs/.../<slug>/code/*.py`). VitePress pages include it directly:
-
-```
-<<< @/ml/foundations/ai-overview/code/demo.py
-```
-
-(`srcDir` is `docs/`, so `@/` is `docs/`.)
+Canonical Python lives only in the chapter folder (`docs/.../<slug>/code/*.py`). Walkthrough pages (`code-demo.md` / `code-exercise.md`) must **not** paste the whole file with VitePress `<<< @/`; point to the repo-root path instead, e.g. `docs/ml/foundations/ai-overview/code/demo.py`. Readers clone the notebook and open that file. Short excerpts in fenced `python` blocks are fine.
 
 `npm run sync-code` (hooked into `dev` and `build`) copies those files to `public/code/<same relative path>/` for the Download button (`/notebook/code/ml/foundations/ai-overview/demo.py`). Chapters with `legacyPaths` also get a copy at `public/code/<old-slug>/` so old download URLs still work.
 
@@ -85,7 +79,7 @@ When you edit a chapter's code, edit **only** `docs/.../code/`. Do not maintain 
 ```
 docs/<domain>/.../<slug>/
 ├── index.md            # Main illustrated article
-├── code-demo.md        # Walkthrough; embeds <<< @/<path>/code/demo.py
+├── code-demo.md        # Walkthrough; 源码位置 points to docs/.../code/demo.py
 ├── code-exercise.md    # Exercise guide
 ├── CODE.md             # Dev-only run report (some chapters; excluded from build)
 ├── code/

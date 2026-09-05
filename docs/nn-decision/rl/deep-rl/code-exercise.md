@@ -132,6 +132,9 @@ $$
 2. DQN 的损失曲线（注意到损失不会单调下降——因为 TD 目标本身在变化）
 3. REINFORCE 的策略决策边界热力图
 
-## 完整代码
 
-<<< @/nn-decision/rl/deep-rl/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/rl/deep-rl/code/exercise.py`

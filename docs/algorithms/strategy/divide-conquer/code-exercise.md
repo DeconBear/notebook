@@ -69,4 +69,9 @@ title: "algo10 递归、分治与二分 — exercise.py"
 3. **最大子数组**：注意所有元素为负数时，应返回最大的那个负数（单个元素），而非 0。
 4. **二分答案**：注意二分循环中的取整方向——`mid = (lo + hi + 1) // 2` 上取整可避免死循环。
 
-<<< @/algorithms/strategy/divide-conquer/code/exercise.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/strategy/divide-conquer/code/exercise.py`

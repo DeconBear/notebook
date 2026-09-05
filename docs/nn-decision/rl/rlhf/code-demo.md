@@ -356,6 +356,9 @@ loss = F.cross_entropy(shift_logits.view(-1, vocab_size), shift_labels.view(-1))
 | 训练稳定性 | 需要仔细调参 | 较稳定（类似分类任务） |
 | 理论最优性 | 依赖 RM 质量 | Bradley-Terry 下最优 |
 
-## 完整代码
 
-<<< @/nn-decision/rl/rlhf/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/rl/rlhf/code/demo.py`

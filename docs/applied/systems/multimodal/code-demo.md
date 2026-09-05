@@ -219,6 +219,9 @@ loss_clip = 0.5 * (loss_image + loss_text)
 | 共享嵌入空间 | $\text{encode}_{\text{image}}(\text{dog}) \approx \text{encode}_{\text{text}}(\text{"a dog"})$ | PCA 可视化 |
 | 提示模板 | `"a photo of a {class}"` 比 `"{class}"` 效果好得多 | `prompt_template` |
 
-## 完整代码
 
-<<< @/applied/systems/multimodal/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/systems/multimodal/code/demo.py`

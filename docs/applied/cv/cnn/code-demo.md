@@ -340,6 +340,9 @@ d_relu2 *= model.relu2.cache["mask"]
 | He 初始化 | $W \sim \mathcal{N}(0, \sqrt{2 / fan\_in})$ | `randn * sqrt(2.0 / fan_in)` |
 | 参数量（卷积层） | $C_{out} \times C_{in} \times k^2 + C_{out}$ | `self.W.size + self.b.size` |
 
-## 完整代码
 
-<<< @/applied/cv/cnn/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/cv/cnn/code/demo.py`

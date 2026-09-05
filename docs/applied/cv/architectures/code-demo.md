@@ -300,6 +300,9 @@ def compute_gradient_norms(model):
 | 退化问题 | 层数增加但训练误差不降反升 | PlainCNN 的糟糕表现 |
 | 网络退化 | 不是过拟合（测试误差也上升），是优化困难 | ResNet 解决了这个问题 |
 
-## 完整代码
 
-<<< @/applied/cv/architectures/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/cv/architectures/code/demo.py`

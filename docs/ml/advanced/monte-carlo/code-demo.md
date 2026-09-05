@@ -129,6 +129,9 @@ $$
 | Burn-in | 丢弃前 N 个样本 | `n_burnin` 参数 | 避免初始值偏差 |
 | ESS | $N/(1+2\sum\rho_k)$ | ACF 计算 | 考虑自相关的有效样本数 |
 
-## 完整代码
 
-<<< @/ml/advanced/monte-carlo/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/monte-carlo/code/demo.py`

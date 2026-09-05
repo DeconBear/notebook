@@ -142,6 +142,9 @@ dp[i][j] = 1 + min(
 | 编辑距离 | min(删,插,替) + 1 | `edit_distance()` |
 | 找零 DP | dp[i] = min(dp[i-c]+1) | `coin_change_min()` |
 
-## 完整代码
 
-<<< @/algorithms/strategy/dp-1/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/strategy/dp-1/code/demo.py`

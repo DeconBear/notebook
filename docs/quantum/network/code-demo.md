@@ -20,6 +20,9 @@ python demo.py
 
 实现用显式 3 比特态矢量，便于对照正文线路，而不是调用黑盒库。
 
-## 完整代码
 
-<<< @/quantum/network/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/quantum/network/code/demo.py`

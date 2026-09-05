@@ -64,6 +64,9 @@ BFS 自然按层扩展——距离起点为 d 的节点在第 d 轮被访问。�
 | 二分图检测 | BFS/DFS染色 | 颜色数组 | O(V+E) |
 | 连通分量 | BFS/DFS遍历 | visited集合 | O(V+E) |
 
-## 完整代码
 
-<<< @/algorithms/graph/basics/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/graph/basics/code/demo.py`

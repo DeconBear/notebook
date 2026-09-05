@@ -76,6 +76,9 @@ title: "ml08 聚类 — exercise.py"
 - **需要调用的函数**：`sklearn.cluster.KMeans`, `sklearn.metrics.silhouette_score`
 - **思考题**：轮廓系数和肘部法则在某些情况下可能给出不同建议——为什么？应该更信任哪个？
 
-## 完整代码
 
-<<< @/ml/advanced/clustering/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/clustering/code/exercise.py`

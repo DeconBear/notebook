@@ -23,6 +23,9 @@ def angle_from_hidden(hidden, weight, bias):
     return (1.0 / (1.0 + np.exp(-linear))) * (2.0 * np.pi)
 ```
 
-## 完整代码
 
-<<< @/quantum/qml/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/quantum/qml/code/exercise.py`

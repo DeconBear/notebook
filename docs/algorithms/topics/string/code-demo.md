@@ -116,6 +116,9 @@ class RollingHash:
 | Manacher | R 数组 + 镜像对称 | $O(n)$ | `manacher()` |
 | 滚动哈希 | 前缀哈希 + 次幂表 | $O(1)$ 子串哈希 | `RollingHash.get_hash()` |
 
-## 完整代码
 
-<<< @/algorithms/topics/string/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/topics/string/code/demo.py`

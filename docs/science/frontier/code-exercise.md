@@ -32,6 +32,9 @@ title: "as08 AI4S综合与前沿 — exercise.py"
 
 运行 `python exercise.py`：两个搜索方法找到的 $a$ 与真实值偏差应小于 0.15。
 
-## 完整代码
 
-<<< @/science/frontier/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/frontier/code/exercise.py`

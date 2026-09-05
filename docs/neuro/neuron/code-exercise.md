@@ -17,6 +17,9 @@ python exercise.py
 
 实现指数 EPSP：`t >= t0` 时为 `amp * exp(-(t-t0)/tau)`，否则为 0。
 
-## 完整代码
 
-<<< @/neuro/neuron/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/neuron/code/exercise.py`

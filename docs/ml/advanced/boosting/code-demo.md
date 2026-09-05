@@ -138,6 +138,9 @@ AdaBoost 的边界对噪声敏感——因为错误样本的权重会不断增�
 | MSE 残差 | $y - F$ | `residuals = y - F` | 平方损失的负梯度 |
 | Shrinkage | $\eta$ (learning_rate) | `self.learning_rate` | 缩小每棵树的贡献 |
 
-## 完整代码
 
-<<< @/ml/advanced/boosting/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/boosting/code/demo.py`

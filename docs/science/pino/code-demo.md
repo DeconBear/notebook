@@ -78,6 +78,9 @@ loss = loss_data + (0.1 * loss_pde + 1.0 * loss_bc if use_physics else 0.0)
 | PDE 残差 | 无标签 $a$ 也能提供梯度 | `pde_residual_and_bc` |
 | 外推 | 测试 $a$ 超出训练范围 | `A_TEST` 中 $>3$ 的点 |
 
-## 完整代码
 
-<<< @/science/pino/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/pino/code/demo.py`

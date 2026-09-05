@@ -231,6 +231,9 @@ TODO 3 测试: 动态障碍物
 
 完成练习后，返回 demo.py 观察完整的 GridWorld 环境、Q-Learning Agent 和消融实验——这些都是对练习中三个核心概念的深入应用。
 
-## 完整代码
 
-<<< @/nn-decision/rl/qlearning/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/rl/qlearning/code/exercise.py`

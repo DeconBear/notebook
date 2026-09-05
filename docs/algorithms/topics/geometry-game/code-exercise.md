@@ -61,4 +61,9 @@ $$Area = \frac{1}{2} \left| \sum_{i=1}^{n} (x_i y_{i+1} - x_{i+1} y_i) \right|$$
 3. Nim 分析用 `itertools.product` 高效枚举。
 4. 三角形内点判断用同号法，比射线法更简洁。
 
-<<< @/algorithms/topics/geometry-game/code/exercise.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/topics/geometry-game/code/exercise.py`

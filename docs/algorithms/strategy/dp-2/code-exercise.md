@@ -58,4 +58,9 @@ title: "algo12 动态规划（下）— exercise.py"
 2. 树的最小顶点覆盖中，DFS 遍历时注意避免访问父节点。
 3. 状态压缩中子集枚举的高效写法：`sub = (sub - 1) & mask`。
 
-<<< @/algorithms/strategy/dp-2/code/exercise.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/strategy/dp-2/code/exercise.py`

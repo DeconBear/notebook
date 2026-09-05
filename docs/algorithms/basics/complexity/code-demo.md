@@ -174,6 +174,9 @@ append(value):
 
 ---
 
-## 完整代码
 
-<<< @/algorithms/basics/complexity/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/basics/complexity/code/demo.py`

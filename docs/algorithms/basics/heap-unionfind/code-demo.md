@@ -67,6 +67,9 @@ P=0.5 时：50% 的节点在 level 0，25% 在 level 1，12.5% 在 level 2...期
 | UnionFind | 森林+路径压缩 | O(alpha(n)) | - | O(alpha(n)) | O(n) |
 | SkipList | 多层有序链表 | O(log n) 期望 | O(log n) 期望 | O(log n) 期望 | O(n) 期望 |
 
-## 完整代码
 
-<<< @/algorithms/basics/heap-unionfind/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/basics/heap-unionfind/code/demo.py`

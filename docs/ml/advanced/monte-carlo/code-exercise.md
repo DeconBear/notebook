@@ -57,6 +57,9 @@ title: "ml10 蒙特卡洛方法 — exercise.py"
 - **预期**：$N$ 增大 100 倍时，平均误差约减小 10 倍（$\sqrt{100} = 10$）
 - **多次重复**：对每个 $N$ 做 10 次独立运行取平均误差可以平滑随机性
 
-## 完整代码
 
-<<< @/ml/advanced/monte-carlo/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/monte-carlo/code/exercise.py`

@@ -70,6 +70,9 @@ title: "as01 AI4S 全景 — exercise.py"
 - 如果候选解只是"振幅不对"（比如整体乘以 0.9），残差会如何随振幅误差变化？是线性关系还是其他关系？
 - 下一章 as02 中，PINN 会用自动微分代替这里的有限差分来计算 $u''$。你能想到自动微分相比有限差分的优势吗（提示：网格无关、精度、边界处理）？
 
-## 完整代码
 
-<<< @/science/overview/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/overview/code/exercise.py`

@@ -17,6 +17,9 @@ python exercise.py
 
 实现 `label_scale`：把现象标到 `membrane` / `synapse` / `circuit` / `connectome` / `neuroai`。对照正文里的尺度表，不要改 `PAIRS`。
 
-## 完整代码
 
-<<< @/neuro/overview/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/overview/code/exercise.py`

@@ -69,6 +69,9 @@ total_loss = recon_loss + vq_loss
 2. 训练后下一帧预测准确率应明显上升（>60%）
 3. 量化层应使用到多个不同码字（不是坍缩到 1 个）
 
-## 完整代码
 
-<<< @/world-models/interactive/genie/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/interactive/genie/code/exercise.py`

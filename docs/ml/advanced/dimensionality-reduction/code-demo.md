@@ -133,6 +133,9 @@ LDA 在很多情况下能以极低的维度（$C-1$）达到甚至超过全维�
 | 交互特征 | $x_i \times x_j$ | `df['area_x_rooms']` | 捕获特征联合效应 |
 | 目标编码 | 贝叶斯收缩 | `target_encoding` | 类别 → 数值，平滑防过拟合 |
 
-## 完整代码
 
-<<< @/ml/advanced/dimensionality-reduction/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/dimensionality-reduction/code/demo.py`

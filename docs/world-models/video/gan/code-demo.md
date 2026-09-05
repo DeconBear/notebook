@@ -15,6 +15,9 @@ CPU 上默认 2 个 epoch、1000 张 MNIST（下载失败则用合成图）。�
 
 样张写入 `images/gan_samples.png`，曲线写入 `images/training_curves.png`。
 
-## 完整代码
 
-<<< @/world-models/video/gan/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/video/gan/code/demo.py`

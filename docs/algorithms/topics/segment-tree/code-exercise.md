@@ -49,4 +49,9 @@ title: "algo14 线段树与树状数组 — exercise.py"
 2. 线段树最大值查询中，不相交时返回 `-inf`（而非 0）。
 3. BIT 逆序对需要离散化，否则值域太大 BIT 数组放不下。
 
-<<< @/algorithms/topics/segment-tree/code/exercise.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/topics/segment-tree/code/exercise.py`

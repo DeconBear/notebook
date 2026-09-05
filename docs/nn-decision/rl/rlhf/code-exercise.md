@@ -127,6 +127,9 @@ GAE 优势: 大约 [6.99, 7.45, 7.94, 8.46, 9.0]
 3. 策略熵的变化（探索程度是否在下降）
 4. DPO 的偏好边际（y_w - y_l 的分数差距）是否在扩大
 
-## 完整代码
 
-<<< @/nn-decision/rl/rlhf/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/rl/rlhf/code/exercise.py`

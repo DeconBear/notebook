@@ -287,6 +287,9 @@ def draw_detections(image, boxes, scores, class_ids, class_names, save_path, tit
 | COCO 80 类 | person, bicycle, car, ... | `COCO_CLASSES` 列表 |
 | YOLOv8 nano | ~3.2M 参数，CPU 可运行 | `YOLO("yolov8n.pt")` |
 
-## 完整代码
 
-<<< @/applied/cv/object-detection/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/cv/object-detection/code/demo.py`

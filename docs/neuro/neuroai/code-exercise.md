@@ -17,6 +17,9 @@ python exercise.py
 
 实现 Hebb 更新：`w <- w + lr * post * pre`（`post` 为标量）。
 
-## 完整代码
 
-<<< @/neuro/neuroai/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/neuroai/code/exercise.py`

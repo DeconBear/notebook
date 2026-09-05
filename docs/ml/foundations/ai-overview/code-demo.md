@@ -186,6 +186,9 @@ def main():
 | 收敛定理 | 线性可分则有限步收敛 | `fit()` break逻辑 | 数据不可分时算法震荡 |
 | 准确率 | $\frac{\text{正确预测数}}{\text{总样本数}}$ | `main()` | `np.mean(y_pred == y)` |
 
-## 完整代码
 
-<<< @/ml/foundations/ai-overview/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/foundations/ai-overview/code/demo.py`

@@ -60,6 +60,9 @@ def gradient_inverse_design(...):
 | 黑盒搜索 | 只能采样评估，不能求导 | `blackbox_grid_search()` |
 | 可微逆向设计 | 直接对设计参数做梯度下降 | `gradient_inverse_design()` |
 
-## 完整代码
 
-<<< @/science/frontier/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/frontier/code/demo.py`

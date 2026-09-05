@@ -202,6 +202,9 @@ def sinusoidal_position_encoding(max_len, d_model):
 
 全部通过后，返回 demo.py 查看完整的 Mini-GPT 实现，观察这些组件如何被整合为一个可训练的文本生成模型。
 
-## 完整代码
 
-<<< @/applied/nlp/transformer/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/nlp/transformer/code/exercise.py`

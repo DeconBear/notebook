@@ -17,6 +17,9 @@ python demo.py
 
 一张「尺度梯子」：离子 / 膜 → 单细胞 → 突触 → 回路 → 连接组 → 行为 / NeuroAI。左边是生物尺度，右边是本教程后续章节的入口。
 
-## 完整代码
 
-<<< @/neuro/overview/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/overview/code/demo.py`

@@ -324,6 +324,9 @@ def generate_safety_report(test_results):
 | 深度防御 | 输入过滤 → 模型层安全训练 → 输出监控 | `demo_comprehensive_evaluation()` |
 | 安全报告 | Accuracy/Precision/Recall + 改进建议 | `generate_safety_report()` |
 
-## 完整代码
 
-<<< @/applied/systems/safety/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/systems/safety/code/demo.py`

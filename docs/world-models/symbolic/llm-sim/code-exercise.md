@@ -37,6 +37,9 @@ return STATES[TRANSITIONS.get((STATES.index(s), ACTIONS.index(a)), STATES.index(
 
 运行后推演至少 2/3 步匹配真实下一状态，即视为通过。
 
-## 完整代码
 
-<<< @/world-models/symbolic/llm-sim/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/symbolic/llm-sim/code/exercise.py`

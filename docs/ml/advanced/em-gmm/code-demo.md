@@ -119,6 +119,9 @@ BIC 源自贝叶斯框架（近似边际似然），在大样本下具有一致�
 | BIC | $-2\log L + p\log N$ | `plot_aic_bic()` | 模型一致性选择 |
 | K-Means 极限 | GMM when $\Sigma \to 0$ | 概念联系 | EM 退化为 Lloyd |
 
-## 完整代码
 
-<<< @/ml/advanced/em-gmm/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/em-gmm/code/demo.py`

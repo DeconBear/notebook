@@ -24,6 +24,9 @@ def split_hamiltonian(j=1.0, h=0.7):
     return a, b
 ```
 
-## 完整代码
 
-<<< @/quantum/simulation/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/quantum/simulation/code/exercise.py`

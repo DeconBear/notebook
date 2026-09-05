@@ -66,6 +66,9 @@ python exercise.py
 
 期望输出：四个任务的 `✅ 通过` 信息和 `🎉 所有练习已完成！`
 
-## 完整代码
 
-<<< @/algorithms/basics/arrays-hash/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/basics/arrays-hash/code/exercise.py`

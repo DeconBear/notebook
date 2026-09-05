@@ -76,6 +76,9 @@ title: "s03 逻辑回归 — exercise.py"
 2. `test_cross_entropy()`：错误预测的损失 > 正确预测的损失
 3. 只有完成 Softmax 部分后，`test_softmax()` 才会通过：每行和为 1，概率值在 $[0,1]$ 内，最大概率对应最大得分
 
-## 完整代码
 
-<<< @/ml/foundations/logistic-regression/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/foundations/logistic-regression/code/exercise.py`

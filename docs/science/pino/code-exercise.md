@@ -42,6 +42,9 @@ python exercise.py
 
 若实现正确，将看到「✓ PINO 物理残差实现正确」，并生成 `exercise_pino_extrapolation.png`。
 
-## 完整代码
 
-<<< @/science/pino/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/pino/code/exercise.py`

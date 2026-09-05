@@ -15,6 +15,9 @@ python demo.py
 
 玩具复现三件事：Top-2 路由、有/无负载均衡时的专家使用率、以及 MoE 分类边界。重点看左图柱状是否被均衡损失「摊平」。
 
-## 完整代码
 
-<<< @/nn-decision/dl/moe/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/dl/moe/code/demo.py`

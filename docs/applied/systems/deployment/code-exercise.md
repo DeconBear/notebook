@@ -186,6 +186,9 @@ best_bs = max(throughputs, key=throughputs.get)
 2. 量化前/后权重的误差分布和输出保真度
 3. 不同矩阵大小下的推理性能特征
 
-## 完整代码
 
-<<< @/applied/systems/deployment/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/systems/deployment/code/exercise.py`

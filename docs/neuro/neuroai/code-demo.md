@@ -17,6 +17,9 @@ python demo.py
 
 左图：Hebb 只在 pre/post 同时高时加强权重。右图：线性读出 + BCE 能分开 AND，分不开 XOR——非线性回路不能用一个感知机打发。
 
-## 完整代码
 
-<<< @/neuro/neuroai/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/neuro/neuroai/code/demo.py`

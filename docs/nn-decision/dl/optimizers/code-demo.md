@@ -315,6 +315,9 @@ traj_sgd_noisy, loss_sgd_noisy = run_optimizer(
 | 条件数 | $\kappa = a/b$ | — | — | 衡量损失地形"狭长度" |
 | 指数滑动平均 | $m_t = \beta m_{t-1} + (1-\beta)g_t$ | — | — | Adam 的基础运算 |
 
-## 完整代码
 
-<<< @/nn-decision/dl/optimizers/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/dl/optimizers/code/demo.py`

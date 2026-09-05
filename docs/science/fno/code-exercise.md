@@ -67,6 +67,9 @@ title: "as03 Neural Operator 与 FNO — exercise.py"
 - 分辨率不变性是否意味着"任意高分辨率都精确"？截断高频会带来什么误差？
 - 对比 as02 的 PINN：如果只有很少的 $(a,u)$ 对，但知道 PDE，你会优先选 PINN、FNO，还是下一章的 PINO？
 
-## 完整代码
 
-<<< @/science/fno/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/fno/code/exercise.py`

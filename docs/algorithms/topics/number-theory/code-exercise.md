@@ -52,4 +52,9 @@ title: "algo15 数论与组合数学 — exercise.py"
 2. 批量欧拉函数是线性筛的经典扩展之一。
 3. 容斥枚举子集使用位运算 `mask` 遍历。
 
-<<< @/algorithms/topics/number-theory/code/exercise.py
+
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/topics/number-theory/code/exercise.py`

@@ -422,6 +422,9 @@ for epoch in range(n_epochs):
 | 梯度检查 | $\frac{L(\theta+\epsilon)-L(\theta-\epsilon)}{2\epsilon}$ | 双边有限差分 |
 | 梯度范数 | $\|g\|_2 = \sqrt{\sum g_i^2}$ | `np.linalg.norm(grad)` |
 
-## 完整代码
 
-<<< @/nn-decision/dl/matrix-backprop/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/dl/matrix-backprop/code/demo.py`

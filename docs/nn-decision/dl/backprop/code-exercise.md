@@ -18,6 +18,8 @@ title: "s06 反向传播与链式法则 — exercise.py"
 
 在开始练习前，确保你已理解以下概念（建议先阅读 index.md 并运行 demo.py）：
 - **计算图**：前向传播时构建的有向无环图（DAG），每个节点代表一个操作
+- **MSE**：$\ell=\frac{1}{2}(\hat{y}-y)^2$——把残差平方成可导的非负标量；$\partial\ell/\partial\hat{y}=\hat{y}-y$ 是反向传播的第一枪
+- **为什么是 $\partial L/\partial w$**：训练时输入和标签不能改，只有权重是旋钮；梯度指向上坡，更新 $w\leftarrow w-\alpha\partial L/\partial w$ 走下坡
 - **链式法则**：$\frac{\partial L}{\partial w} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} \cdot \frac{\partial z}{\partial w}$——将间接依赖的梯度拆成局部导数连乘
 - **局部梯度规则**：加法门梯度原样传递，乘法门梯度交换，ReLU 梯度门控
 - **梯度累积（Fan-out）**：当一个变量被多条路径使用时，梯度需要求和（`+=` 而非 `=`）
@@ -117,6 +119,9 @@ $$
 | TODO 3: backward() | DFS 后序遍历 + 拓扑逆序 + 链式法则 | 先拓扑排序，逆序 `_backward()` |
 | TODO 3(续): 梯度下降 | 自动微分用于优化 | $x \leftarrow x - \alpha \cdot \nabla f(x)$ |
 
-## 完整代码
 
-<<< @/nn-decision/dl/backprop/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/dl/backprop/code/exercise.py`

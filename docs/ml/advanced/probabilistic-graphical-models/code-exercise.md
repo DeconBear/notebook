@@ -52,6 +52,9 @@ title: "ml13 概率图模型基础 — exercise.py"
   3. 剩余因子相乘并归一化
 - **注意 ordering**：消除顺序影响计算效率，但不影响最终结果
 
-## 完整代码
 
-<<< @/ml/advanced/probabilistic-graphical-models/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/ml/advanced/probabilistic-graphical-models/code/exercise.py`

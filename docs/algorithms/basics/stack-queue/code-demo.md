@@ -99,6 +99,9 @@ for i in range(n):
 | Mono Queue | 单调 | O(1)均摊 | O(1)均摊 | O(1) | 滑动窗口最大值 |
 | MinHeap | 堆序 | O(log n) | O(log n) | O(1) | 优先队列、堆排序 |
 
-## 完整代码
 
-<<< @/algorithms/basics/stack-queue/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/basics/stack-queue/code/demo.py`

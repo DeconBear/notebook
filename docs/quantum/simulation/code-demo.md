@@ -17,6 +17,9 @@ python demo.py
 
 两自旋横场 Ising：$H=A+B$，比较精确 $e^{-iHt}$ 与一阶 Trotter。步数增加，失真度应下降。这是数字量子模拟能在 CPU 上跑完的最小例子。
 
-## 完整代码
 
-<<< @/quantum/simulation/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/quantum/simulation/code/demo.py`

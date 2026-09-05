@@ -97,6 +97,9 @@ loss = -advantage * torch.stack(log_probs).sum()
 | REINFORCE | 用优势(奖励-基线)加权轨迹对数概率之和作为损失 | `train_rl_placement()` |
 | 稀疏/延迟奖励 | 只有放完所有模块才能算出总线长 | `wirelength()` 调用时机 |
 
-## 完整代码
 
-<<< @/science/alphachip/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/alphachip/code/demo.py`

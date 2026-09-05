@@ -89,6 +89,9 @@ loss = F.mse_loss(pred_repr, tgt_repr)
 | 掩码 token | 预测器输入中代表"待预测位置"的可学习向量 | `Predictor.mask_token` |
 | 表征空间损失 | L2 回归损失定义在表征上，不是像素上 | `train_toy_jepa()` |
 
-## 完整代码
 
-<<< @/world-models/abstract/jepa/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/world-models/abstract/jepa/code/demo.py`

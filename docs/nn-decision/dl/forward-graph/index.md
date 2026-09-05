@@ -408,6 +408,7 @@ $$
 | File | View | Download |
 |------|------|----------|
 | demo.py | [Open](./code-demo) | <a href="/notebook/code/nn-decision/dl/forward-graph/demo.py" target="_blank" download>Download</a> |
+| plot_demo.py | — | <a href="/notebook/code/nn-decision/dl/forward-graph/plot_demo.py" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="/notebook/code/nn-decision/dl/forward-graph/exercise.py" target="_blank" download>Download</a> |
 
 ## 参考

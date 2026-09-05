@@ -171,6 +171,9 @@ def coin_change_dp(coins, amount):
 | 贪心找零 | 规范面额 → 正确；非规范 → 可能失败 | `coin_change_greedy()` |
 | DP 找零 | 任意面额系统都能正确的最少硬币数 | `coin_change_dp()` |
 
-## 完整代码
 
-<<< @/algorithms/strategy/greedy/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/strategy/greedy/code/demo.py`

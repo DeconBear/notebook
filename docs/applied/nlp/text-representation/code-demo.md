@@ -322,6 +322,9 @@ $$
 | 词类比 | $\vec{v}_a - \vec{v}_b + \vec{v}_c \approx \vec{v}_?$ | `word_analogy()` |
 | 分布式假设 | 词的含义由上下文决定 | word2vec 的理论基础 |
 
-## 完整代码
 
-<<< @/applied/nlp/text-representation/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/nlp/text-representation/code/demo.py`

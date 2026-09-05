@@ -151,6 +151,9 @@ $$x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}$$
 | 三分搜索 | 两个三等分点比较，缩小区间 | `ternary_search()` |
 | 牛顿法 | 切线迭代，二次收敛 | `newtons_method()` |
 
-## 完整代码
 
-<<< @/algorithms/strategy/divide-conquer/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/strategy/divide-conquer/code/demo.py`

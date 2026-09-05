@@ -15,6 +15,9 @@ python demo.py
 
 运行后会在 `images/` 写出正文用的四张示意图，以及 `mcts_tic_tac_toe.png`。
 
-## 完整代码
 
-<<< @/nn-decision/rl/alphago/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/nn-decision/rl/alphago/code/demo.py`

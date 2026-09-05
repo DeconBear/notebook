@@ -42,6 +42,9 @@ cd docs/algorithms/basics/heap-unionfind/code
 python exercise.py
 ```
 
-## 完整代码
 
-<<< @/algorithms/basics/heap-unionfind/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/basics/heap-unionfind/code/exercise.py`

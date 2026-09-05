@@ -251,6 +251,9 @@ def benchmark_matrix_multiply(sizes, n_trials):
 | PagedAttention | KV Cache 分页管理，消除内存碎片 | 文字说明 |
 | GGUF | llama.cpp 的量化格式，专为 CPU 设计 | Q4_K_M, Q5_K_M 等 |
 
-## 完整代码
 
-<<< @/applied/systems/deployment/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/applied/systems/deployment/code/demo.py`

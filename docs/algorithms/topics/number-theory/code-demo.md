@@ -109,6 +109,9 @@ nCr(n, r) = fact[n] * inv_fact[r] % mod * inv_fact[n-r] % mod
 | 组合数 | $n!/(k!(n-k)!)$ | `nCr()` |
 | 错位排列 | $D_n = (n-1)(D_{n-1}+D_{n-2})$ | `derangement()` |
 
-## 完整代码
 
-<<< @/algorithms/topics/number-theory/code/demo.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/algorithms/topics/number-theory/code/demo.py`

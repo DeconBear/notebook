@@ -34,6 +34,9 @@ python exercise.py
 
 看到「✓ 练习完成！」并生成 `exercise_message_passing.png`。
 
-## 完整代码
 
-<<< @/science/gnn/code/exercise.py
+## 源码位置
+
+clone 后打开（相对仓库根目录）：
+
+`docs/science/gnn/code/exercise.py`
