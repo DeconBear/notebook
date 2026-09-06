@@ -147,7 +147,7 @@ $f$ 与 $P$ 都均匀时该项较小；若集中在少数专家上则变大。$\
 | 负载均衡 | 防止路由崩溃的辅助损失 / 容量约束 |
 | 在 Transformer 中 | 常替换 FFN 子层 |
 
-> 上一站是优化器细节 [Adam](/nn-decision/dl/adam/)；若你关心大模型语境，可对照 [Transformer](/applied/nlp/transformer/) 的 FFN 位置，以及 [大语言模型](/applied/nlp/llm/) 里的缩放叙事。
+> 上一站是优化器细节 [Adam](/nn-decision/dl/adam/)；图结构数据见 [GNN](/nn-decision/dl/gnn/)；若你关心大模型语境，可对照 [Transformer](/applied/nlp/transformer/) 的 FFN 位置，以及 [大语言模型](/applied/nlp/llm/) 里的缩放叙事。
 
 ## 📥 Code
 
