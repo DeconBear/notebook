@@ -11,7 +11,7 @@ legacyPaths:
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
 
-> 从"World Models"的 V-M-C 三件套，到 PlaNet 的 RSSM —— 如何让 Agent 在潜空间里学会做梦。
+> 从"World Models"的 V-M-C 三件套，到 PlaNet 的 RSSM —— 如何让 Agent 在潜空间里学会做梦。先验 / 后验上的 KL 记号见 [信息论精简](/math/information/)；「压缩观测还要留下多少信息」的通信语言见 [信息论](/information/)（率失真一章尤其近）。
 
 ---
 

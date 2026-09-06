@@ -9,7 +9,7 @@ order: 20
 
 > 路径一的第二块积木。VAE 写的是**显式下界**（ELBO），不是对抗。更重要的工程后果：它逼潜空间变成可以随便采样、随便插值的瓶子——[扩散](/world-models/video/diffusion/) 里的 Latent Diffusion、视频 tokenizer，以及路径三 [RSSM](/world-models/abstract/rssm/) 的先验/后验，说的都是同一门语言。
 
-ELBO 里的 KL 与 [信息论精简](/math/information/) 同一套记号。
+ELBO 里的 KL 与 [信息论精简](/math/information/) 同一套记号。无损压缩的极限是熵，见 [信息论](/information/)（[信源编码](/information/source-coding/)）。
 
 ---
 

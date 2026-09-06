@@ -13,6 +13,9 @@ __pycache__/
 .vitepress/dist/
 .vitepress/cache/
 dist/
+*.exe
+a.out
+**/warnings.log
 
 # 生图提示词备份
 _backup/

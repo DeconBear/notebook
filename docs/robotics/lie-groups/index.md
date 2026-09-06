@@ -7,13 +7,37 @@ order: 40
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
-> 三维旋转矩阵 $R$ 满足 $R^\top R=I$ 且 $\det R=1$，全体记作 $\mathrm{SO}(3)$。两个旋转的「平均」或「一点点增量」都不能把九个数字当 $\mathbb{R}^9$ 加减——会走出合法姿态。正确的小量住在单位元处的切空间 **$\mathfrak{so}(3)$**（反对称矩阵），再用 **指数映射** 送回 $\mathrm{SO}(3)$。本章 Python 与 C++ 实现同一套 Rodrigues；平面刚体的「转 + 移」见 [旋量](/robotics/screw/)。
+> 三维旋转矩阵 $R$ 满足 $R^\top R=I$ 且 $\det R=1$，全体记作 $\mathrm{SO}(3)$。两个旋转的「平均」或「一点点增量」都不能把九个数字当 $\mathbb{R}^9$ 加减——会走出合法姿态。正确的小量住在单位元处的切空间 **$\mathfrak{so}(3)$**（反对称矩阵），再用 **指数映射** 送回 $\mathrm{SO}(3)$。本章把「为什么欧拉角会万向节死锁、hat 从哪来、Rodrigues 每项在干什么」写清楚。平面刚体的「转 + 移」见 [旋量](/robotics/screw/)。DH 链上的 $R$ 块正是这里的点，见 [建模](/robotics/modeling/)。
 
 ---
 
-## 一、$\mathrm{SO}(3)$ 是流形，$\mathfrak{so}(3)$ 是切空间
+## 一、通俗理解：姿态不是平面上的一个角
 
-单位元 $I$ 是「什么都不转」。在 $I$ 旁边，合法的无穷小位移是反对称的：$\hat\omega^\top=-\hat\omega$。三维反对称矩阵恰好三个自由量，与轴角向量 $\omega\in\mathbb{R}^3$ 一一对应（`hat`）：
+平面里一个 $\theta$，加 $0.1$ 还是角。空间里三个欧拉角看起来也像向量，但：
+
+1. **乘法不交换**：$R_x R_z$ 和 $R_z R_x$ 不是同一个姿态。先低头再转身，和先转身再低头，鼻子朝向不同。
+2. **欧拉角有万向节死锁（gimbal lock）**：中间角到 $\pm 90^\circ$ 时，另外两轴重合，丢了一个自由度。飞机、相机云台、欧拉积分的仿真都会踩。
+3. **九个矩阵元只有三个自由**：必须 $R^\top R=I$、$\det R=1$。把 $R_1$ 和 $R_2$ 逐元平均，结果一般不再正交。
+
+所以姿态的合法集合是弯曲的三维流形（可以想成一个三维的「球面」），不是 $\mathbb{R}^3$ 或 $\mathbb{R}^9$。在流形上，**切空间里的向量才可以加**；加完再用指数映射贴回流形。
+
+![SO(3) 与 so(3)](./images/rob-04-so3.png)
+
+> **图解说明**：左：球面示意旋转流形，切平面是 $\mathfrak{so}(3)$，曲线箭头是 $\exp$。右：$\omega$ 变成 $\hat\omega$，Rodrigues 给出绕轴转角。群上的点是姿态，代数上的向量是「转多少」。
+
+量子信息里的幺正群 $\mathrm{U}(n)$ 是同一类故事；见 [量子信息](/quantum/overview/)。线性代数复习见 [向量与矩阵](/math/linear-algebra/)。
+
+---
+
+## 二、无穷小旋转为什么一定是反对称矩阵
+
+取 $R(t)$，$R(0)=I$。正交性 $R^\top R=I$ 两边对 $t$ 在 $0$ 求导：
+
+$$
+\dot R^\top + \dot R=0 \quad\Rightarrow\quad \dot R^\top=-\dot R.
+$$
+
+所以 $\dot R(0)$ 必须反对称。三维反对称矩阵恰好三个自由量，与轴角向量 $\omega\in\mathbb{R}^3$ 一一对应（`hat`）：
 
 $$
 \hat\omega
@@ -25,23 +49,13 @@ $$
 \end{pmatrix}.
 $$
 
-叉乘 $\omega\times p=\hat\omega\, p$。指数映射把切空间里的有限长向量变成一个真旋转：
-
-$$
-R=\exp(\hat\omega)\in\mathrm{SO}(3).
-$$
-
-![SO(3) 与 so(3)](./images/rob-04-so3.png)
-
-> **图解说明**：左：球面示意旋转流形，切平面是 $\mathfrak{so}(3)$，曲线箭头是 $\exp$。右：$\omega$ 变成 $\hat\omega$，Rodrigues 给出绕轴转角。总结：群上的点是姿态，代数上的向量是「转多少」。
-
-量子信息里的幺正群 $\mathrm{U}(n)$ 是同一类故事（群 + 代数 + 指数），只是矩阵换成复数；见 [量子信息全景](/quantum/overview/)。线性代数复习见 [向量与矩阵](/math/linear-algebra/)。
+直接验证 $\hat\omega\, p=\omega\times p$。角速度就是「此刻姿态在切空间里的速度」。练习 `hat_02` 钉死矩阵 $(0,2)$ 格是 $+\omega_y$——符号写反则转反。
 
 ---
 
-## 二、Rodrigues 公式（代码用的形式）
+## 三、Rodrigues：有限转角的闭式 $\exp$
 
-令 $\theta=\|\omega\|$，$K=\hat\omega$（**不是**单位反对称阵）。则
+令 $\theta=\|\omega\|$，$K=\hat\omega$（**不是**单位反对称阵）。绕轴 $n=\omega/\theta$ 转 $\theta$ 弧度：
 
 $$
 \exp(\hat\omega)
@@ -50,7 +64,15 @@ I + \frac{\sin\theta}{\theta}K + \frac{1-\cos\theta}{\theta^2}K^2
 \qquad(\theta\to 0\text{ 时退回 }I+K).
 $$
 
-教材若写单位轴 $\hat n$ 与转角 $\theta$，则 $K=\theta\hat n$，两种写法等价。对数映射反向：
+保姆级读三项：
+
+- $I$：不转。
+- $\sin\theta$ 项：在垂直于轴的平面里把向量拧一截（像二维旋转的 $\sin$）。
+- $(1-\cos\theta)$ 项：把向量往轴上「拉近」再送回去（二维旋转的 $1-\cos$）。
+
+教材若写单位轴 $\hat n$ 与转角 $\theta$，则 $K=\theta\hat n$，两种写法等价。$\theta\to 0$ 时 $\sin\theta/\theta\to 1$，代码用阈值避免除零。
+
+对数映射反向：从 $R$ 读出转角与轴，
 
 $$
 \theta=\arccos\frac{\mathrm{tr}(R)-1}{2},\quad
@@ -58,28 +80,46 @@ n=\frac{1}{2\sin\theta}\begin{pmatrix}R_{32}-R_{23}\\ R_{13}-R_{31}\\ R_{21}-R_{
 \quad \omega=\theta n.
 $$
 
-$\theta\approx 0$ 时 $\log$ 返回 $0$，避免除零。
+$\mathrm{tr}(R)=1+2\cos\theta$。$\theta\approx 0$ 时 `log` 返回 $0$。$\theta=\pi$ 时轴的符号有两点歧义（转 $180^\circ$ 与转 $-180^\circ$ 同一姿态），数值上要小心——demo 用的 $\omega$ 模长约 $0.86<\pi$，无此问题。
+
+**四元数**（不展开实现）：单位四元数也表示 $\mathrm{SO}(3)$，插值（slerp）比欧拉干净，与 $\exp$ 是同一轴角的另一套坐标。IMU 滤波常用。
 
 ---
 
-## 三、Python 与 C++ 对照
+## 四、数字例与 C++
 
 同一组 $\omega=(0.3,-0.1,0.8)$：
 
 - Python `so3_exp` / `so3_log` 验证 $\log(\exp(\omega))\approx\omega$、$R^\top R\approx I$、$\det R=1$，并把立方体顶点转过去；
 - `so3.hpp` 里 `hat` / `so3_exp` 是同样的 Rodrigues；`demo.cpp` 只印 $\det(R)$。
 
-编译（在 `docs/robotics/lie-groups/code/`）：
-
 ```bash
+cd docs/robotics/lie-groups/code
+python demo.py
 g++ -std=c++17 demo.cpp -o so3_demo
 ```
 
-头文件是 header-only，不必再链库。数值应与 Python 同一 $\omega$ 下 $\det\approx 1$。
+头文件 header-only。数值应 $\det\approx 1$。
 
 ---
 
-## 四、代码在做什么
+## 五、常见疑问
+
+**Q：那我积分姿态能不能 $\theta\leftarrow\theta+\omega\Delta t$？**  
+平面可以。三维应对反对称矩阵做 $\exp(\hat\omega\Delta t)$ 再左乘（或右乘，看 $\omega$ 在体坐标还是空间坐标）。欧拉角积分既慢又死锁。
+
+**Q：两个旋转怎么平均？**  
+不能 $(R_1+R_2)/2$。正确做法在切空间：$\bar R=R_1\exp(\tfrac12\log(R_1^\top R_2))$（测地中点）。这就是「先变回向量、加完再贴回去」。
+
+**Q：$\mathrm{SO}(3)$ 和旋转向量差在哪？**  
+旋转向量 $\omega$ 是切空间坐标，$\|\omega\|$ 到 $2\pi$ 会绕回来，不是全局一一对应。滤波时误差取小 $\omega$，名义姿态用 $R$ 或四元数。
+
+**Q：和 DH 什么关系？**  
+每一帧 $A_i$ 的左上 $3\times 3$ 都是 $\mathrm{SO}(3)$ 里的点。关节转 $\Delta\theta$，相当于沿该关节 $z$ 轴做一次 $\exp$。
+
+---
+
+## 六、代码在做什么
 
 `demo.py` 打印往返误差与正交性，三维散点图 `so3_exp.png`：灰点原立方体，橙点 $Rp$，蓝箭头是 $\omega$ 轴。
 
@@ -87,17 +127,18 @@ g++ -std=c++17 demo.cpp -o so3_demo
 
 ---
 
-## 五、小结
+## 七、小结
 
 | 概念 | 一句话 |
 |------|--------|
-| $\mathrm{SO}(3)$ | 合法三维旋转矩阵 |
-| $\mathfrak{so}(3)$ | 反对称；$3$ 个数 $= \omega$ |
+| $\mathrm{SO}(3)$ | 合法三维旋转；弯曲的，不能逐元加 |
+| 欧拉角 | 看起来像 $\mathbb{R}^3$，有死锁、不交换 |
+| $\mathfrak{so}(3)$ | 反对称；$3$ 个数 $=\omega$ |
 | `hat` | $\mathbb{R}^3\to$ 叉乘矩阵 |
 | $\exp/\log$ | 切空间 $\leftrightarrow$ 群 |
-| 下游 | 位姿滤波、IMU、旋量 $\mathrm{SE}(3)$ |
+| 下游 | 位姿滤波、IMU、[旋量 $\mathrm{SE}(3)$](/robotics/screw/) |
 
-> 下一章 [机构学](/robotics/mechanisms/) 先离开矩阵，看闭链怎么动。把转动与平移合成螺旋见 [旋量代数](/robotics/screw/)。DH 链上的 $R$ 块正是 $\mathrm{SO}(3)$ 里的点，见 [建模](/robotics/modeling/)。
+> 下一章 [机构学](/robotics/mechanisms/) 先离开矩阵，看闭链怎么动。把转动与平移合成螺旋见 [旋量](/robotics/screw/)。
 
 ## 📥 Code
 
@@ -111,4 +152,5 @@ g++ -std=c++17 demo.cpp -o so3_demo
 ## 参考
 
 1. Murray, Li, Sastry, *A Mathematical Introduction to Robotic Manipulation*
-2. Solà, “Quaternion kinematics for the error-state Kalman filter”（$\exp/\log$ 工程笔记）
+2. Solà, “Quaternion kinematics for the error-state Kalman filter”
+3. 3Blue1Brown 之外，可视化 $\mathrm{SO}(3)$ 可看 *Modern Robotics* 第 3 讲

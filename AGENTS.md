@@ -4,7 +4,7 @@ Guide for AI agents working in this repository. Covers the non-obvious architect
 
 ## Project overview
 
-**notebook** is a Chinese-language illustrated notebook published as a [VitePress](https://vitepress.dev) static site (formerly *learn-ai*). Content lives under `docs/`, grouped by domain (machine learning, **neural nets & decision**, **perception / language / systems**, **control theory**, **robotics**, **world models**, scientific computing, **computational neuroscience**, **information theory**, **quantum information**, algorithms, papers, **ROS 2**)—not a single `ai/` bucket. Most chapters pair illustrated prose (`index.md`) with runnable Python (`code/demo.py`) and a guided exercise (`code/exercise.py`). Lie-group chapter also ships a small C++ header. ROS 2 lessons are Markdown-only; their colcon workspace is `workspaces/ros2-humble/`.
+**notebook** is a Chinese-language illustrated notebook published as a [VitePress](https://vitepress.dev) static site (formerly *learn-ai*). Content lives under `docs/`, grouped by domain (machine learning, **neural nets & decision**, **perception / language / systems**, **control theory**, **robotics**, **world models**, scientific computing, **computational neuroscience**, **information theory**, **quantum information**, algorithms, **programming basics** (Python / C++ / PyTorch / `torch.nn` / CUDA), papers, **ROS 2**)—not a single `ai/` bucket. Most chapters pair illustrated prose (`index.md`) with runnable Python (`code/demo.py`) and a guided exercise (`code/exercise.py`). Lie-group and several **math** chapters also ship handwritten C++ headers (`*.hpp` + `demo.cpp`, no Eigen install required; optional Eigen snippets live only in `code-demo.md`). ROS 2 lessons are Markdown-only; their colcon workspace is `workspaces/ros2-humble/`.
 
 - Site URL: deployed at `https://<user>.github.io/notebook/` (note the `/notebook/` base path).
 - All content is written in **Chinese** (`lang: 'zh-CN'`); code comments are in Chinese. Keep new content in Chinese unless told otherwise.
@@ -94,7 +94,7 @@ Group folders (`docs/ml/`, `docs/nn-decision/`, `docs/applied/`, `docs/algorithm
 - `docs/applied/cv/vit/` has **no** `exercise.py` / `code-exercise.md` — only `vit_demo.py` and `code-demo.md`.
 - `docs/applied/nlp/transformer/` has extra `nanogpt.py` and `nanogpt.md`.
 - `docs/applied/systems/multimodal/images/samples/` ships real JPG samples for the CLIP demo.
-- `docs/papers/placeholder/` has no `code/` yet.
+- `docs/programming/cpp/` 的主演示是 `demo.cpp` + `vec2.hpp`；`exercise.py` 用 Python 复述同一套向量运算。
 - `docs/ros2/` lessons have **no** `code/demo.py`. Runnable packages live in `workspaces/ros2-humble/src/` (outside VitePress `srcDir`). See [ROS 2 tutoring](#ros-2-tutoring) below.
 
 ## Code conventions

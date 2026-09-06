@@ -9,15 +9,18 @@ title: "概率与贝叶斯 — demo.py"
 # 概率与贝叶斯 — demo.py 代码详解
 
 <a href="/notebook/code/math/probability/demo.py" target="_blank" download>Download demo.py</a>
+<a href="/notebook/code/math/probability/stats.hpp" target="_blank" download>Download stats.hpp</a>
+<a href="/notebook/code/math/probability/demo.cpp" target="_blank" download>Download demo.cpp</a>
 
 ## 运行方式
 
 ```bash
 cd docs/math/probability/code
 python demo.py
+g++ -std=c++17 demo.cpp -o prob_demo
 ```
 
-CPU、NumPy 即可。两张图：`prob_bayes_coin.png`（Beta 先验被 7/10 正面更新成后验）和 `prob_gaussian.png`（一维 $\sigma$ 胖瘦 + 相关二维云）。不依赖 SciPy：Beta 密度自己归一化。
+CPU、NumPy 即可。两张图：`prob_bayes_coin.png`（Beta 先验被 7/10 正面更新成后验）和 `prob_gaussian.png`（一维 $\sigma$ 胖瘦 + 相关二维云）。不依赖 SciPy：Beta 密度自己归一化。C++ 只算样本均值 / 方差，见文末。
 
 ## 代码逐段详解
 
@@ -155,8 +158,27 @@ if __name__ == '__main__':
 | `[:, 0]` | 取一列 | 散点的 $x$ |
 | `linspace` | 均匀网格 | 画密度曲线 |
 
+## C++：`stats.hpp`
+
+```bash
+cd docs/math/probability/code
+g++ -std=c++17 demo.cpp -o prob_demo
+```
+
+`sample_mean` 是循环累加再除以 $n$。`sample_var(..., true)` 除以 $n-1$：
+
+$$
+s^2=\frac1{n-1}\sum_i (x_i-\bar x)^2
+$$
+
+对 $\{1,2,3,4,5\}$，$\bar x=3$，$\sum d_i^2=10$，无偏 $10/4=2.5$，MLE $10/5=2$。贝叶斯积分仍只在 Python 里画；C++ 只钉死「数字特征是样本的函数」这件事。
+
+可选 Eigen 只在你要向量化一整列样本时才有意义（`Map<VectorXd>` + `mean()`），本章样本只有 5 个数，手写循环更清楚。
+
 ## 源码位置
 
 clone 后打开（相对仓库根目录）：
 
-`docs/math/probability/code/demo.py`
+- `docs/math/probability/code/demo.py`
+- `docs/math/probability/code/stats.hpp`
+- `docs/math/probability/code/demo.cpp`

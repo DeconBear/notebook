@@ -81,7 +81,7 @@ class MyRNNCell(nn.Module):
 
 ### 第3步：从零实现 LSTM 细胞 — `MyLSTMCell`
 
-LSTM 通过引入**细胞状态** $c_t$ 和三个**门**（遗忘门 $f_t$、输入门 $i_t$、输出门 $o_t$）来解决 RNN 的梯度消失问题。
+LSTM 通过引入**细胞状态** $c_t$ 和三个**门**（遗忘门 $f_t$、输入门 $i_t$、输出门 $o_t$）来解决 RNN 的梯度消失问题。正文 [s15 第三节](/applied/nlp/sequence-models/#lstm-cell) 把「一个 cell 上差在哪、乘法传播是什么、门怎么拧出来」写全了；下面对照 `MyLSTMCell` 看实现。
 
 #### 3.1 核心公式回顾
 

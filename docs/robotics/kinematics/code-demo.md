@@ -9,15 +9,18 @@ title: "机器人运动学 — demo.py"
 # 机器人运动学 — demo.py 代码详解
 
 <a href="/notebook/code/robotics/kinematics/demo.py" target="_blank" download>Download demo.py</a>
+<a href="/notebook/code/robotics/kinematics/fk2r.hpp" target="_blank" download>Download fk2r.hpp</a>
+<a href="/notebook/code/robotics/kinematics/demo.cpp" target="_blank" download>Download demo.cpp</a>
 
 ## 运行方式
 
 ```bash
 cd docs/robotics/kinematics/code
 python demo.py
+g++ -std=c++17 demo.cpp -o fk_demo
 ```
 
-CPU、NumPy 即可。一张图 `arm_2r.png`：左是工作空间采样 + 同一目标的肘上/肘下构型，右是 $\det J$ 随 $\theta_2$ 过零。杆长 $\ell_1=1$、$\ell_2=0.7$，目标 $(1.1,0.6)$。无物理引擎，纯几何。
+CPU、NumPy 即可。一张图 `arm_2r.png`：左是工作空间采样 + 同一目标的肘上/肘下构型，右是 $\det J$ 随 $\theta_2$ 过零。杆长 $\ell_1=1$、$\ell_2=0.7$，目标 $(1.1,0.6)$。无物理引擎，纯几何。C++ `fk2r.hpp` 复现正运动学两行余弦。
 
 ## 代码逐段详解
 
@@ -160,8 +163,18 @@ $$
 | `*th` | 元组拆参数 | `fk(*th)` |
 | `rad2deg` | 只用于显示 | 打印与右图横轴 |
 
+## C++：`fk2r.hpp`
+
+```bash
+g++ -std=c++17 demo.cpp -o fk_demo
+```
+
+`fk_2r(l1,l2,th1,th2,x,y)` 用引用写出 $x,y$。$\theta=0$ 应得到 $(1.7,0)$。没有 IK：逆解的 `atan2` 在 Python 里更不容易写错象限，C++ 只钉死正运动学。
+
 ## 源码位置
 
 clone 后打开（相对仓库根目录）：
 
-`docs/robotics/kinematics/code/demo.py`
+- `docs/robotics/kinematics/code/demo.py`
+- `docs/robotics/kinematics/code/fk2r.hpp`
+- `docs/robotics/kinematics/code/demo.cpp`

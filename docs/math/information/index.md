@@ -7,7 +7,7 @@ order: 40
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
-> 分类损失、VAE/RSSM 的正则、Dreamer 的 KL balancing——背后都是同一套语言。本章只建立三个量：**熵**、**交叉熵**、**KL 散度**，并说明它们如何接到「最大似然」。信道、互信息、容量、Huffman / Hamming、高斯信道与率失真，见领域 [信息论](/information/)（从 [导论](/information/overview/) 进）。量子信息的前置是香农容量，不是交叉熵损失。
+> 分类损失、VAE/RSSM 的正则、Dreamer 的 KL balancing——背后都是同一套语言。本章只建立三个量：**熵**、**交叉熵**、**KL 散度**，并说明它们如何接到「最大似然」。**通信问题**（信道、容量、Huffman / Hamming、高斯信道、率失真）请跳到领域 **[信息论](/information/)**：从 [导论](/information/overview/) 进，容量章是 [香农](/information/shannon/)。量子信息的前置是香农容量，不是交叉熵损失。
 
 ---
 
@@ -116,9 +116,9 @@ $$
 | 交叉熵 $H(p,q)$ | 用 $q$ 编码 $p$ 的平均代价 |
 | KL $D_{\mathrm{KL}}(p\|q)$ | 交叉熵减去熵；非负、不对称 |
 | 训练联系 | 交叉熵 ↓ ⇔ 似然 ↑ |
-| 下游 | 分类、VAE、RSSM/Dreamer、蒸馏 |
+| 下游 | 分类、VAE、RSSM/Dreamer、蒸馏；通信见 [信息论](/information/) |
 
-> 数学基础四章到此收束。建议回到 [线性回归](/ml/foundations/linear-regression/) 或按兴趣进入 [机器学习](/ml/foundations/ai-overview/)。世界模型读者可带着 KL 直觉去看 [RSSM](/world-models/abstract/rssm/)；生成模型读者可看 [VAE](/world-models/video/vae/) 与 [扩散](/world-models/video/diffusion/)。
+> 数学基础到此收束（微积分两章、线代三章、概率统计四章、优化、本章）。建议回到 [线性回归](/ml/foundations/linear-regression/) 或按兴趣进入 [机器学习](/ml/foundations/ai-overview/)。世界模型读者可带着 KL 直觉去看 [RSSM](/world-models/abstract/rssm/)；生成模型读者可看 [VAE](/world-models/video/vae/) 与 [扩散](/world-models/video/diffusion/)。**压缩、信道、容量**请跳到 [信息论](/information/)。领域地图：[数学基础](/math/)。
 
 ## 📥 Code
 
