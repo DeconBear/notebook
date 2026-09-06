@@ -358,7 +358,7 @@ scheduler = CosineAnnealingLR(optimizer, T_max=total_steps,
 
 > 至此，"深度学习基础"阶段（s05-s09）完成。我们从前向传播的计算图出发，理解了反向传播的链式法则，掌握了矩阵形式的完整反向传播推导，学会了从 SGD 到 Adam 的优化器演进，最后深入 Adam 的每个设计细节。这些知识构成了理解和调试任何深度学习训练流程的基础。
 
-> 扩展阅读：[图神经网络 GNN](/nn-decision/dl/gnn/)——数据是图（分子、路网），不是前向那张计算图；[混合专家 MoE](/nn-decision/dl/moe/)——用路由与稀疏激活，在相近算力下撑起更大参数量（常替换 Transformer 的 FFN）。
+> 扩展阅读：[图神经网络 GNN](/nn-decision/dl/gnn/)（消息传递 / 变体 / 应用，三章；数据是图，不是前向那张计算图）；[混合专家 MoE](/nn-decision/dl/moe/)——用路由与稀疏激活，在相近算力下撑起更大参数量（常替换 Transformer 的 FFN）。
 
 ## 📥 Code
 

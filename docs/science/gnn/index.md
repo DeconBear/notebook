@@ -16,7 +16,7 @@ legacyPaths:
 - **粒子系统**：近邻相互作用（动态图）
 - **蛋白质**：残基接触图 → AlphaFold 的图推理
 
-把它们统一起来的语言，就是 **图神经网络（GNN）** 与 **消息传递（Message Passing）**。通用变体（GCN、GAT、GIN…）和推荐 / 知识图谱等应用见 [图神经网络 GNN](/nn-decision/dl/gnn/)；本章只把这套语言接到**网格 PDE 与分子图**。
+把它们统一起来的语言，就是 **图神经网络（GNN）** 与 **消息传递（Message Passing）**。通用变体见 [GNN 变体](/nn-decision/dl/gnn/variants/)，推荐 / 气象等应用见 [GNN 应用与坑](/nn-decision/dl/gnn/applications/)；本章只把消息传递接到**网格 PDE 与分子图**。
 
 ---
 
@@ -39,7 +39,7 @@ $$
 
 > **图解说明**：一层消息传递 = 沿边算消息 → 聚合邻居 → 更新自身。分子、网格、粒子系统都可落成同一套「图上的局部更新」。
 
-不同 GNN 变体（GCN、GraphSAGE、GAT、MPNN、GIN…）的差别，主要就在 $\phi$、$\mathrm{AGG}$、$\psi$ 的具体选择——对照表见 [GNN 基础 · 第三节](/nn-decision/dl/gnn/)。
+不同 GNN 变体（GCN、GraphSAGE、GAT、MPNN、GIN…）的差别，主要就在 $\phi$、$\mathrm{AGG}$、$\psi$ 的具体选择——对照表见 [GNN 变体](/nn-decision/dl/gnn/variants/)。
 
 ---
 
@@ -119,7 +119,7 @@ $$
 1. **过平滑（over-smoothing）**：层数太深时，节点表示趋同，方差塌缩——网格平滑 demo 已经展示了这个趋势；
 2. **边的定义**：分子用化学键，网格用单元邻接，粒子用半径近邻——**图怎么建，往往比网络多深一层更重要**；
 3. **物理约束**：可把能量守恒、力为势能负梯度等写进损失或架构（等价于「图上的 PINO」）；
-4. **下一站**：变体公式（GCN / SAGE / GAT / GIN）与推荐、知识图谱等应用见深度学习里的 [图神经网络 GNN](/nn-decision/dl/gnn/)；蛋白质结构把图推到原子坐标，见 [as06 AlphaFold](/science/alphafold/)。
+4. **下一站**：变体公式见 [GNN 变体](/nn-decision/dl/gnn/variants/)，推荐与气象见 [应用与坑](/nn-decision/dl/gnn/applications/)；蛋白质结构把图推到原子坐标，见 [as06 AlphaFold](/science/alphafold/)。
 
 ---
 
@@ -136,7 +136,7 @@ as05 的 demo 是最朴素的 mean-MPNN。落到真问题上：
 | 全球气象网格 | GraphCast 式多分辨率 GNN | 规则球网格 + 远程边 |
 | 芯片 netlist | 异构 GNN + RL | 节点类型不同，见 [AlphaChip](/science/alphachip/) |
 
-完整公式对照表放在 [GNN 基础](/nn-decision/dl/gnn/) 第三节，这里不重复抄。
+完整公式对照表放在 [GNN 变体](/nn-decision/dl/gnn/variants/)，这里不重复抄。
 
 ---
 
