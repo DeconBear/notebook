@@ -7,7 +7,7 @@ order: 10
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
-> 本章不是大学线代课的压缩版，只建立 AI 里天天用到的三种直觉：**向量是带方向的量**、**矩阵是线性变换**、**SVD/PCA 抓住主要方向**。学完应能读懂线性回归、注意力里的 $QK^\top$、以及「把数据投到低维」在说什么。
+> 本章不是大学线代课的压缩版，只建立 AI 里天天用到的三种直觉：**向量是带方向的量**、**矩阵是线性变换**、**SVD/PCA 抓住主要方向**。学完应能读懂线性回归、注意力里的 $QK^\top$、以及「把数据投到低维」在说什么。微积分里「局部当成直线」见 [导数](/math/derivative/)；解方程与秩见 [线性方程组](/math/systems/)；特征向与二次型见 [特征值](/math/eigen/)。领域地图：[数学基础](/math/)。
 
 ---
 
@@ -95,6 +95,8 @@ $$
 1. 画一个 2D 向量，展示旋转矩阵如何把它转起来；
 2. 生成椭圆状散点，用 SVD 画出前两个主方向并投影。
 
+C++ `mat2.hpp` 手写 2×2 乘法 / 行列式 / 旋转，与 Python 同一约定（逆时针，$R(90^\circ)[1,0]^\top=[0,1]^\top$）。不安装 Eigen；可选 Eigen 写法见 [code-demo](./code-demo)。
+
 ![旋转矩阵作用在向量上](./images/la_rotation.png)
 
 ![PCA 主方向与一维投影](./images/la_pca.png)
@@ -113,13 +115,15 @@ $$
 | SVD/PCA | 找方差/能量最大的正交方向并降维 |
 | 下游 | 线性层、注意力、降维、潜空间、[量子态矢量](/quantum/overview/) |
 
-> 下一章 [概率与贝叶斯](/math/probability/)：从「确定的箭头」走到「不确定的信念」。
+> 下一章 [线性方程组与秩](/math/systems/)：问 $Ax=b$ 有没有解。特征向见 [特征值与二次型](/math/eigen/)。概率从 [贝叶斯](/math/probability/) 起。
 
 ## 📥 Code
 
 | File | View | Download |
 |------|------|----------|
 | demo.py | [Open](./code-demo) | <a href="/notebook/code/math/linear-algebra/demo.py" target="_blank" download>Download</a> |
+| mat2.hpp | — | <a href="/notebook/code/math/linear-algebra/mat2.hpp" target="_blank" download>Download</a> |
+| demo.cpp | — | <a href="/notebook/code/math/linear-algebra/demo.cpp" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="/notebook/code/math/linear-algebra/exercise.py" target="_blank" download>Download</a> |
 
 ## 参考

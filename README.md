@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  AI · 控制论 · 机器人学 · 世界模型 · 信息论 · 量子信息 · 算法 · ROS 2 · 图解 + 可运行代码
+  AI · 控制论 · 机器人学 · 世界模型 · 信息论 · 量子信息 · 算法 · 编程基础 · ROS 2 · 图解 + 可运行代码
 </p>
 
 <p align="center">
@@ -38,8 +38,8 @@ AI 领域每天都有新论文、新框架、新名词。但真正关键的底�
 | 在校学生 / 转行学习者 | 从感知机到大模型的完整知识体系 | 会一门编程语言（Python 最佳）、基础高数 |
 | 大模型重度使用者（日常用 ChatGPT/Claude） | 理解 LLM 底层原理：Transformer、RLHF、RAG、推理优化 | 无需 ML 工程经验 |
 | ML 工程师（已会深度学习） | 补经典 ML 理论 + 算法数据结构基础 | 熟悉 PyTorch/TensorFlow |
-| 软件工程师转 AI | ML 理论 + DL 实战 + CV/NLP/RL 全链路 | 有工程经验，缺 ML 数学 |
-| 其他行业转行 AI | 够用、能上手、能面试的核心内容 | 不限 CS 背景，肯动手跑代码 |
+| 软件工程师转 AI | ML 理论 + DL 实战 + CV/NLP/RL 全链路；语言与 `torch.nn` 见编程基础 | 有工程经验，缺 ML 数学 |
+| 其他行业转行 AI | 够用、能上手、能面试的核心内容 | 不限 CS 背景；可先读 [编程基础](docs/programming/) |
 | 面试冲刺者 | 高频考点速通复习 | 已学过一遍 |
 | 算法竞赛选手 | 算法与数据结构图解（algo01-algo16） | 有编程基础 |
 | ROS 2 初学者 | Humble 入门（Topic → Gazebo），边做边记 | Ubuntu 22.04 + ROS 2 Humble |
@@ -61,8 +61,15 @@ https://deconbear.github.io/notebook/
 
 ### 数学基础
 
+- [导数与微分](docs/math/derivative/)
+- [积分与基本定理](docs/math/integral/)
 - [线性代数直觉](docs/math/linear-algebra/)
+- [线性方程组与秩](docs/math/systems/)
+- [特征值与二次型](docs/math/eigen/)
 - [概率与贝叶斯](docs/math/probability/)
+- [常见分布](docs/math/distributions/)
+- [数理统计与估计](docs/math/estimation/)
+- [大数定律与中心极限](docs/math/clt/)
 - [优化与梯度](docs/math/optimization/)
 - [信息论精简：熵与 KL](docs/math/information/)
 
@@ -104,6 +111,7 @@ https://deconbear.github.io/notebook/
 - [s07 多层网络矩阵反传](docs/nn-decision/dl/matrix-backprop/)
 - [s08 优化器：SGD→Adam](docs/nn-decision/dl/optimizers/)
 - [s09 Adam 深度解析](docs/nn-decision/dl/adam/)
+- [图神经网络 GNN](docs/nn-decision/dl/gnn/)
 - [混合专家 MoE](docs/nn-decision/dl/moe/)
 
 #### 强化学习
@@ -159,7 +167,9 @@ https://deconbear.github.io/notebook/
 
 ### 机器人学
 
+- [机器人学导论](docs/robotics/overview/)
 - [机器人运动学](docs/robotics/kinematics/)
+- [轨迹规划](docs/robotics/trajectory/)
 - [机器人动力学](docs/robotics/dynamics/)
 - [机器人建模方法](docs/robotics/modeling/)
 - [李群与李代数](docs/robotics/lie-groups/)
@@ -295,6 +305,14 @@ https://deconbear.github.io/notebook/
 - [algo15 数论与组合数学](docs/algorithms/topics/number-theory/)
 - [algo16 计算几何与博弈论入门](docs/algorithms/topics/geometry-game/)
 
+### 编程基础
+
+- [Python 基础](docs/programming/python/)
+- [C++ 基础](docs/programming/cpp/)
+- [PyTorch 张量与自动求导](docs/programming/pytorch/)
+- [torch.nn 模块怎么用](docs/programming/nn/)
+- [CUDA 与设备](docs/programming/cuda/)
+
 ### 论文精读
 
 - [paper00 占位：经典论文讲解即将更新](docs/papers/placeholder/)
@@ -310,15 +328,15 @@ https://deconbear.github.io/notebook/
 | 🔵 **系统学习** | AI 零基础，建立完整知识体系 | **数学基础** → 阶段一 → 二 → 三 → 四/五/六/七，按序推进 |
 | 🟡 **LLM 重度用户** | 日常用 ChatGPT/Claude，想懂原理 | s01 → s14-s18(NLP) → s21(RLHF) → s22-s23(多模态/RAG) → s25(安全) |
 | 🟢 **ML 工程师** | 已会深度学习，补经典 ML 理论 | 阶段二（ml01-ml05 必修）→ 番外一（集成树/聚类/降维）→ 附录算法 |
-| 🟠 **开发转 AI** | 有编程基础，缺 ML 理论和 DL 实战 | **数学基础** → 阶段一速览 → ml01/04/05 → 阶段三~七全量 |
-| 🔵 **其他行业转行** | 非 CS/数学背景，目标上手+面试 | **数学基础** → s01-s04 直觉→ml01/04/05→s05-s09→s10/s16/s18→s23/s25 |
+| 🟠 **开发转 AI** | 有编程基础，缺 ML 理论和 DL 实战 | [编程基础](docs/programming/) → **数学基础** → 阶段一速览 → ml01/04/05 → 阶段三~七全量 |
+| 🔵 **其他行业转行** | 非 CS/数学背景，目标上手+面试 | **数学基础** → [编程基础](docs/programming/python/) → s01-s04 直觉→ml01/04/05→s05-s09→s10/s16/s18→s23/s25 |
 | 🟣 **面试冲刺** | 已学过，快速复习高频考点 | s02-s04 → ml04(SVM) → ml05(树) → s06-s09 → s16 → s18 → s21 → s25 |
-| 🔴 **算法竞赛** | 只关注算法与数据结构 | 直接看附录 algo01 → algo16，其余章节按需查阅 |
+| 🔴 **算法竞赛** | 只关注算法与数据结构 | 附录 algo01 → algo16；语言补课走 [编程基础](docs/programming/) |
 | 🟤 **科研向 / AI4S** | 做科学计算、生物、芯片等交叉 | 阶段三~五 → 进阶一（as01–as08） |
 | 🟩 **计算神经科学** | 细胞方程、编码、回路、连接组、NeuroAI | 侧栏 **计算神经科学**（`docs/neuro/`） |
 | ⬛ **世界模型** | 关注具身智能 / 生成式模拟 | 控制论 → 机器人学 → 世界模型五路径 |
-| 🟧 **控制论 / 机器人学** | 反馈、状态空间、运动学与李群 | 侧栏 **控制论**、**机器人学** |
-| 🟦 **信息论 → 量子信息** | 先香农容量，再量子比特 | 侧栏 **信息论** 然后 **量子信息** |
+| 🟧 **控制论 / 机器人学** | 反馈、状态空间、运动学与李群 | [控制论](docs/control/) · [机器人学](docs/robotics/kinematics/) |
+| 🟦 **信息论 → 量子信息** | 先熵与容量，再量子比特 | **[信息论](docs/information/)**（[导论](docs/information/overview/)）→ [量子信息](docs/quantum/overview/) |
 | 🟠 **ROS 2** | 要在本机跑 Humble | 侧栏 ROS 2；工作区 `workspaces/ros2-humble/` |
 
 > 💡 **番外一**（集成学习、聚类、降维、蒙特卡洛、HMM、EM、概率图、高斯过程）在阶段二之后，默认折叠。内容独立、互不依赖，可按需跳读。**进阶一 / 进阶二**在阶段七之后，默认折叠；**番外二**为论文精读占位，敬请期待。

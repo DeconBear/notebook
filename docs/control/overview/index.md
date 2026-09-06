@@ -44,7 +44,7 @@ $$
 | [经典控制](/control/classical/) | 传递函数、误差标量 | 从 [传递函数](/control/classical/transfer/) 或 [PID](/control/classical/pid/) |
 | [现代控制](/control/modern/) | 状态向量、矩阵增益 | 从 [状态空间](/control/modern/state-space/) |
 
-几何接到手臂上，见 [运动学](/robotics/kinematics/)。
+几何接到手臂上，见 [机器人学](/robotics/)。
 
 ---
 

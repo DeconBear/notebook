@@ -7,7 +7,7 @@ order: 20
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
-> 模型预测的不是「真理」，而是**在数据下更合理的信念**。本章只抓四块：随机变量与期望、条件概率、贝叶斯更新、高斯分布——足够读线性回归噪声假设、EM/GMM、PETS 的不确定度、以及世界模型里的先验/后验。
+> 模型预测的不是「真理」，而是**在数据下更合理的信念**。本章只抓四块：随机变量与期望、条件概率、贝叶斯更新、高斯分布——足够读线性回归噪声假设、EM/GMM、PETS 的不确定度、以及世界模型里的先验/后验。常见分布清单见 [常见分布](/math/distributions/)；用样本反推参数见 [估计](/math/estimation/)；平均为何像高斯见 [CLT](/math/clt/)。领域地图：[数学基础](/math/)。
 
 ---
 
@@ -25,7 +25,7 @@ $$
 \frac1n\sum_{i=1}^n \ell(f_\theta(x_i),y_i).
 $$
 
-大数定律保证：样本够多，平均会靠近真期望——这是「用训练集代理真实风险」的合法借口（还要小心过拟合，那是下一阶段的故事）。
+大数定律保证：样本够多，平均会靠近真期望——这是「用训练集代理真实风险」的合法借口（还要小心过拟合）。定理表述与直方图见 [大数定律与中心极限](/math/clt/)。
 
 ---
 
@@ -102,6 +102,8 @@ $$
 1. 用抛硬币的 Beta-Binomial 玩具演示先验 → 后验如何随正面次数移动；
 2. 画不同 $\sigma$ 的一维高斯，并采样二维相关高斯散点。
 
+C++ `stats.hpp` 不算贝叶斯积分，只把「期望 / 方差是样本的函数」写成循环：对 $\{1,2,3,4,5\}$ 印均值 $3$、无偏方差 $2.5$、MLE 方差 $2$。
+
 ![Beta 先验与后验](./images/prob_bayes_coin.png)
 
 ![一维与二维高斯](./images/prob_gaussian.png)
@@ -118,13 +120,15 @@ $$
 | 高斯 | 最常用的噪声与不确定模型 |
 | 下游 | 回归、EM、贝叶斯深度学习、世界模型先验/后验 |
 
-> 下一章 [优化与梯度](/math/optimization/)：信念写成损失后，参数怎么下山。
+> 下一章 [常见分布](/math/distributions/)：似然里那些 $p(x\mid\theta)$ 具体长什么样。优化见 [梯度](/math/optimization/)。
 
 ## 📥 Code
 
 | File | View | Download |
 |------|------|----------|
 | demo.py | [Open](./code-demo) | <a href="/notebook/code/math/probability/demo.py" target="_blank" download>Download</a> |
+| stats.hpp | — | <a href="/notebook/code/math/probability/stats.hpp" target="_blank" download>Download</a> |
+| demo.cpp | — | <a href="/notebook/code/math/probability/demo.cpp" target="_blank" download>Download</a> |
 | exercise.py | [Open](./code-exercise) | <a href="/notebook/code/math/probability/exercise.py" target="_blank" download>Download</a> |
 
 ## 参考

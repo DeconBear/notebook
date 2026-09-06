@@ -9,7 +9,7 @@ order: 10
 
 > 量子信息不是「把电脑换成量子的」一句话，而是一套关于**如何编码、传送、保存、模拟和用量子系统学习**的共同语言。
 
-本领域紧接 [信息论](/information/overview/)：经典熵、信道与容量说清楚以后，再把比特换成量子比特。线性代数是硬前置，请先有 [向量 / 矩阵 / 内积](/math/linear-algebra/) 的几何直觉。具身与规划见 [控制论](/control/overview/) 与 [世界模型](/world-models/intro/)。
+本领域紧接 **[信息论](/information/)**：经典熵、信道与 [香农容量](/information/shannon/) 说清楚以后，再把比特换成量子比特。线性代数是硬前置，请先有 [向量 / 矩阵 / 内积](/math/linear-algebra/) 的几何直觉。具身与规划见 [控制论](/control/overview/) 与 [世界模型](/world-models/intro/)。
 
 ---
 
@@ -89,7 +89,7 @@ $$
 
 ## 五、和本笔记本其他部分的接口
 
-- **数学**：态矢量、酉门、测量投影，全是线代；变分量子线路的训练还用得到 [梯度](/math/optimization/) 与 [KL / 交叉熵](/math/information/)。
+- **数学**：态矢量、酉门、测量投影，全是线代；变分量子线路的训练还用得到 [梯度](/math/optimization/) 与 [KL / 交叉熵](/math/information/)。经典容量对照见 [信息论](/information/shannon/)。
 - **深度学习**：QML 的经典压缩器就是普通网络；对照 [CNN](/applied/cv/cnn/)。
 - **科学计算**：量子模拟是 AI4S 的「另一条轴」——不一定用神经网络逼近 PDE，而是让硬件自己演化哈密顿量。
 

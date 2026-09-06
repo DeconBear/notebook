@@ -132,7 +132,7 @@ phi = rng.uniform(0, 2 * np.pi)
 self.gru = nn.GRUCell(stoch_dim + act_dim, deter_dim)
 ```
 
-**`nn.GRUCell`**：单步 GRU，不是整段 `nn.GRU`。输入是「上一步 $s$ 和上一步 $a$ 拼起来」，隐状态是 $h$。公式：
+**`nn.GRUCell`**：单步 GRU，不是整段 `nn.GRU`。这是**类的实例**（一台带权重的机器），不是 \(h_t\)。类 vs 实例、以及 `Linear` / `Sequential` / Cell 的用法见 [编程基础 · torch.nn](/programming/nn/)。输入是「上一步 $s$ 和上一步 $a$ 拼起来」，隐状态是 $h$。公式：
 
 $$
 h_t = \mathrm{GRU}(h_{t-1},\, [s_{t-1}; a_{t-1}])

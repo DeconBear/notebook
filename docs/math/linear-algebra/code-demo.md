@@ -9,15 +9,18 @@ title: "线性代数直觉 — demo.py"
 # 线性代数直觉 — demo.py 代码详解
 
 <a href="/notebook/code/math/linear-algebra/demo.py" target="_blank" download>Download demo.py</a>
+<a href="/notebook/code/math/linear-algebra/mat2.hpp" target="_blank" download>Download mat2.hpp</a>
+<a href="/notebook/code/math/linear-algebra/demo.cpp" target="_blank" download>Download demo.cpp</a>
 
 ## 运行方式
 
 ```bash
 cd docs/math/linear-algebra/code
 python demo.py
+g++ -std=c++17 demo.cpp -o la_demo
 ```
 
-CPU、NumPy 即可。会画出两张图：`la_rotation.png`（同一向量被旋转矩阵转到不同角度）和 `la_pca.png`（椭圆云上的 SVD 主方向，以及投到第一主成分）。本章不训练网络，只把「矩阵 = 几何变换」和「PCA = SVD」跑通。
+CPU、NumPy 即可。会画出两张图：`la_rotation.png`（同一向量被旋转矩阵转到不同角度）和 `la_pca.png`（椭圆云上的 SVD 主方向，以及投到第一主成分）。本章不训练网络，只把「矩阵 = 几何变换」和「PCA = SVD」跑通。C++ 复现 2×2 旋转，见文末。
 
 ## 代码逐段详解
 
@@ -174,8 +177,44 @@ if __name__ == '__main__':
 | `deg2rad` | 度→弧度 | `np.deg2rad(35)` |
 | `set_aspect('equal')` | 圆看起来是圆 | 两张图都设了 |
 
+## C++：`mat2.hpp` 与 `demo.cpp`
+
+同一目录：
+
+```bash
+cd docs/math/linear-algebra/code
+g++ -std=c++17 demo.cpp -o la_demo
+```
+
+Windows 跑 `la_demo.exe`。头文件 header-only，不要 `-l`。
+
+`mat2_apply` 就是 $Ax$ 的四个乘法：
+
+```cpp
+ox = A.a[0][0] * x + A.a[0][1] * y;
+oy = A.a[1][0] * x + A.a[1][1] * y;
+```
+
+`mat2_det` 是 $ad-bc$。旋转矩阵 $\det=1$，所以 `R(90°)` 印 `det=1`，并且把 `[1,0]` 转到 `[0,1]`（浮点误差约 `1e-16` 量级，打印六位是 `0` 和 `1`）。
+
+### 可选：同一件事用 Eigen
+
+仓库**不**附带 Eigen。若本机已装：
+
+```cpp
+#include <Eigen/Dense>
+Eigen::Matrix2d R;
+R << c, -s, s, c;
+Eigen::Vector2d v(1.0, 0.0);
+Eigen::Vector2d w = R * v;
+```
+
+`R * v` 对应 Python 的 `R @ v`。教学路径以手写 `mat2.hpp` 为准，才能看见那四个乘法。
+
 ## 源码位置
 
 clone 后打开（相对仓库根目录）：
 
-`docs/math/linear-algebra/code/demo.py`
+- `docs/math/linear-algebra/code/demo.py`
+- `docs/math/linear-algebra/code/mat2.hpp`
+- `docs/math/linear-algebra/code/demo.cpp`
