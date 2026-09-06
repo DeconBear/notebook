@@ -63,7 +63,7 @@ logit = A_norm @ (h W2)
 | 消息聚合 | 按 dst 加权求和 | `GATLayer` + `index_add_` |
 | 转导 vs 归纳 | 测试节点是否在训练图里 | 本 demo 是转导 |
 
-公式、变体对照和应用地图见 [正文](/nn-decision/dl/gnn/)；网格/分子见 [as05](/science/gnn/)。
+消息传递三步见 [消息传递](/nn-decision/dl/gnn/message-passing/)；GCN / GAT 公式见 [变体](/nn-decision/dl/gnn/variants/)；网格/分子见 [as05](/science/gnn/)。
 
 ## 源码位置
 

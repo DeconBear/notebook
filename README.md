@@ -112,6 +112,9 @@ https://deconbear.github.io/notebook/
 - [s08 优化器：SGD→Adam](docs/nn-decision/dl/optimizers/)
 - [s09 Adam 深度解析](docs/nn-decision/dl/adam/)
 - [图神经网络 GNN](docs/nn-decision/dl/gnn/)
+  - [消息传递](docs/nn-decision/dl/gnn/message-passing/)
+  - [变体（GCN / SAGE / GAT / GIN）](docs/nn-decision/dl/gnn/variants/)
+  - [应用与坑](docs/nn-decision/dl/gnn/applications/)
 - [混合专家 MoE](docs/nn-decision/dl/moe/)
 
 #### 强化学习
