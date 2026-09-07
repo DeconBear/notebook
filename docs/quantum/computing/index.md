@@ -27,6 +27,12 @@ $(\theta,\phi)$ 是球面上的一个点：北极 $|0\rangle$，南极 $|1\rangl
 
 > **图解说明**：箭头指向的是纯态；混合态会掉进球体内。测量 $Z$ 相当于问「更靠近北还是南」。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/bloch_h.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：$H$ 把 $|0\rangle$ 从北极转到赤道 $|+\rangle$。测 $Z$ 之前还是叠加；测完才塌到南北极（这一次演示落到 $|0\rangle$）。
+
 多比特：$|01\rangle = |0\rangle\otimes|1\rangle$。一般态是 $2^n$ 个振幅，**不一定**能写成各个比特的张量积——写不成的就叫**纠缠**。
 
 ---

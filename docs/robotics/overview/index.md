@@ -56,6 +56,12 @@ $$
 
 > **图解说明**：左是手能到的圆环；右是 $\theta_1$-$\theta_2$ 平面。同一条任务，两边形状完全不同。奇异落在工作空间边界，对应 $\theta_2=0$ 或 $\pm\pi$。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/cspace.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：右图 $\theta$ 走直线，左图手在圆环带里走出香蕉弯。参数与 demo 相同：$\ell_1=1$，$\ell_2=0.7$。
+
 **任务空间**：你真正关心的输出，常常是手的位姿，有时还加「避开人」。任务空间里的直线，通常要在构型空间里解逆运动学才能跟踪。
 
 demo 把 2R 的可达点采样成云，再在构型空间画一条 $\theta$ 直线，把对应的手路径叠在圆环上——你会看见香蕉弯。

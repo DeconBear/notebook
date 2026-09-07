@@ -22,6 +22,12 @@ order: 50
 
 > **图解说明**：机架 $AD$，曲柄（蓝）绕 $A$ 整周转，连杆（绿）带偶联点曲线，摇杆（紫）绕 $D$ 摆。四个铰链。自由度 $1$，一个主动输入决定整机。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/fourbar.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：曲柄整周转一圈，摇杆只摆；橙色偶联点扫出封闭曲线。$M=3(N-1)-2J_1=1$。
+
 ---
 
 ## 二、Gruebler：保姆级数自由度

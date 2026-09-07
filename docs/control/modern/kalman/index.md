@@ -31,6 +31,12 @@ $R$ 大（测量很吵）→ $K_g$ 小，更信模型；$Q$ 大（模型不可�
 
 > **图解说明**：蓝框按模型走一步，椭圆变大；绿框用新息 $z-H\hat x^-$ 把估计拉向测量，椭圆变小。$K_g$ 决定信模型还是信测量。二维矩阵形式与此相同，只是除法换成 $(HPH^\top+R)^{-1}$。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/kf_anim.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：一维随机游走。黑线真值，橙点最新测量，绿线滤波。竖条 $\pm 2\sqrt{P}$：预测撑开、更新捏紧。
+
 这和 [世界模型](/world-models/intro/) 里「先验动力学 + 用观测纠正隐状态」是同一句人话；RSSM 在非线性、非高斯时改用神经网络。量子侧把「测完如何更新信念」换成另一套语言，见 [量子信息](/quantum/overview/)。
 
 ---

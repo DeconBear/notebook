@@ -30,6 +30,12 @@ $$
 
 > **图解说明**：串联 2R，力矩标在关节 1、2；动能、势能、欧拉-拉格朗日。重力竖直向下。图示为质心与惯量；demo 把质量放在杆端。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/lagrange_free.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：同一组拉格朗日方程、同一初值。左：无阻尼自由落体；右：关节黏性阻尼。$\theta=0$ 为水平，重力沿 $-y$。
+
 **角度约定（必读）**：demo 里 $\theta=0$ 是**水平**（杆沿 $+x$），重力沿 $-y$，于是重力力矩里出现 $\cos\theta$（水平时力臂最大）。许多教材取竖直悬挂为 $0$，公式差一个 $\sin\leftrightarrow\cos$。抄系数前先看「零位在哪」。
 
 ---

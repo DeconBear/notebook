@@ -41,6 +41,12 @@ $$
 
 > **图解说明**：刚体上一条螺旋轴；$\omega$ 沿轴，$v$ 含沿轴平移与因转动引起的线速度。右栏捻、力螺与功率。平面 demo 只保留 $\omega$ 的一个标量和 $v_x,v_y$。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/se2_screw.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：平面刚体绕固定瞬心拧过去，$T(t)=\exp(t\hat\xi)$。灰框是中间姿态残影。对应 demo 的 SE(2) 指数映射。
+
 这套语言把 [运动学](/robotics/kinematics/) 的雅可比列写成「各关节旋量」，把 [动力学](/robotics/dynamics/) 的力写成力螺；Murray–Li–Sastry / *Modern Robotics* 用它统一开链。
 
 ---

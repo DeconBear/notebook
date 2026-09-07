@@ -31,6 +31,12 @@ $K=0$ 时根就是开环极点 $0,-1,-3$。$K$ 增大，根离开这些点；有
 
 > **图解说明**：左是 $K$ 套在 $G(s)$ 上的单位反馈；右是 $s$ 平面上 $K\uparrow$ 时极点离开开环极点（叉号）的轨迹。虚轴是稳定边界。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/locus_walk.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：三条根随 $K$ 从 0 走到 40。还在左半平面时稳定；有根贴上或越过虚轴就开始振荡发散。
+
 规则（本课够用的几条）：分支数 = 极点数；起点是开环极点；终点是开环零点或无穷远。完整 Evans 规则（渐近线夹角、出射角）可查 Ogata，demo 用 `np.roots` 硬算多项式，不背规则。
 
 ---

@@ -36,6 +36,12 @@ flowchart LR
 
 一条典型尖峰可以拆成：静息 → 去极化上升（钠正反馈）→ 超射峰值 → 复极化（钾赶上、钠失活）→ 后超极化（贡献不应期）。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/spike_anim.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：左是 LIF，积到阈值就复位，没有波形；右是 HH，阶跃电流打出一个有形状的动作电位。电流与 demo 相同。
+
 HH 的贡献，是把「钠/钾通道如何随电压开关」写成门控变量 $m,n,h \in [0,1]$。
 
 ---

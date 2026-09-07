@@ -25,6 +25,12 @@ $\lambda$ 是特征值，$v$ 是特征向量。旋转 $90^\circ$ 的矩阵**没�
 
 > **图解说明**：网格被 $A$ 捏成平行四边形；有两条边仍沿原直线，那就是特征向。底栏：PCA 主轴 $=$ 协方差的特征向。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/eigen_anim.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：把 $I$ 连续变成 $A$。红/绿是特征向，始终躺在自己的射线上；其它向量都被拧走。$A$ 与 demo 相同。
+
 对角化 $A=Q\Lambda Q^{-1}$。对称时 $Q$ 可取正交，$A=Q\Lambda Q^\top$，换到主轴上乘法变成逐分量乘 $\lambda_i$。
 
 ---
