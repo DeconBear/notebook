@@ -48,6 +48,12 @@ $$
 
 > 运行 `code/demo.py` 生成。因果一侧为正、反因果为负。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/stdp_anim.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：左：pre 比 post 早 10 ms，权重变大（LTP）。右：反过来，权重变小（LTD）。窗口上的绿/红点就是这两个 $\Delta t$。
+
 ![一对重复配对下的权重轨迹](./images/stdp_pair_trace.png)
 
 > 固定 $\Delta t=+10\,\mathrm{ms}$ 的配对会把权重推向上界附近。

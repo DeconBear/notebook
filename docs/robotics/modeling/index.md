@@ -30,6 +30,12 @@ order: 30
 
 > **图解说明**：相邻系 $\{i-1\}$ 与 $\{i\}$ 之间，$a$ 杆长，$\alpha$ 扭角，$d$ 偏置，$\theta$ 关节角。右手定则。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/dh_3r.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：平面 3R，每节坐标系贴在关节上。$\theta$ 变了，齐次阵连乘，末端跟着走。杆长与 demo 相同。
+
 ---
 
 ## 二、一帧齐次变换：把四步写成一个 $4\times 4$

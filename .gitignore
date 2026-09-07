@@ -17,6 +17,11 @@ dist/
 a.out
 **/warnings.log
 
+# Manim 中间文件（成片 mp4 可另存，不提交 partials）
+docs/**/_manim/media/
+docs/**/_manim/.cache/
+docs/**/_manim/preview/
+
 # 生图提示词备份
 _backup/
 **/image_prompts.md

@@ -33,6 +33,12 @@ $$
 
 > **图解说明**：左是 $Y=GR$；中是 $s$ 平面，左半稳定、右半不稳定，复极点的辐角与 $\zeta$ 有关；右是过阻尼 / 欠阻尼 / 无阻尼三种阶跃素描。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/zeta_anim.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：$\omega_n=3$ 固定，只改 $\zeta$。过阻尼不晃；欠阻尼越来越晃。虚线是 $r=1$。
+
 ---
 
 ## 二、阻尼比对照表

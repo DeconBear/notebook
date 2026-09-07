@@ -27,6 +27,12 @@ $$
 
 > **图解说明**：上半是 $\dot x=Ax+Bu$、$y=Cx$ 的方块；中段用倒立摆说明「状态可以比输出更长」；下段天平是 LQR：$Q$ 罚状态偏离，$R$ 罚控制能量。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/lqr_cart.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：双积分器小车 $\ddot x=u$。左：$u=0$ 带着初速飞走；右：$u=-Kx$ 拉回原点。$Q,R$ 与 demo 相同。
+
 离散时间（demo 用这个，因为电脑按步走）把 $A,B$ 换成一步转移：
 
 $$

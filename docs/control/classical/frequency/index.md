@@ -25,6 +25,12 @@ $$
 
 > **图解说明**：上半正弦进、放大并落后相的正弦出；下半幅频过 0 dB 的频率叫穿越频率 $\omega_c$，该处相位距离 $-180^\circ$ 还剩多少就是相位裕度。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/bode_sine.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：$\omega$ 从低扫到高。左边输入/输出正弦，输出越来越小、越来越落后；右边游标走幅频，橙线是 0 dB 穿越 $\omega_c$。
+
 相位裕度（直觉）：
 
 $$

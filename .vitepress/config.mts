@@ -18,7 +18,7 @@ export default withMermaid(
     lang: 'zh-CN',
     ignoreDeadLinks: true,
     publicDir: path.join(repoRoot, 'public'),
-    srcExclude: ['README.md', '**/image_prompts.md', '**/CODE.md', '**/_gone.yaml', '**/_meta.yaml'],
+    srcExclude: ['README.md', '**/image_prompts.md', '**/CODE.md', '**/_gone.yaml', '**/_meta.yaml', '**/_manim/**'],
     head: [
       ['link', { rel: 'icon', href: '/favicon.ico' }]
     ],

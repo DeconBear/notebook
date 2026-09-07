@@ -25,6 +25,12 @@ order: 40
 
 > **图解说明**：左：球面示意旋转流形，切平面是 $\mathfrak{so}(3)$，曲线箭头是 $\exp$。右：$\omega$ 变成 $\hat\omega$，Rodrigues 给出绕轴转角。群上的点是姿态，代数上的向量是「转多少」。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/so3_order.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：左先 $R_z 90^\circ$ 再 $R_x 90^\circ$，右先 $R_x$ 再 $R_z$。红 $x$ / 绿 $y$ / 蓝 $z$。终点姿态不同，所以欧拉角不能当 $\mathbb{R}^3$ 加减。
+
 量子信息里的幺正群 $\mathrm{U}(n)$ 是同一类故事；见 [量子信息](/quantum/overview/)。线性代数复习见 [向量与矩阵](/math/linear-algebra/)。
 
 ---

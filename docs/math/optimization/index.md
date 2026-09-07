@@ -26,6 +26,12 @@ $$
 
 > **图解说明**：等高线谷底是目标；橙色折线是步子过大；平滑轨迹是合适学习率。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/gd_anim.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：同一起点。$\eta=0.95$ 在谷里振荡；$\eta=0.15$ 沿着等高线走进 $(1,-0.5)$。
+
 **随机梯度下降（SGD）**：每次只用一个小批量估计 $\nabla L$，噪声反而有时帮着逃离差的峡谷。Adam 等自适应方法 = 给各维度不同的有效学习率，细节留给深度学习章。
 
 ---

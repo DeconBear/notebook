@@ -61,6 +61,12 @@ $$
 
 > **图解说明**：误差 $e$ 分成三路：绿路比例 $K_p e$ 快；橙路积分累积过去误差，消静差；紫路微分看斜率，抑制超调。三路相加得 $u$，送进受控对象。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/pid_anim.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：同一质量-弹簧。纯 P 到不了 $r=1$；PD 超调变小仍可能留差；PID 把残差积掉。参数与 demo 相同。
+
 | 项 | 数学 | 直觉 | 典型副作用 |
 |----|------|------|------------|
 | P | $K_p e$ | 现在差多少就推多猛 | 单靠 P，有弹簧/扰动时常留静差 |

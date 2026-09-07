@@ -72,6 +72,12 @@ C++ `fk2r.hpp` 就是那两行余弦，用来对照 Python。
 
 > **图解说明**：左图由 $\theta_1,\theta_2$ 推出末端，虚线圆是最大/最小伸长；右图同一目标有肘上、肘下两套角。余弦定理先解 $\theta_2$，再用 $\operatorname{atan2}$ 解 $\theta_1$。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/fk_ik.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：先正运动学扫一圈；再对同一目标画出肘上 / 肘下；最后把目标拖出工作空间，两圆不再相交。
+
 ---
 
 ## 三、逆解：余弦定理逐步写
@@ -138,6 +144,12 @@ $$
 ![雅可比与奇异](./images/rob-01b-jacobian.png)
 
 > **图解说明**：上半 $v=J\dot\theta$；下半两杆共线时 $\det J=0$。奇异附近不要硬求 $J^{-1}$。
+
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/jacobian.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：橙箭头是「只转基座」给手的速度方向，绿箭头是「只转肘」。伸直时两支变成平行，$|\det J|\to 0$。
 
 速度逆解 $\dot\theta=J^{-1}v$。奇异时无解或无穷放大。实践用阻尼伪逆 $(J^\top J+\lambda I)^{-1}J^\top$，以牺牲一点跟踪换稳定。冗余臂 $J$ 不是方的，用伪逆，零空间还可以用来躲障碍。
 

@@ -33,6 +33,12 @@ $$
 
 > **图解说明**：左是宽窗口的平均变化率；中是两点靠近；右是切线，旁边的小三角形就是微分 $dy=f'(a)\,dx$。底栏：导数是速度，微分是局部直线。
 
+<video controls muted loop playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:8px;background:#f7fafc;margin:0.6rem 0;">
+  <source src="./images/secant_anim.mp4" type="video/mp4">
+</video>
+
+> **动画说明**：$f(x)=x^3-2x$，锚点 $x=1.2$。$h$ 从 0.85 收到 0.04，割线斜率贴近切线 $f'(1.2)$。
+
 $f(x)=x^3-2x$ 在 $x=2$ 处，$f'(2)=10$。demo 里三张图用 $h=0.8$、$0.25$、切线把这个贴合过程画出来。
 
 ---
