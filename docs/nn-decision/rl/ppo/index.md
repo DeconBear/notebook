@@ -45,6 +45,18 @@ $$
 
 $\hat{A}_t>0$ 时加大 $r$ 会提高目标；$\hat{A}_t<0$ 时减小 $r$ 会提高目标。没有限制的话，优化器会把 $r$ 推到极端。
 
+**数字例。** 某步 $\hat A=+1$，$\pi_{\mathrm{old}}(a|s)=0.2$，新策略若把该动作推到 $0.8$，比率 $r=4$。$\varepsilon=0.2$ 时 $\mathrm{clip}(r,0.8,1.2)=1.2$，目标最多按 $1.2\hat A$ 计，不会按 $4$ 计。优势为负时对称：不允许比率掉得太深去「过度惩罚」。
+
+::: details 逐步推导：裁剪目标与 GAE（点击展开）
+
+$$
+L^{\mathrm{CLIP}}=\mathbb E_t\bigl[\min\bigl(r_t\hat A_t,\;\mathrm{clip}(r_t,1-\varepsilon,1+\varepsilon)\hat A_t\bigr)\bigr].
+$$
+
+$\hat A>0$ 时 $\min$ 取较小的那个，防止 $r$ 过大；$\hat A<0$ 时 $\mathrm{clip}$ 的下界阻止 $r$ 过小。取 $\min$ 是悲观界：只在信任域里保证改进。GAE：$\delta_t=r_t+\gamma V(s_{t+1})-V(s_t)$，$\hat A_t=\sum_{l=0}\gamma\lambda^l\delta_{t+l}$。$\lambda=0$ 是一步 TD，$\lambda=1$ 是蒙特卡洛。价值损失另算 MSE；熵奖励鼓励探索。卡点：一轮数据可更新 $K$ 个 epoch，但 $K$ 太大等于离策略太远，裁剪也会失效。
+
+:::
+
 ---
 
 ## 三、裁剪替代目标

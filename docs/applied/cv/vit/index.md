@@ -11,7 +11,7 @@ legacyPaths:
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
 
-> 2020 年，Google 用一篇《An Image is Worth 16x16 Words》证明：把图像切成 patch 当词序列，扔进标准 Transformer，就能超越 CNN。
+> 2020 年，Google 用一篇《An Image is Worth 16x16 Words》证明：把图像切成 patch 当词序列，扔进标准 Transformer，就能超越 CNN。卷积归纳偏置见 [CNN](/applied/cv/cnn/) 与 [架构](/applied/cv/architectures/)；自注意力公式与 NLP 完全同一套，见 [Transformer](/applied/nlp/transformer/)。本章把 $224\times 224$ 怎样变成 $196$ 个 token、以及 $\mathrm{softmax}(QK^\top/\sqrt{d})$ 在图像上在干什么，写到可以手算。
 
 ---
 
@@ -41,6 +41,8 @@ Vision Transformer（ViT，Dosovitskiy et al., 2020）的洞见极其简洁，�
 > **把图像切成一个个小方块（patch），每个 patch 当作 NLP 中的一个"词"，然后把整串 patch 扔进标准 Transformer 编码器。**
 
 ![ViT architecture](./images/11b-01-vit-architecture.png)
+
+> **图解说明**：图切成 patch → 线性投到 $D$ 维 → 加上位置编码和 CLS → 标准 Transformer 编码器 → 只拿 CLS 做分类。中间没有卷积金字塔。
 
 不需要修改 Transformer 的任何结构，不需要卷积，不需要特殊的视觉归纳偏置——整个模型就是一个纯 Transformer。
 
@@ -102,6 +104,16 @@ $$
 
 其中 $\mathbf{z}_L^0$ 是 `[class]` token 在第 $L$ 层的输出。
 
+::: details 逐步推导：$224$ 图、$P=16$ 如何变成 $196$ 个 token，以及 $\sqrt{d_k}$ 从哪来（点击展开）
+
+**切块。** $H=W=224$，$P=16$，$N=(224/16)^2=14^2=196$。每个 patch 体积 $16\times 16\times 3=768$。ViT-Base 的 $D=768$，投影 $\mathbf{E}$ 恰好是 $768\times 768$——实现上就是 `kernel=16,stride=16` 的 Conv2d，输出 $768\times 14\times 14$，展平为 $196\times 768$。再在序列头插一个 CLS，长度 $197$。
+
+**注意力缩放。** 设 $q,k$ 的坐标独立、方差约 $1$，则点积 $q\cdot k$ 的方差约 $d_k$。softmax 对大方差极度尖锐（几乎 one-hot），梯度消失。除以 $\sqrt{d_k}$ 把方差拉回 $O(1)$，softmax 才有平滑的权重。图像上含义不变：第 $i$ 个 patch 的新向量是所有 patch 的值向量的加权平均，权重由相似度给出。第一层就能让左上角的 patch 看见右下角——这是 CNN 要堆很多层才有的全局感受野。
+
+**位置。** 没有 $E_{\text{pos}}$ 时，把 patch 打乱顺序，自注意力输出只是置换，模型不知道谁在上谁在下。可学习的 1D 表足够，因为 $N$ 固定（同分辨率训练）；改分辨率就要插值这张表，Swin/NaViT 才改成相对或 2D 编码。
+
+:::
+
 ### 2.3 一个关键细节：为什么用 1D 位置编码而不是 2D？
 
 直觉上，图像有明确的 2D 空间结构，应该使用 2D 位置编码（行编码 + 列编码）。但 ViT 的实验表明：**1D 和 2D 位置编码的效果几乎没有差异**。这是因为模型可以通过学习到的位置嵌入隐式地推断 2D 空间关系——Transformer 有足够的能力自己学。
@@ -123,6 +135,8 @@ ViT 论文提供了三种主要规格，与 BERT 的命名风格一致：
 ## 3. Patch Embedding：从像素到 Token
 
 ![Patch embedding](./images/11b-02-patch-embedding.png)
+
+> **图解说明**：每个 $P\times P$ 方块展平后乘同一矩阵 $E$，变成一个 token。Conv2d 的大核+等步长是同一件事的实现技巧。
 
 Patch Embedding 是 ViT 中唯一与 NLP 不同的组件，也是它"连接两个世界"的桥梁。让我们深入其数学细节。
 
@@ -171,6 +185,8 @@ $$
 
 ![CNN vs ViT](./images/11b-03-cnn-vs-vit.png)
 
+> **图解说明**：CNN 浅层只看局部；ViT 从第一层起每个 token 都可以看所有 token。代价是小数据时不知道「近邻更重要」，要靠预训练补上。
+
 ViT 和 CNN 的根本差异在于它们对视觉世界的"先验假设"不同。
 
 ### 4.1 归纳偏置对比
@@ -216,6 +232,8 @@ ViT 论文中有一个核心发现：
 ## 5. ViT 进化树
 
 ![ViT evolution](./images/11b-04-vit-evolution.png)
+
+> **图解说明**：DeiT 用蒸馏降低数据门槛；Swin 把注意力关进窗口并做出金字塔，好接检测；MAE/DINO 把监督换成掩码或自蒸馏。
 
 ViT 只是一个起点。后续研究从不同角度对它进行了改进和扩展，形成了一个庞大的 ViT "家族"。
 

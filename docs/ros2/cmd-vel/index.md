@@ -41,6 +41,14 @@ order: 100
 - `linear.x`：前进/后退（m/s），\(x\) 一般是车头方向  
 - `angular.z`：绕竖直轴转向（rad/s）
 
+::: details 逐步推导：差分驱动 $(v,\omega)$ 怎样变成左右轮速（点击展开）
+
+轮距 $L$，轮半径 $r$。车体在平面上的瞬时运动：绕瞬时转动中心转。左轮线速度 $v_L=v-\omega L/2$，右轮 $v_R=v+\omega L/2$（符号约定：$\omega>0$ 左转，右轮更快）。再除以 $r$ 得轮角速度，送给电机。本课**不发轮速**，只发 $v,\omega$：仿真插件或 `ros2_control` 在下一层做这道转换和 PID。
+
+**数字。** $v=0.2\,\mathrm{m/s}$，$\omega=0$：两轮一样快，直行。$v=0$，$\omega=0.3\,\mathrm{rad/s}$：原地转，左右轮反向。积分一小步 $\Delta t$：航向 $\theta\leftarrow\theta+\omega\Delta t$，位置 $x\leftarrow x+v\cos\theta\,\Delta t$。开环会漂，所以真机要用里程计/TF 闭环——那是定位课，不是本课的 PID。
+
+:::
+
 ## 常见疑问
 
 **Q：这一节也管 PID 吗？**  

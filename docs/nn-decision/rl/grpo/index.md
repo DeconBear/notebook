@@ -39,6 +39,14 @@ $$
 
 没有单独的 $V_\phi$。基线就是 $\mathrm{mean}(\mathbf{r})$：比组内平均好的输出 $\hat{A}>0$，差的 $<0$。这正是 [s20](/nn-decision/rl/deep-rl/)「优势 = 比平均好多少」在**一组并列样本**上的实现，而不是在状态价值网上的实现。
 
+**数字例。** 同一题 $G=4$ 个答案，奖励 $(1,0,1,0)$。均值 $0.5$，标准差 $0.5$，$\hat A=(1,-1,1,-1)$。两条对的答案提高概率，错的压低。若全是 $1$，标准差 $\approx 0$，$\hat A\approx 0$，**没有梯度**——这就是「全对/全错组」的坑，需要更大组或加噪声。
+
+::: details 逐步推导：组标准化优势代入 PPO 裁剪（点击展开）
+
+GRPO 的策略目标与 PPO 同形：$L=\mathbb E_i[\min(r_i\hat A_i,\mathrm{clip}(r_i,1-\varepsilon,1+\varepsilon)\hat A_i)]$，但 $\hat A_i$ 来自组内 $(r_i-\bar r)/\mathrm{std}$，不是 GAE。同一轨迹所有 token 共享 $\hat A_i$，等于把终局相对分广播回每个位置。无 Critic 省一半参数；代价是必须对每个 prompt 采 $G\ge 2$，且组内要有区分度。KL 到参考策略（SFT 模型）仍然常加，防止奖励模型 hacking。
+
+:::
+
 若一组全对或全错，$\mathrm{std}\approx 0$，这一组没有学习信号——实践里会跳过或加噪声，避免除零。
 
 ---

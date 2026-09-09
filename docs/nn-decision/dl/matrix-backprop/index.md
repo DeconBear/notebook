@@ -10,8 +10,9 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> $\delta$ 递推把链式法则收成三行矩阵公式。`demo.py` 训练一个小 MLP 画决策边界。$\delta^{[l]}=(W^{[l+1]})^\top\delta^{[l+1]}\odot\phi'(Z^{[l]})$ 的来源在折叠里。
 
-> $\delta$ 递推公式、mini-batch 平均与完整训练循环 —— 把反向传播扩展到真实的多层网络
+## 一、从标量到矩阵：为什么要用矩阵形式？
 
 ---
 
@@ -40,6 +41,33 @@ $$
 矩阵形式的好处是可以用高效的 BLAS/LAPACK 库（如 NumPy、cuBLAS）来计算，远比逐神经元循环快得多。同时在数学上也更简洁——用几个矩阵公式就能描述整个网络的梯度流。
 
 ![矩阵反传——δ 递推关系](./images/07-01-delta-recurrence.png)
+
+> **图解说明**：误差 $\delta$ 从输出层往左乘 $W^\top$，再点乘本地 $\phi'$。权重梯度是 $\delta$ 与前一层激活的外积。
+
+**数字例。** 一层 $n^{[l]}=2$，$n^{[l-1]}=3$，batch $m=1$。若 $\delta^{[l]}=(0.1,-0.2)^\top$，$A^{[l-1]}=(1,0,2)^\top$，则
+
+$$
+\frac{\partial L}{\partial W^{[l]}}=\delta^{[l]}(A^{[l-1]})^\top
+=\begin{pmatrix}0.1&0&0.2\\-0.2&0&-0.4\end{pmatrix}.
+$$
+
+第二列全 0：因为该输入分量是 0，对应权重这步不更新——「没被用到的权重没有责任」。
+
+::: details 逐步推导：$\delta^{[l]}$ 递推与 $W$ 的外积梯度（点击展开）
+
+$Z^{[l]}=W^{[l]}A^{[l-1]}+b^{[l]}$，$A^{[l]}=\phi(Z^{[l]})$。损失对 $Z^{[l]}$ 的梯度定义为 $\delta^{[l]}$。
+
+对 $W$：$\mathrm{d}Z=\mathrm{d}W\,A$，故 $\mathrm{d}L=\langle\delta,\mathrm{d}W\,A\rangle=\langle\delta A^\top,\mathrm{d}W\rangle$，因此 $\partial L/\partial W=\delta A^\top$。对 $b$：每列的 $\delta$ 求和（广播的逆）。
+
+对上一层激活：$ \mathrm{d}Z=W\,\mathrm{d}A^{[l-1]}$，$\partial L/\partial A^{[l-1]}=W^\top\delta^{[l]}$。再乘 $\phi'(Z^{[l-1]})$ 得到 $\delta^{[l-1]}$：
+
+$$
+\delta^{[l]}=(W^{[l+1]})^\top\delta^{[l+1]}\odot\phi'(Z^{[l]}).
+$$
+
+Softmax+交叉熵时输出层 $\delta^{[L]}=\hat Y-Y$（和逻辑回归同一句）。Batch 维要对 $m$ 平均，否则学习率暗含 batch size。梯度爆炸：连乘许多 $W$ 与 $\phi'$；ReLU 的 $\phi'$ 是 0/1 门，死神经元梯度永久为 0。
+
+:::
 
 ---
 

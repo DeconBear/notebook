@@ -33,6 +33,24 @@ $(\theta,\phi)$ 是球面上的一个点：北极 $|0\rangle$，南极 $|1\rangl
 
 > **动画说明**：$H$ 把 $|0\rangle$ 从北极转到赤道 $|+\rangle$。测 $Z$ 之前还是叠加；测完才塌到南北极（这一次演示落到 $|0\rangle$）。
 
+![Bloch 球：一个量子比特的全部纯态](./images/qinfo-bloch-b-h.png)
+
+> **图解说明**：北极 $|0\rangle$、南极 $|1\rangle$、赤道叠加。H 把门从北极打到赤道；Z 测量按 $|\alpha|^2,|\beta|^2$ 塌缩。
+
+::: details 逐步推导：为什么纯态只要两个角，以及 $H|0\rangle=|+\rangle$（点击展开）
+
+一般 $|\psi\rangle=\alpha|0\rangle+\beta|1\rangle$，$\alpha,\beta\in\mathbb{C}$，四个实数，但归一化 $|\alpha|^2+|\beta|^2=1$ 扣一个，整体相位 $e^{i\gamma}|\psi\rangle$ 测不到再扣一个，剩下两个实参数，正好是球面的 $\theta,\phi$。写成 $\cos(\theta/2)|0\rangle+e^{i\phi}\sin(\theta/2)|1\rangle$ 自动满足归一化。
+
+Hadamard：
+
+$$
+H|0\rangle=\frac{1}{\sqrt{2}}\begin{pmatrix}1&1\\1&-1\end{pmatrix}\begin{pmatrix}1\\0\end{pmatrix}=\frac{|0\rangle+|1\rangle}{\sqrt{2}}=|+\rangle.
+$$
+
+这是 Bloch 球上从北极到 $+x$ 赤道。测 $Z$（计算基）时 Born 规则 $P(0)=|\langle 0|\psi\rangle|^2$。对 $|+\rangle$ 两边都是 $1/2$，所以动画里每次测量才随机落到南北极。门必须酉：$U^\dagger U=I$，否则概率和不再为 $1$。
+
+:::
+
 多比特：$|01\rangle = |0\rangle\otimes|1\rangle$。一般态是 $2^n$ 个振幅，**不一定**能写成各个比特的张量积——写不成的就叫**纠缠**。
 
 ---

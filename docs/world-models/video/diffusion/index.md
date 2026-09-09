@@ -29,6 +29,12 @@ x_t = \sqrt{\bar\alpha_t}\, x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon,
 \epsilon\sim\mathcal{N}(0,I)
 $$
 
+::: details 逐步推导：为何可以一步写出 $x_t=\sqrt{\bar\alpha_t}x_0+\sqrt{1-\bar\alpha_t}\epsilon$（点击展开）
+
+$x_t=\sqrt{\alpha_t}x_{t-1}+\sqrt{\beta_t}\epsilon_t$。代入 $x_{t-1}$ 的同类表达式，高斯之和仍是高斯。系数连乘得到 $\sqrt{\bar\alpha_t}$ 乘 $x_0$，噪声方差合成 $1-\bar\alpha_t$。于是训练时随机抽 $t$，直接造 $x_t$，不必真的走 $t$ 步。网络预测 $\epsilon$，损失是 $\|\epsilon-\epsilon_\theta(x_t,t)\|^2$。采样则从 $x_T$ 逐步减噪。Latent Diffusion 先用 VAE 把 $x$ 压成 $z$，扩散在 $z$ 上跑，解码回像素——视频 WM 同构，只是 $z$ 带时间维。
+
+:::
+
 **反向过程 $p_\theta$**（要学）：从 $x_T\sim\mathcal{N}(0,I)$ 出发，逐步恢复。
 
 $$

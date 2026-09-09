@@ -26,6 +26,12 @@ order: 30
 
 读任何 DH 表，先看教材用的是哪一套，**不要混抄矩阵**。以代码 `dh()` 的乘法顺序为准。
 
+**保姆级：四个字母各管哪一截。** 站在关节 $i-1$ 的坐标系里，想到关节 $i$ 去：先绕自己的 $z$ 转到下一根公垂线对准的方位（$\theta$），再沿 $z$ 滑到公垂线高度（$d$），再沿公垂线（新的 $x$）走到下一根轴（$a$），最后绕 $x$ 把 $z$ 扭到下一根转轴方向（$\alpha$）。平面臂 $\alpha=d=0$，只剩「转 $\theta$、沿杆走 $a$」，就是运动学章的 $T(\theta,a)$。
+
+![DH 四参数把坐标系贴在关节上](./images/rob-03b-dh-steps.png)
+
+> **图解说明**：每关节 $z$ 沿转轴，$x$ 沿公垂线。四步：$\theta\to d\to a\to\alpha$。平面 3R 的 $\alpha=d=0$。
+
 ![DH 参数](./images/rob-03-dh.png)
 
 > **图解说明**：相邻系 $\{i-1\}$ 与 $\{i\}$ 之间，$a$ 杆长，$\alpha$ 扭角，$d$ 偏置，$\theta$ 关节角。右手定则。
@@ -65,6 +71,32 @@ T_n^{0} = A_1 A_2 \cdots A_n.
 $$
 
 左乘还是右乘？**从基座往外乘**：`T = T @ A_i`（Python 右乘下一帧）。这与「点的坐标先在末端表示，再一帧帧送回基座」一致。
+
+::: details 逐步推导：四步初等变换怎样乘成 $A_i$（点击展开）
+
+每一小步都是「只转或只移」的 $4\times 4$。经典 DH 顺序：
+
+$$
+\operatorname{Rot}_z(\theta)\;\operatorname{Trans}_z(d)\;\operatorname{Trans}_x(a)\;\operatorname{Rot}_x(\alpha).
+$$
+
+写开（$c_\theta=\cos\theta$ 等）：
+
+$$
+\operatorname{Rot}_z(\theta)=\begin{pmatrix}c_\theta&-s_\theta&0&0\\ s_\theta&c_\theta&0&0\\ 0&0&1&0\\ 0&0&0&1\end{pmatrix},\quad
+\operatorname{Trans}_z(d)=\begin{pmatrix}1&0&0&0\\ 0&1&0&0\\ 0&0&1&d\\ 0&0&0&1\end{pmatrix},
+$$
+
+$$
+\operatorname{Trans}_x(a)=\begin{pmatrix}1&0&0&a\\ 0&1&0&0\\ 0&0&1&0\\ 0&0&0&1\end{pmatrix},\quad
+\operatorname{Rot}_x(\alpha)=\begin{pmatrix}1&0&0&0\\ 0&c_\alpha&-s_\alpha&0\\ 0&s_\alpha&c_\alpha&0\\ 0&0&0&1\end{pmatrix}.
+$$
+
+从右往左乘（先作用 $\operatorname{Rot}_x$）。平面情形 $\alpha=d=0$，后两个矩阵几乎是单位阵加「沿 $x$ 走 $a$」，前两个合成运动学章的 $T(\theta,a)$ 再补一行 $[0,0,1,0]$ 和一列齐次。一般 $\alpha\neq 0$ 时，右上角仍是「下一原点」，但姿态块会把 $z$ 扭出纸面——这就是空间臂需要的。
+
+验算右上角：$\alpha=d=0$ 时下一原点应是 $(a c_\theta,\, a s_\theta,\, 0)$，与正文矩阵第四列一致。
+
+:::
 
 ---
 

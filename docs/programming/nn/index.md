@@ -9,6 +9,8 @@ order: 40
 
 > `nn.Linear`、`nn.GRUCell` **都是类**。`nn.Linear(3, 4)` 才造出带权重的**实例**。张量与 `backward` 见 [上一章](/programming/pytorch/)；[序列模型](/applied/nlp/sequence-models/) 讲 RNN/LSTM 公式；[RSSM](/world-models/abstract/rssm/) 里 `self.gru = nn.GRUCell(...)` 就是本节的 Cell。
 
+`torch.nn` 是零件箱：仿射、卷积、归一化、损失。读文档时先分清「有参数的模块必须 `nn.` 并赋给 `self`」和「`F.relu` 只是函数」。下面用形状账把 Linear 和 GRUCell 写到能手算。
+
 ![三种常见 nn 构造](./images/prog-nn-three.png)
 
 > **怎么读**：三块都是「先用类造实例」。Linear 一层仿射；Sequential 把层串成 MLP；GRUCell 只走一步，返回值才是 \(h_t\)。
@@ -53,6 +55,24 @@ y = x W^\top + b,\quad W\in\mathbb{R}^{4\times 3}
 PyTorch 存的是 \(W\) 的 **`(out, in)`**，所以公式带转置。它**没有**激活，只是 \(Wx+b\)。MLP 是 Linear 和激活叠起来（上面的 `Sequential`）。
 
 RSSM 先验网：`Linear(deter, hidden) → ELU → Linear(hidden, 2*stoch)`，这才是小 MLP。
+
+::: details 逐步推导：`nn.Linear(3,4)` 的形状，以及 Cell 一步在干什么（点击展开）
+
+`lin.weight` 形状 `(4, 3)`，`bias` 形状 `(4,)`。输入 `x` 形状 `(N, 3)`：
+
+$$
+y = x W^\top + b \in \mathbb{R}^{N\times 4}.
+$$
+
+若写成 $xW$ 而不转置，就需要 $W$ 存成 `(in, out)`。PyTorch 选 `(out, in)` 是为了和 `F.linear`、初始化约定一致。打印 `tuple(lin.weight.shape)` 对不上时，先看 `in_features` 是否等于 `x.shape[-1]`。
+
+`GRUCell(input_size, hidden_size)`：内部若干个 `(hidden, input)` 和 `(hidden, hidden)` 门矩阵。调用 `h1 = gru(x_t, h0)` 要求 `x_t` 最后一维 = `input_size`，`h0` 最后一维 = `hidden_size`。返回的 `h1` 与 `h0` 同形状。RSSM 里 `input_size = stoch_dim + act_dim`，因为把 $s$ 和 $a$ 在最后一维 `cat` 再送进去。
+
+整段 `nn.GRU` 吃 `(N, T, input)` 一次吐 `(output, h_n)`，中间你插不进「采样 $s_t$、再算先验」。所以世界模型用 Cell + Python `for t`。慢在 Python 循环，换来的是每步可自定义计算图。
+
+`nn.ModuleList` vs `list`：`self.blocks = [nn.Linear(4,4) for _ in range(3)]` 这三层**不会**出现在 `model.parameters()` 里，Adam 更新不到，看起来像「网络不学习」。改成 `ModuleList` 立刻好。
+
+:::
 
 相关：`nn.Identity()` 原样传过；`nn.Flatten()` 把后面几维摊平；`nn.Bilinear` 两个输入的双线性。
 

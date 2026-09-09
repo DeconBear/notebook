@@ -6,7 +6,13 @@ order: 1
 
 边做边记。环境：**Ubuntu 22.04 + ROS 2 Humble**。`$ROS_WS` 指 notebook 仓库里的 colcon 工作区 `workspaces/ros2-humble/`（源码在 `src/`，笔记在站点 `/ros2/`）。
 
-运动学、DH、李群等几何先看侧栏 **[机器人学](/robotics/kinematics/)**；反馈与状态空间看 **[控制论](/control/overview/)**。本课把这些接到话题、TF 和仿真。
+运动学、DH、李群等几何先看侧栏 **[机器人学](/robotics/kinematics/)**；反馈与状态空间看 **[控制论](/control/overview/)**。本课把这些接到话题、TF 和仿真。ROS 2 不是「命令大全」：每一课先问**为什么要这种通信原语**，再动手。公式出现在 [TF](/ros2/tf2/) 的齐次变换和 [cmd_vel](/ros2/cmd-vel/) 的差分驱动运动学。
+
+::: details 逐步说明：为何机器人中间件要拆成 Topic / Service / Action（点击展开）
+
+传感器 50Hz 往外涌，没有「请求—应答」的对方——用 Topic，解耦、可丢。标定相机内参是一次性问答——用 Service，保证有响应。导航到目标要几分钟、要反馈进度、可取消——用 Action。弄错原语：用 Service 传激光会堵住客户端；用 Topic 做「请给张地图」会丢请求。后面每课只练一种，但脑子里要先有这张表。
+
+:::
 
 本课来自 [ros2-humble-notes](https://github.com/DeconBear/ros2-humble-notes)，已并入本仓库。
 

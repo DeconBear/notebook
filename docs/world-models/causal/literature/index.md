@@ -19,6 +19,12 @@ Agentic World Modeling survey（Chu et al., 2026）把「干预敏感性」写�
 
 读任何视频 WM 论文时，先找有没有 **action-conditioned 闭环评测**，还是只有 FVD / 主观观感。
 
+::: details 逐步说明：文献里「干预敏感性」在测什么（点击展开）
+
+给模型看 $x$，再分别问 $P(y\mid x)$ 和 $P(y\mid do(x=i))$。若两者几乎一样，模型没学会切断进入 $x$ 的箭，只是关联拟合器。Next-token 论文问的是内部有没有可拨动的状态机，不是 perplexity。和路径五分工：这边问数据与识别假设；那边问定律能不能写成可执行符号。
+
+:::
+
 ---
 
 ## 二、LLM + 显式因果模块

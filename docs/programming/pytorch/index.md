@@ -9,6 +9,8 @@ order: 30
 
 > `torch.nn` 里每一层吃的都是 **Tensor**。层怎么叠见 [下一章](/programming/nn/)；数据放 GPU 见 [CUDA](/programming/cuda/)。自动求导的微积分背景：[导数](/math/derivative/)、[优化](/math/optimization/)、[反向传播](/nn-decision/dl/backprop/)。
 
+张量先当 NumPy 用：形状、dtype、设备。自动求导再当「会记账的计算器」：前向每一步留下怎么反传，`backward()` 按链式法则把 $\partial L/\partial x$ 填进叶子的 `.grad`。本章用手算一个标量例子对上 `x.grad`。
+
 ## 一、Tensor 是带设备的多维数组
 
 ```python
@@ -48,6 +50,26 @@ print(x.grad)         # ∂L/∂x
 - 第二次 `backward` 前通常 `x.grad.zero_()`，否则会**累加**。
 
 `torch.no_grad()`：评估、做梦 rollout 时关掉图，省内存、加快。RSSM 的 `imagine()` 上有 `@torch.no_grad()`。
+
+::: details 逐步推导：$L=(x^2+3x)^2$ 在 $x=2$ 的梯度和 autograd 对得上（点击展开）
+
+令 $u=x^2+3x$，则 $L=u^2$。
+
+$$
+\frac{\mathrm{d}L}{\mathrm{d}x}=2u\cdot(2x+3).
+$$
+
+$x=2$ 时 $u=4+6=10$，$L'=2\cdot 10\cdot(4+3)=140$。
+
+代码里 `y = x*x + 3*x` 就是 $u$；`L = y*y`。`L.backward()` 从 $L$ 往回：先 $\partial L/\partial y=2y=20$，再 $\partial y/\partial x=2x+3=7$，相乘 $140$，写入 `x.grad`。
+
+链式法则和 [导数章](/math/derivative/) 的乘积/复合完全同一件事。PyTorch 只是把每条运算登记成节点：乘法节点知道「左边贡献右边那个因子」。叶子 `x` 因 `requires_grad=True` 被留下；中间 `y` 默认不存 `.grad`，除非 `retain_grad()`。
+
+第二次 `backward` 前必须 `zero_()`：实现是**累加**梯度（为了梯度累积大 batch）。不清就变成 $280$、$420$……看起来像 bug。
+
+`torch.no_grad()` 包住的前向不建图。想象轨迹滚 50 步若建图，中间激活全留着，显存爆炸；那 50 步也不需要对世界模型反传时，就该关掉。
+
+:::
 
 ## 三、训练循环最小骨架
 

@@ -36,6 +36,12 @@ Launch 是机器人的**开机脚本 / 总装配单**：
 
 **Parameter 管“跑成什么样”，Launch 管“怎么把系统拉起来”。** 两者常一起用，但职责不同。
 
+::: details 逐步说明：Launch 在组合什么，以及为何用 Python 而不是一串 `&`（点击展开）
+
+shell 里 `ros2 run A & ros2 run B` 没有依赖顺序、没有统一参数、关一个不管另一个。Launch 描述图：节点、命名空间、重映射、参数、include 别的 launch。关 launch 可以拆掉整棵进程树。Python launch 能按条件（有没有 GPU、是不是仿真）分支。第 12 课的仿真栈就是 include + RViz，同一套思想放大。
+
+:::
+
 ## 常见疑问
 
 **Q：Launch 会替代 Parameter 吗？**  

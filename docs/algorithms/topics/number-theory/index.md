@@ -49,6 +49,14 @@ $$
 
 证明：$a^{M-1} \equiv 1 \pmod{M}$（费马小定理），两边同乘 $a^{-1}$。
 
+::: details 逐步推导：快速幂 $a^n\bmod M$，以及 $\gcd$ 与逆元（点击展开）
+
+$n$ 的二进制：$n=\sum b_k 2^k$。维护 $p\leftarrow a^{2^k}$，若 $b_k=1$ 则乘进答案。$O(\log n)$ 次模乘。费马：$M$ 质数、$a\not\equiv 0$，则 $a^{M-2}\equiv a^{-1}$。
+
+欧几里得：$\gcd(a,b)=\gcd(b,a\bmod b)$。扩展欧几里得找 $ax+by=\gcd$。$\gcd(a,M)=1$ 时 $ax\equiv 1\pmod M$，$x$ 即逆元。组合数 $C(n,k)=n!/(k!(n-k)!)$ 在模质数下把阶乘逆元打表，$O(n)$ 预处理后 $O(1)$ 查询。
+
+:::
+
 ### 1.3 中国剩余定理（CRT）
 
 对于一组同余方程组：

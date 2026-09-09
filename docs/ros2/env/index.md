@@ -8,6 +8,16 @@ order: 10
 
 搞清楚：ROS 装在哪、工作区是什么、为什么每次都要 `source`。
 
+## 为什么要先搞环境
+
+ROS 把「系统里那份 Humble」和「你写的包」分成两棵树。`source` 不是迷信，是把 `PATH`、`PYTHONPATH`、`AMENT_PREFIX_PATH` 指到正确的 `install/`，否则 `ros2 run` 找到的是旧包或找不到。conda 抢 Python 时，colcon 会链到另一套解释器，Humble 的消息类型对不上——所以脚本里把 `/usr/bin` 放到前面。
+
+::: details 逐步说明：overlay 是怎么叠起来的（点击展开）
+
+先 `source /opt/ros/humble/setup.bash`：官方库。再 `source $ROS_WS/install/setup.bash`：你的包**盖在**系统之上，同名可覆盖。只 source 工作区、忘了系统，依赖（`rclpy`、`std_msgs`）会缺。`build/` 可删重编；`install/` 才是运行时入口。`check_env.sh` 就是在查这三层有没有对上。
+
+:::
+
 ## 概念
 
 ### 发行版（distro）

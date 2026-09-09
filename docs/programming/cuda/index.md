@@ -9,6 +9,8 @@ order: 50
 
 > CUDA 是 NVIDIA 的 GPU 编程平台。对读本笔记而言：**先会把 Tensor 和 `nn.Module` 搬到 `device` 上**，比自己写 `.cu` 内核重要得多。张量见 [PyTorch](/programming/pytorch/)；层见 [nn](/programming/nn/)。没有 GPU 时，下面所有代码都应在 CPU 上照样跑通。
 
+设备错误的本质是：**一次运算的所有操作数必须住在同一块芯片上**。CPU 张量不能和 CUDA 张量相加。本章把「探测 → 搬家 → 同一 device 上算」写成可抄的三行，并说明 kernel 下标公式在干什么。
+
 ## 一、CPU 和 GPU 各适合什么
 
 - **CPU**：核少、擅长复杂分支、延迟低。本仓库默认路径。
@@ -60,6 +62,22 @@ __global__ void add(float* a, float* b, float* c, int n) {
 `<<<grid, block>>>` 启动成千上万个线程，每个线程算一个下标。PyTorch 的 `a + b` 在 CUDA 设备上就是在调类似的东西。自定义算子、融合 kernel、cuDNN 调优属于进阶，本笔记各章用现成算子即可。
 
 自己写 `.cu` 需要 NVIDIA 的 `nvcc`，和「pip 安装的 torch」不是同一件事。
+
+::: details 逐步说明：线程下标 $i$ 和「为什么小循环里来回 `.cuda()` 很贵」（点击展开）
+
+示意 kernel 里
+
+$$
+i = \texttt{blockIdx.x}\times\texttt{blockDim.x} + \texttt{threadIdx.x}.
+$$
+
+一块里有 `blockDim.x` 个线程（例如 256），第 `blockIdx.x` 块从全局下标 `blockIdx.x * 256` 开始。成千上万块覆盖 $n$ 个元素。`if (i < n)` 挡住末尾多出来的线程。PyTorch 的 `c = a + b` 在 CUDA 上就是这类逐元素 kernel；`a @ b` 则走切块 GEMM，远比 Python `for` 快。
+
+搬家贵，是因为要走 PCIe（或等效总线），带宽远低于显存内部。训练一步里：把一个 batch 搬上 GPU 一次，后面几十层都在卡上算，只在记录日志时把标量 loss `.item()` 回主机。若在 `for` 里对每个样本 `x.cuda()`，带宽会把 GPU 饿死。
+
+`Expected all tensors to be on the same device`：通常是 `model` 已经 `.to(cuda)`，但 DataLoader 出来的 batch 还在 CPU，或者某个 buffer 忘记搬。统一写成构造时 `device = ...`，所有新建张量 `device=device`，就很少踩。
+
+:::
 
 ## 五、混合精度与显存
 

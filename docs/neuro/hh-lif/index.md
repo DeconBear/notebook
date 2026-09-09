@@ -94,6 +94,24 @@ $$
 
 低于它永远到不了阈值；高于它周期放电。
 
+![LIF：漏电电容被电流充电，到阈值放电](./images/neuro-lif-b-rc.png)
+
+> **图解说明**：膜 = 电容 + 漏电阻。电流充电，电压碰到阈值就记一次尖峰并复位。右侧 HH 保留钠钾门控，尖峰有形状。
+
+::: details 逐步推导：LIF 的时间常数与流变阈值（点击展开）
+
+无外电流时 $\tau_m \dot V=-(V-V_{\mathrm{rest}})$，解是 $V(t)=V_{\mathrm{rest}}+(V_0-V_{\mathrm{rest}})e^{-t/\tau_m}$。$\tau_m=RC_m$：电容越大、漏电越弱，积得越慢。
+
+恒流 $I$ 时平衡点 $V_\infty=V_{\mathrm{rest}}+RI$。要能碰到 $V_{\mathrm{th}}$，必须 $V_\infty>V_{\mathrm{th}}$，即
+
+$$
+I>\frac{V_{\mathrm{th}}-V_{\mathrm{rest}}}{R}=I_{\mathrm{rheobase}}.
+$$
+
+高于阈值时，从复位积到阈值的时间就是发放周期。HH 不设硬阈值：钠电导的正反馈让 $V$ 自己跑出尖峰形状，再靠钾和钠失活拉回来。LIF 把这整段折叠成「到了就打点」，网络规模才能上去。
+
+:::
+
 ![LIF 电压轨迹](./images/lif_trace.png)
 
 ![LIF I–f](./images/lif_fi.png)

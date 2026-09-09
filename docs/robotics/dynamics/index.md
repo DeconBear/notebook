@@ -26,6 +26,8 @@ $$
 
 图解里杆可以有分布质量和转动惯量；**demo 把质量放在每根杆末端**，推导短一截，结构与带 $I_z$、质心距 $\ell_c$ 的教材完全一样。
 
+公式看结论；$T_2$ 交叉项和 $M,H$ 从欧拉-拉格朗日怎么收，点开推导。
+
 ![拉格朗日 2R](./images/rob-02-lagrange.png)
 
 > **图解说明**：串联 2R，力矩标在关节 1、2；动能、势能、欧拉-拉格朗日。重力竖直向下。图示为质心与惯量；demo 把质量放在杆端。
@@ -67,6 +69,35 @@ $$
 （若你的零位是水平而势能用 $\sin$，要对一下坐标：demo 的重力项用的是 $\cos$，与「$y$ 向上、$\theta$ 从 $x$ 轴起」配套——见下一节 $H$ 里的 $g_1,g_2$。）
 
 把 $L=T-V$ 代入欧拉-拉格朗日，对 $\theta_1,\theta_2$ 各写一行，再把含 $\ddot\theta$ 的项收到左边，就得到标准形。
+
+![动能怎么写：两个点质量的 2R](./images/rob-02b-energy.png)
+
+> **图解说明**：质量集中在肘与手。$|v_1|=\ell_1|\dot\theta_1|$；手的速度由两关节共同贡献。零位水平时重力力臂最大，公式里出现 $\cos$。
+
+::: details 逐步推导：杆 2 的动能交叉项 $2\ell_1\ell_2\cos\theta_2$（点击展开）
+
+手的位置就是正运动学 $p_2$。对时间求导（链式法则，与雅可比第一列、第二列点乘 $\dot\theta$ 相同）：
+
+$$
+\begin{aligned}
+\dot x &= -\ell_1 s_1\dot\theta_1-\ell_2 s_{12}(\dot\theta_1+\dot\theta_2),\\
+\dot y &= \ell_1 c_1\dot\theta_1+\ell_2 c_{12}(\dot\theta_1+\dot\theta_2).
+\end{aligned}
+$$
+
+平方相加。与工作空间那次推导一样，交叉项会出现 $\cos\theta_2$：
+
+$$
+|v_2|^2=\ell_1^2\dot\theta_1^2+\ell_2^2(\dot\theta_1+\dot\theta_2)^2+2\ell_1\ell_2\cos\theta_2\,\dot\theta_1(\dot\theta_1+\dot\theta_2).
+$$
+
+几何阅读：$\ell_1\dot\theta_1$ 是肘的速率；$\ell_2(\dot\theta_1+\dot\theta_2)$ 是手相对肘的速率（绝对角速度 × 第二杆长）。两段速度的夹角就是 $\theta_2$，点积带 $\cos\theta_2$。伸直（$\theta_2=0$，$\cos=1$）时两段速度几乎同向，动能最大——「一起甩」更费劲；折叠时部分抵消。
+
+$T_2=\tfrac12 m_2|v_2|^2$ 就是正文那一行。$T_1$ 更简单：肘绕定点转，$|v_1|=\ell_1|\dot\theta_1|$。
+
+势能：取 $y$ 向上为正，高度就是 $y$ 坐标。demo 的零位是水平（$\theta=0$ 沿 $+x$），重力沿 $-y$，所以 $V$ 用 $\sin$（高度）而重力力矩（$-\partial V/\partial\theta$）里出现 $\cos$。许多教材零位是竖直悬挂，公式差一个 $\sin\leftrightarrow\cos$。**抄系数前先看零位。**
+
+:::
 
 ---
 
@@ -112,6 +143,49 @@ $H=H_{\mathrm{cor}}+g$。速度为 0 时 $H$ 只剩重力——这就是「重�
 阻尼写成 $-c\dot q$ 加进右端，对比「保守系统永远摆」和「有摩擦停下」。
 
 [现代控制](/control/modern/) 的状态若包含 $q,\dot q$，线性化后的 $A,B$ 就是这个非线性式在平衡点的切线。
+
+![标准形 M(q) q̈ + H = τ](./images/rob-02c-mass-h.png)
+
+> **图解说明**：$M$ 对称正定，2R 中只依赖 $\theta_2$。正动力学由 $\tau$ 求加速度；逆动力学由计划好的运动求 $\tau$（控制更常用）。
+
+::: details 逐步推导：欧拉-拉格朗日怎样把 $\ddot\theta$ 收到 $M(q)$ 里（点击展开）
+
+对广义坐标 $q_i$，
+
+$$
+\frac{\mathrm{d}}{\mathrm{d}t}\frac{\partial L}{\partial \dot q_i}-\frac{\partial L}{\partial q_i}=\tau_i,\quad L=T-V.
+$$
+
+动能对速度是二次型 $T=\tfrac12\dot q^\top M(q)\dot q$。于是
+
+$$
+\frac{\partial T}{\partial \dot q}=M(q)\dot q.
+$$
+
+再对时间求导（乘积法则）：$M\ddot q+\dot M\dot q$。$\dot M$ 来自 $M$ 对 $q$ 的依赖，里面全是 $\dot q$ 的二次项，加上 $-\partial T/\partial q$ 与 $+\partial V/\partial q$，一并叫做 $H(q,\dot q)$（科氏 / 离心 + 重力）。含 $\ddot q$ 的只剩 $M\ddot q$，所以
+
+$$
+M(q)\ddot q+H(q,\dot q)=\tau.
+$$
+
+对点质量 2R，把 $T_1+T_2$ 写成 $\tfrac12\sum M_{ij}\dot\theta_i\dot\theta_j$，对照系数：
+
+- $\dot\theta_1^2$ 的系数 $\times 2$ 给出 $M_{11}=(m_1+m_2)\ell_1^2+m_2\ell_2^2+2m_2\ell_1\ell_2\cos\theta_2$；
+- $\dot\theta_2^2$ 只来自 $m_2\ell_2^2(\dot\theta_1+\dot\theta_2)^2$ 里的 $\dot\theta_2^2$，故 $M_{22}=m_2\ell_2^2$；
+- 交叉 $\dot\theta_1\dot\theta_2$ 给出 $M_{12}=M_{21}$。
+
+$M$ 只依赖 $\theta_2$：绕基座转一圈，两杆相对姿势不变，惯性在关节坐标里长得一样。
+
+重力项是 $-\partial V/\partial q$（注意 $L=T-V$ 里对 $q$ 的偏导带负号，移到左边变成 $+g(q)$）。与代码 `h_vector` 一致，$\theta=0$ 水平：
+
+$$
+g_1=(m_1+m_2)g\ell_1\cos\theta_1+m_2 g\ell_2\cos(\theta_1+\theta_2),\quad
+g_2=m_2 g\ell_2\cos(\theta_1+\theta_2).
+$$
+
+静止时 $\ddot q=\dot q=0$，要维持姿态必须 $\tau=g(q)$——这就是重力补偿。
+
+:::
 
 ---
 

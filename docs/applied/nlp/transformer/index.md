@@ -11,7 +11,7 @@ legacyPaths:
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
 
-> 注意力就是你告诉我"看哪"，我去看。Transformer 让每个词同时"看"所有词——不需要一步一步传递信息。
+> 注意力就是你告诉我"看哪"，我去看。Transformer 让每个词同时"看"所有词——不需要一步一步传递信息。RNN 的记忆瓶颈见 [序列模型](/applied/nlp/sequence-models/)；BERT/GPT 怎么用这块积木见 [预训练](/applied/nlp/pretrained/)。本章把 $QK^\top/\sqrt{d_k}$ 和因果掩码写到能手算一个 $3\times 3$ 的注意力矩阵。
 
 ---
 
@@ -73,6 +73,8 @@ Luong et al. (2015) 提出了更简洁的乘法形式：
 
 ![Attention 核心机制](./images/16-01-attention-mechanism.png)
 
+> **图解说明**：解码每一步对编码器所有位置打分，softmax 成权重，加权求和得到这一步专用的 $c_t$。不再把整句塞进一个固定向量。
+
 ---
 
 ## 三、Self-Attention："Attention is All You Need"
@@ -112,6 +114,18 @@ $$
 - $\times V$：用注意力权重对 Values 加权求和，得到最终的输出 (n, d_v)
 
 ![QKV 详解](./images/16-02-qkv-explained.png)
+
+> **图解说明**：同一串词各自乘 $W^Q,W^K,W^V$。Query 去对 Key 做点积，得到「看谁」，再去加权 Value。
+
+::: details 逐步推导：$n=3$、$d_k=2$ 的缩放点积，以及掩码把未来打成 0（点击展开）
+
+三个位置，简化 $Q=K=\begin{pmatrix}1&0\\0&1\\1&1\end{pmatrix}$，$V$ 的行当作三个值向量。$QK^\top$ 的 $(i,j)$ 是第 $i$ 个 query 和第 $j$ 个 key 的点积。$d_k=2$，$\sqrt{d_k}=\sqrt{2}$。第 0 行 softmax 之前除 $\sqrt{2}$，再对三个分数归一化，得到「词 0 看词 0/1/2 各多少」。加权 $V$ 的三行，就是位置 0 的输出。
+
+**因果掩码。** 生成第 $i$ 个词时不能看 $j>i$。在 $QK^\top$ 的严格上三角填 $-10^9$，softmax 后那些位置 $\approx 0$。下三角（含对角）仍是正常分数。训练时整句并行：一行一个位置，靠掩码保证没有偷看，比 RNN 逐步前向快得多。
+
+$\sqrt{d_k}$：若 $q,k$ 坐标方差 1，点积方差 $\approx d_k$。$d_k=64$ 时点积动辄几十，softmax 变 one-hot。除开之后方差回到 1。
+
+:::
 
 ### 3.3 为什么要除以 $\sqrt{d_k}$？
 
@@ -157,6 +171,8 @@ $$
 > 不同头能学会关注不同的模式：有的头关注句法结构，有的头关注共指关系，有的头关注语义关联。这也是 Transformer 可解释性研究的重要入口。
 
 ![多头注意力](./images/16-03-multi-head-attention.png)
+
+> **图解说明**：$h$ 套不同的投影，各看一种关系，拼起来再乘 $W^O$。总计算量与单头、维度 $d_{\mathrm{model}}$ 时同阶，因为每头 $d_k=d_{\mathrm{model}}/h$。
 
 ---
 
@@ -215,6 +231,8 @@ LayerNorm
 3. **残差连接**：每个子层后都有残差连接（$x + \text{Sublayer}(x)$）。残差连接让梯度可以直通底层，是训练深层 Transformer（几十到几百层）的关键。
 
 ![Transformer Block 完整结构](./images/16-04-transformer-block.png)
+
+> **图解说明**：Pre-LN → 自注意力 + 残差 → Pre-LN → FFN + 残差。残差把梯度送回浅层，和 [ResNet](/applied/cv/architectures/) 是同一句话。
 
 ---
 

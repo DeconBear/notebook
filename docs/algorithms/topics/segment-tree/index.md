@@ -37,6 +37,14 @@ $$
 - $\text{lowbit}(6) = \text{lowbit}(110_2) = 010_2 = 2$
 - $\text{lowbit}(8) = \text{lowbit}(1000_2) = 1000_2 = 8$
 
+::: details 逐步推导：$\mathrm{lowbit}(x)=x\&(-x)$，以及前缀和如何 $O(\log n)$ 拼起来（点击展开）
+
+补码里 $-x=\sim x+1$，会把最低位 1 以下翻成 1 再进位，与 $x$ 相与只留下那一位。`tree[x]` 管区间 $(x-\mathrm{lowbit}(x),x]$。前缀 $i$ 不断减 lowbit，区间不相交且覆盖 $[1,i]$，次数等于 $i$ 的二进制 1 的个数，故 $O(\log n)$。更新沿 $i+=\mathrm{lowbit}(i)$ 爬，覆盖所有包含 $i$ 的 BIT 节点。
+
+线段树每个节点管区间中点劈开的两半，查询/更新 $O(\log n)$ 个结点。比 BIT 灵活（任意区间最值、懒标记区间加），常数更大。
+
+:::
+
 ### 1.3 实现
 
 **更新操作**：$i \leftarrow i + \text{lowbit}(i)$ 向上爬树

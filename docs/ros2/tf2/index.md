@@ -33,6 +33,25 @@ TF 回答的是：**“这个零件相对那个零件，在空间里偏了多少
 
 本课是**静态外参**（螺丝拧死的安装位置）：`base_link → sensor_link` 固定为前方 0.2 m、上方 0.1 m。轮子滚动带来的位姿变化属于**动态 TF**，以后里程计/定位会发。
 
+::: details 逐步推导：静态外参怎样写成齐次变换，lookup 在求什么（点击展开）
+
+传感器相对车体：沿车头 $x=0.2\,\mathrm{m}$、向上 $z=0.1\,\mathrm{m}$，无旋转。齐次变换（与 [运动学](/robotics/kinematics/) 同一套）
+
+$$
+T_{\mathrm{base}}^{\mathrm{sensor}}
+=
+\begin{pmatrix}
+1 & 0 & 0 & 0.2 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 0.1 \\
+0 & 0 & 0 & 1
+\end{pmatrix}.
+$$
+
+点在传感器系是 $p_s$，变到车体系 $p_b=R p_s+t$。TF2 存的是带时间戳的树：lookup `base_link`←`sensor_link` 就是查这条边（或链上多边连乘）。静态 TF 走 `/tf_static`，不随时间变。动态里程计每拍更新 `odom`→`base_link`。名字写错或 broadcaster 未起，lookup 就说 frame 不存在——不是数学错了，是树没接上。
+
+:::
+
 ## 常见疑问
 
 **Q：TF 是一种 Topic 吗？**  

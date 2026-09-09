@@ -47,6 +47,24 @@ $$
 \text{可微代理做法：} \quad a^* = \arg\min_a \|\mathcal{G}_\theta(a) - u_{\text{target}}\|^2 \quad (\text{可以直接对 } a \text{ 求梯度，用 Adam/SGD 优化})
 $$
 
+**本 demo 数字：** 代理 MLP 把标量 $a$ 映到解曲线 $u(x)$，训 $2000$ epoch，`lr=2e-3`。黑盒网格搜索在 $a\in[0.5,3.5]$ 上评 $200$ 个点；梯度法从 $a_{\mathrm{init}}=2.0$ 走 $60$ 步，`lr=0.15`。种子 `42`。终端打印真实 $a$、两种方法找到的 $a$、前向次数和 MSE。
+
+::: details 逐步推导：可微代理上 $\nabla_a\|G_\theta(a)-u_{\mathrm{target}}\|^2$ 怎样反传（点击展开）
+
+令标量损失 $\ell(a)=\|G_\theta(a)-u_{\mathrm{target}}\|_2^2$。链式法则
+
+$$
+\frac{\mathrm{d}\ell}{\mathrm{d}a}
+=2\bigl(G_\theta(a)-u_{\mathrm{target}}\bigr)^\top
+\frac{\partial G_\theta}{\partial a}.
+$$
+
+$G_\theta$ 是神经网络，$a$ 当作输入（`requires_grad=True`），一次反向就得到 $\partial G/\partial a$。更新 $a\leftarrow a-\eta\,\mathrm{d}\ell/\mathrm{d}a$ 就是梯度逆向设计。网格搜索没有 $\partial G/\partial a$，只能扫一遍 $200$ 个 $a$，成本随设计维数指数涨（又回到 as01 的 $N^d$）。
+
+不可靠之处：若 $u_{\mathrm{target}}$ 对应的真 $a$ 落在代理训练分布外，$G_\theta$ 的梯度会指向「网络以为对、真求解器不对」的点。工业流程要用真模拟器抽检、主动加数据。demo 的 $a$ 仍是一维，只为把「前向次数 vs 梯度步数」对照画出来。
+
+:::
+
 ![可微逆向设计 vs 黑盒网格搜索](./images/as08-03-inverse-design.png)
 
 > **图解说明**：左侧黑盒搜索只能反复「试参数 → 跑模拟」；右侧可微代理把模拟器换成神经网络后，损失可对设计参数反传，用梯度下降直接优化。维度越高，相对黑盒网格搜索的优势越明显（呼应 as01 的维度灾难）。

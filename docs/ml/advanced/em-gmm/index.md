@@ -9,8 +9,7 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
-
-> 当数据中有"看不见的变量"，如何估计模型参数？EM 算法给出了一个优雅的迭代答案——而 GMM 就是 EM 最经典的应用。
+> 当数据中有"看不见的变量"，如何估计模型参数？EM 保证似然不降；GMM 是最常见的软聚类。`demo.py` 会画椭圆成分从乱到贴合数据。责任度 $\gamma_{ik}$ 与 Jensen 下界在折叠里。
 
 ---
 
@@ -61,6 +60,24 @@ M 步：在固定 $q$ 下最大化 ELBO——这必然使得对数似然不降�
 EM 算法保证 $\mathcal{L}(\theta^{(t+1)}) \ge \mathcal{L}(\theta^{(t)})$，即对数似然单调递增。
 
 ![EM 算法几何直觉：蓝色曲线表示真正的对数似然 L(θ)，若干条不同颜色的下界曲线（ELBO）在各个 θ^old 处与 L(θ) 相切。M 步找到每条 ELBO 的最大值（红色箭头），对应的 L(θ) 值更高。标注："E 步：构造紧下界（相切）；M 步：最大化下界"](./images/ml12-01-em-algorithm-geometry.png)
+
+> **图解说明**：蓝线是真 $\log P(X\mid\theta)$。E 步在当前点贴一条下界（ELBO），M 步沿下界走到更高处，再贴新的下界。
+
+**数字例。** 一维两点 $x=0$ 与 $x=10$，$K=2$。E 步后若 $\gamma_{1,A}\approx 1$、$\gamma_{2,B}\approx 1$，M 步 $\mu_A\approx 0$、$\mu_B\approx 10$——退化为硬 K-Means。若两点离得很近，责任度会是 $0.5/0.5$，两个成分重叠。卡点：奇异协方差（一个点独占一个成分，$\Sigma\to 0$）——加正则或绑协方差。
+
+::: details 逐步推导：Jensen 下界与 GMM 的 $\gamma_{ik}$（点击展开）
+
+$\log\sum_Z P(X,Z\mid\theta)=\log\sum_Z q(Z)\frac{P(X,Z\mid\theta)}{q(Z)}\ge\sum_Z q\log\frac{P}{q}$（Jensen，$\log$ 凹）。取 $q=P(Z\mid X,\theta^{\mathrm{old}})$ 时等号，ELBO 与 $\mathcal L$ 相切。M 步抬 ELBO，$\mathcal L$ 至少不降。
+
+GMM：$z_i$ 是成分编号。E 步
+
+$$
+\gamma_{ik}=P(z_i=k\mid x_i)=\frac{\pi_k\mathcal N(x_i\mid\mu_k,\Sigma_k)}{\sum_\ell\pi_\ell\mathcal N(x_i\mid\mu_\ell,\Sigma_\ell)}.
+$$
+
+M 步把 $\gamma_{ik}$ 当权重：$\pi_k=N_k/N$，$N_k=\sum_i\gamma_{ik}$，$\mu_k=\sum_i\gamma_{ik}x_i/N_k$，$\Sigma_k$ 同理加权协方差。K-Means 是 $\gamma\in\{0,1\}$ 的硬版本。
+
+:::
 
 ---
 
@@ -165,6 +182,10 @@ AIC 选 K 通常偏大（倾向复杂模型）→ 适合预测任务
 BIC 选 K 通常适中 → 适合模型解释和结构发现
 两者不一致时 → 取两者的"共识区间"内的 K
 ```
+
+**对照 demo.py。** 合成的几坨高斯，EM 迭代图里椭圆应从乱转到罩住各坨。责任度 $\gamma_{ik}$ 对边界点接近 0.5。$K$ 选大了会出现扁到几乎一条线的成分（奇异）。卡点：对数似然应单调不降，若某步下降，多半是空成分或 $\Sigma$ 没对称化。
+
+---
 
 ---
 

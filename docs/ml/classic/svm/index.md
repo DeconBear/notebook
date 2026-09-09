@@ -9,6 +9,7 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> 能分开的直线有无数条，SVM 挑**最宽那条马路**。`demo.py` 用 SGD + hinge 实现线性 SVM（$C$ 扫几档），再用 sklearn 的 RBF 看 $\gamma$。几何间隔 $2/\|w\|$ 与对偶里的内积，推导在折叠中。
 
 ## 1. 最大间隔分类器
 
@@ -61,6 +62,20 @@ $$
 $$
 
 ![最大间隔分类器示意图：展示分类超平面、两个间隔边界（+1 和 -1）、支持向量（圈出）、以及间隔宽度 2/||w||](./images/ml04-01-maximum-margin.png)
+
+> **图解说明**：中间实线 $w^\top x+b=0$，虚线 $\pm 1$。只有踩在虚线上的点（支持向量）真正决定 $w$。马路宽 $2/\|w\|$。
+
+**数字例。** 正类 $(1,1)$、$(2,2)$，负类 $(-1,-1)$。对称解 $w\propto(1,1)$。约束 $y_i(w^\top x_i+b)\ge 1$ 在最近点取等。$\|w\|$ 越小马路越宽。$C\to\infty$ 时 demo 近似硬间隔；$C=0.01$ 时允许点掉进间隔里，边界更钝。
+
+::: details 逐步推导：从「最大化间隔」到 $\min \tfrac12\|w\|^2$ 与对偶（点击展开）
+
+点到平面距离 $|w^\top x+b|/\|w\|$。令所有点满足 $y(w^\top x+b)\ge 1$（这是缩放自由度：$(w,b)$ 与 $(2w,2b)$ 是同一平面，把最小函数间隔钉成 1）。于是几何间隔 $=1/\|w\|$，最大化它 $\Leftrightarrow$ 最小化 $\tfrac12\|w\|^2$。
+
+拉格朗日 $\mathcal L=\tfrac12\|w\|^2-\sum_i\alpha_i[y_i(w^\top x_i+b)-1]$。$\partial_w\mathcal L=0$ 给出 $w=\sum_i\alpha_i y_i x_i$；$\partial_b\mathcal L=0$ 给出 $\sum_i\alpha_i y_i=0$。代回去只剩 $\alpha$ 和对 $x_i^\top x_j$ 的依赖——换成 $K(x_i,x_j)$ 就是核技巧，不必写出 $\phi(x)$。
+
+Hinge：$\max(0,1-yf)$。$yf\ge 1$ 时子梯度对 $w$ 只有正则项 $w$（demo 里 `lambda_*w`）；掉进间隔或分错才累加 $-yx$。这就是 `LinearSVM.fit` 的 if/else。
+
+:::
 
 ### 1.3 对偶问题与 KKT 条件（几何直觉）
 
@@ -249,6 +264,10 @@ sv_mask = (margin >= 0.99) & (margin <= 1.01)
 ```
 
 在 SGD 方法中，所有满足 $y_i(\mathbf{w}^T \mathbf{x}_i + b) \leq 1$ 的样本都会贡献梯度，使它们"被推向"决策边界。最终落在间隔边界上的就是支持向量。
+
+**对照 demo.py。** 线性可分点云上 $C=10^5$ 近似硬间隔，支持向量少、马路宽。$C$ 减小后更多点掉进间隔。moons/circles 上线性核失败，RBF 能弯。$\gamma$ 过大决策岛碎成一块块。卡点：标签必须是 $\pm 1$ 不是 $\{0,1\}$，否则 hinge 的 $y\cdot f$ 符号全错。
+
+---
 
 ---
 

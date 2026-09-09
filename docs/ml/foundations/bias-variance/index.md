@@ -9,6 +9,7 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> 训练误差低不算赢，**没见过的点**也要准。`demo.py` 用 $n=80$ 个点拟合 $y=\sin(2\pi x)+\varepsilon$（$\sigma=0.3$），多项式次数从 1 扫到 15：一次欠拟合，三次附近刚好，十五次把噪声也背下来。正文留分解公式；推导在折叠里。
 
 ## 1. 过拟合与欠拟合：经典的「度」的问题
 
@@ -29,6 +30,8 @@ $$
 $$
 
 ![欠拟合 vs 正常拟合 vs 过拟合：三栏对比不同多项式次数对数据拟合的效果](./images/04-01-underfit-overfit.png)
+
+> **图解说明**：左直线穿不过正弦；中三次多项式跟着弯；右高次多项式在训练点上抖得厉害。
 
 ### 1.2 为什么会过拟合？
 
@@ -85,36 +88,33 @@ $$
 
 ![Bias-Variance 权衡：经典 U 形曲线展示偏差、方差和总误差随模型复杂度的变化](./images/04-02-bias-variance-tradeoff.png)
 
-### 2.3 数学推导（选读）
-
-设真实函数为 $f(x)$，训练得到的模型为 $\hat{f}(x)$，$y = f(x) + \epsilon$ 其中 $\mathbb{E}[\epsilon] = 0$，$\text{Var}(\epsilon) = \sigma^2$。
-
-展开 MSE 期望：
+结论（对固定 $x$ 取「换一批训练集」的期望）：
 
 $$
-\begin{aligned}
-\mathbb{E}[(y - \hat{f})^2]
-&= \mathbb{E}[(f + \epsilon - \hat{f})^2] \\
-&= \mathbb{E}[(f - \hat{f})^2] + \mathbb{E}[\epsilon^2] + 2\mathbb{E}[\epsilon(f - \hat{f})] \\
-&= \mathbb{E}[(f - \hat{f})^2] + \sigma^2 \quad (\because \mathbb{E}[\epsilon] = 0)
-\end{aligned}
+\mathbb{E}[(y-\hat f(x))^2]=\mathrm{Bias}^2+\mathrm{Var}+\sigma^2.
 $$
 
-接下来，引入 $\mathbb{E}[\hat{f}]$（在所有可能训练集上 $\hat{f}$ 的期望），通过加减这个中间量：
+`demo.py` 不能真的换无穷多训练集，于是用**训练 MSE vs 验证 MSE 随次数变化**当代理：次数升高时训练误差单调降，验证误差先降后升——U 形的右边就是方差在主导。
+
+::: details 逐步推导：期望平方误差拆成偏差² + 方差 + 噪声（点击展开）
+
+$y=f+\varepsilon$，$\mathbb E[\varepsilon]=0$，$\mathrm{Var}(\varepsilon)=\sigma^2$，$\hat f$ 与 $\varepsilon$ 独立。
 
 $$
-\begin{aligned}
-\mathbb{E}[(f - \hat{f})^2]
-&= \mathbb{E}[(f - \mathbb{E}[\hat{f}] + \mathbb{E}[\hat{f}] - \hat{f})^2] \\
-&= (f - \mathbb{E}[\hat{f}])^2 + \mathbb{E}[(\mathbb{E}[\hat{f}] - \hat{f})^2] + 2(f - \mathbb{E}[\hat{f}])\mathbb{E}[\mathbb{E}[\hat{f}] - \hat{f}]
-\end{aligned}
+\mathbb E[(y-\hat f)^2]=\mathbb E[(f-\hat f+\varepsilon)^2]=\mathbb E[(f-\hat f)^2]+\sigma^2.
 $$
 
-由于 $\mathbb{E}[\mathbb{E}[\hat{f}] - \hat{f}] = 0$，交叉项消失。最终得到：
+令 $\bar f=\mathbb E[\hat f]$（所有训练集上的平均模型）。把 $f-\hat f=(f-\bar f)+(\bar f-\hat f)$：
 
 $$
-\mathbb{E}[(y - \hat{f})^2] = \underbrace{\text{Bias}[\hat{f}]^2}_{\text{偏差}^2} + \underbrace{\text{Var}[\hat{f}]}_{\text{方差}} + \underbrace{\sigma^2}_{\text{不可约误差}}
+\mathbb E[(f-\hat f)^2]=(f-\bar f)^2+\mathbb E[(\bar f-\hat f)^2],
 $$
+
+交叉项 $\mathbb E[\bar f-\hat f]=0$。第一项是偏差²（模型家族太笨，平均起来也对不齐 $f$），第二项是方差（换数据模型乱跳）。demo 的噪声标准差 $0.3$，所以不可约误差大约 $0.09$，验证 MSE 再怎么调也不会稳定低于这个量级。
+
+**数字直觉。** 一次多项式：几乎每份数据都学成「略斜的直线」，偏差大、方差小。十五次：每份数据都能穿过训练点，平均曲线也许还行，但单次实现抖得很——方差大。
+
+:::
 
 ---
 
@@ -140,7 +140,7 @@ $$
 \nabla_{\mathbf{w}} J_{\text{Ridge}} = \nabla_{\mathbf{w}} J + 2\lambda \mathbf{w}
 $$
 
-这个额外的 $2\lambda \mathbf{w}$ 项也被称为**权重衰减（weight decay）**，因为它在每次更新中都把权重往 0 的方向「拉」了一把。
+这个额外的 $2\lambda \mathbf{w}$ 项也被称为**权重衰减（weight decay）**，因为它在每次更新中都把权重往 0 的方向「拉」了一把。Ridge 还有闭式解 $(X^\top X+\lambda I)^{-1}X^\top y$——对角加上 $\lambda$ 后一定可逆。`demo.py` 的高次多项式正是靠这个把系数路径压扁。
 
 ### 3.2 L1 正则化（Lasso 回归）
 
@@ -155,6 +155,8 @@ $$
 **几何直觉**：L1 的约束区域在参数空间中是菱形（而不是圆形）。损失函数的等高线与菱形的角（坐标轴上）最先接触的概率最大，而落在坐标轴上意味着某些权重精确为 0。
 
 ![L1 vs L2 正则化：几何视角对比圆形约束和菱形约束对稀疏解的影响](./images/04-03-l1-vs-l2-geometry.png)
+
+> **图解说明**：等高线先碰到菱形尖角 → 某些 $w_j=0$（Lasso）；碰到圆 → 所有分量一起缩小（Ridge）。偏置项不要加正则，`demo.py` 里 `dw_reg[0]=0`。
 
 ### 3.3 ElasticNet
 
@@ -194,6 +196,8 @@ K-Fold 交叉验证（K-Fold Cross-Validation）是选择超参数的标准方�
 3. 报告 $K$ 次验证性能的平均值
 
 ![K-Fold 交叉验证：5 折交叉验证的完整流程示意](./images/04-04-kfold-cross-validation.png)
+
+> **图解说明**：每一折轮流当验证集。报告的是 $K$ 次平均，不是你碰巧划到的那一次。
 
 ### 4.2 如何选择 K
 
@@ -239,6 +243,8 @@ K-Fold 交叉验证（K-Fold Cross-Validation）是选择超参数的标准方�
 4. **集成方法**：Bagging、随机森林等方法通过平均多个模型降低方差
 5. **交叉验证**：确保评估结果的可靠性
 
+**对照 demo.py。** $n=80$，$y=\sin(2\pi x)+0.3\varepsilon$。一次多项式：训练/验证 MSE 都高。三次附近验证最低。十五次：训练几乎贴点，验证翘起来。Ridge 把十五次的系数往 0 拉，验证曲线会再降一截。K 折选 $\lambda$ 时，报告的是折平均，不是某一折的运气。卡点：$\lambda$ 扫对数网格（`logspace`），线性网格会在大 $\lambda$ 处浪费。
+
 ---
 
 ## 本章总结
@@ -252,6 +258,8 @@ Bias-Variance 权衡是理解机器学习泛化性能的核心框架：
 5. **双重下降** 提醒我们，传统的 U 形曲线可能不适用于极端过参数化的现代模型
 
 掌握这一章，你就掌握了机器学习模型调优的「内功心法」——不是盲目的试参数，而是有理有据地诊断和改进。
+
+**卡点。** (1) 用测试集调 $\lambda$ = 泄漏，测试误差会虚低。 (2) 多项式特征 $x^{15}$ 在 $x\in[0,1]$ 还好，若 $x$ 到 10，$10^{15}$ 会让正规方程数值炸掉，先标准化。 (3) $\lambda$ 太大：所有 $w\to 0$，又欠拟合——demo 的系数路径图右端就是一条贴零的线。
 
 ---
 

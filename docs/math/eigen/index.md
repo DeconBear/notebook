@@ -33,6 +33,31 @@ $\lambda$ 是特征值，$v$ 是特征向量。旋转 $90^\circ$ 的矩阵**没�
 
 对角化 $A=Q\Lambda Q^{-1}$。对称时 $Q$ 可取正交，$A=Q\Lambda Q^\top$，换到主轴上乘法变成逐分量乘 $\lambda_i$。
 
+![特征向量：方向不变，只被拉长](./images/math-eig-b-stretch.png)
+
+> **图解说明**：单位圆被对称矩阵拉成椭圆。橙箭头在特征向上只缩放；绿箭头被拧离自己的直线。
+
+::: details 逐步推导：$2\times 2$ 对称矩阵的特征多项式（点击展开）
+
+$Av=\lambda v$ 改写 $(A-\lambda I)v=0$，要非零 $v$，必须 $\det(A-\lambda I)=0$。对
+
+$$
+A=\begin{pmatrix}a&b\\ b&c\end{pmatrix},\quad
+A-\lambda I=\begin{pmatrix}a-\lambda&b\\ b&c-\lambda\end{pmatrix},
+$$
+
+行列式 $(a-\lambda)(c-\lambda)-b^2=\lambda^2-(a+c)\lambda+(ac-b^2)$。求根公式给出正文的
+
+$$
+\lambda=\frac{a+c\pm\sqrt{(a-c)^2+4b^2}}{2}.
+$$
+
+判别式 $(a-c)^2+4b^2\ge 0$，对称 $2\times 2$ **永远有两个实特征**。demo 的 $A=\begin{pmatrix}3&1\\1&2\end{pmatrix}$：$a+c=5$，判别式 $1+4=5$，$\lambda=(5\pm\sqrt5)/2$，大约 $3.618$ 与 $1.382$。幂迭代盯住较大的那个：反复 $v\leftarrow Av/\|Av\|$，因为 $A^k v$ 里 $\lambda_{\max}^k$ 压倒一切。
+
+几何：$x^\top A x=1$ 在主轴坐标里是 $\lambda_1 y_1^2+\lambda_2 y_2^2=1$，正定（$\lambda>0$）时是椭圆，半轴 $1/\sqrt{\lambda_i}$。
+
+:::
+
 ---
 
 ## 二、幂迭代：最大的那个自己会冒出来

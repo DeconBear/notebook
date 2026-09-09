@@ -9,6 +9,7 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> Bagging 并行降方差；Boosting 串行降偏差：下一棵树专治上一棵栽过的点。`demo.py` 跑 AdaBoost 权重变化和残差拟合。$\alpha_m=\tfrac12\ln\frac{1-\varepsilon}{\varepsilon}$ 的来源在折叠里。
 
 ## 1. Boosting 的哲学：从弱学习器到强学习器
 
@@ -76,6 +77,22 @@ $$
 - 如果某一轮的 $\epsilon_m = 0$（完美分类），$\alpha_m \to \infty$——这意味着训练已经完成
 
 ![学习器权重 alpha_m 随错误率 epsilon_m 变化的曲线：epsilon 越小 alpha 越大](./images/ml07-02-adaboost-alpha-curve.png)
+
+> **图解说明**：$\varepsilon=0.5$ 时 $\alpha=0$（扔硬币的 stump 没发言权）；$\varepsilon\to 0$ 时 $\alpha\to+\infty$。
+
+**数字例。** 100 个样本等权 $0.01$。某 stump 错了 20 个，$\varepsilon=0.2$，$\alpha=\tfrac12\ln(0.8/0.2)=\tfrac12\ln 4\approx 0.693$。分错的权重乘 $e^{0.693}\approx 2$，分对的乘 $e^{0}$（若按 $\mathbb I(\text{error})$ 形式）或乘 $e^{-\alpha}$（对称形式）。归一化后再训下一棵。$\varepsilon\ge 0.5$ 时 demo 应提前停或翻转标签。
+
+::: details 逐步推导：指数损失一步得到 $\alpha=\frac12\ln\frac{1-\varepsilon}{\varepsilon}$（点击展开）
+
+前向模型 $F_m=F_{m-1}+\alpha h$，$h(x)\in\{\pm 1\}$。指数损失 $\sum_i e^{-y_i F_m(x_i)}=\sum_i w_i^{(m)} e^{-y_i\alpha h(x_i)}$，其中 $w_i^{(m)}=e^{-y_i F_{m-1}}$。把对错拆开：$e^{-\alpha}\sum_{\text{对}}w + e^{\alpha}\sum_{\text{错}}w$。令 $W=\sum w$、$W_{\text{err}}=\sum_{\text{错}}w$，$\varepsilon=W_{\text{err}}/W$。对 $\alpha$ 求导：
+
+$$
+-e^{-\alpha}(1-\varepsilon)+e^{\alpha}\varepsilon=0\implies e^{2\alpha}=\frac{1-\varepsilon}{\varepsilon}\implies\alpha=\frac12\ln\frac{1-\varepsilon}{\varepsilon}.
+$$
+
+GBDT 把损失换成任意可微 $L$：在 $F_{m-1}$ 处对 $F$ 求负梯度当伪残差，再让回归树去拟合。MSE 下负梯度就是 $y-F$，所以「拟合残差」不是比喻。XGBoost 再加二阶 $h_i$ 和叶正则 $\gamma T+\tfrac12\lambda\sum w_j^2$。
+
+:::
 
 ---
 

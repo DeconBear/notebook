@@ -35,6 +35,18 @@ $$
 
 这个积分一般算不出。引入编码器近似后验 $q_\phi(z\mid x)$，可以证明对数似然有变分下界（**ELBO**）：
 
+::: details 逐步推导：ELBO 两项从哪来，重参数为何能反传（点击展开）
+
+$\log p(x)=\log\int p(x\mid z)p(z)\,dz$。乘除 $q(z\mid x)$ 后用 Jensen：
+
+$$
+\log p(x)\ge \mathbb{E}_{q}[\log p(x\mid z)]-D_{\mathrm{KL}}(q(z\mid x)\|p(z)).
+$$
+
+第一项：从 $q$ 采 $z$ 再解码，要像 $x$（重建）。第二项：每个 $x$ 的后验要贴近 $\mathcal{N}(0,I)$，否则潜空间有洞、不能从先验采样。重参数：$z=\mu+\sigma\odot\epsilon$，$\epsilon\sim\mathcal{N}(0,I)$。随机性在 $\epsilon$，对 $\mu,\sigma$ 可导，才能训编码器。RSSM 的先验/后验 KL 是同一套话在时间上展开。
+
+:::
+
 $$
 \log p_\theta(x)
 \ge
