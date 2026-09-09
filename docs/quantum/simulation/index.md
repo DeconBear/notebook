@@ -9,7 +9,7 @@ order: 50
 
 > Feynman 的原话精神是：用量子系统去模拟量子系统。经典计算机要存 $2^n$ 个振幅；若硬件自己就是那 $n$ 个自旋，演化可以「长在」物理里。
 
-前置：[量子计算](/quantum/computing/) 的酉演化；[科学计算全景](/science/overview/) 里维度灾难的对照。
+前置：[量子计算](/quantum/computing/) 的酉演化；[科学计算全景](/science/overview/) 里维度灾难的对照。需要把 $4\times 4$ 横场 Ising 或 Trotter 误差展开时，点开「逐步推导」。
 
 ---
 
@@ -26,6 +26,8 @@ $$
 $H$ 是 $2^n\times 2^n$ 的厄米矩阵（$n$ 个自旋）。精确对角化只对很小的 $n$ 可行。蒙特卡洛会碰上符号问题；张量网络擅长一维……**没有一种经典方法通吃所有相互作用图**。
 
 这和 PINN / 算子学习要逼近的 PDE 不是同一句话，但痛点同类：状态空间太大。
+
+**保姆级：$n=50$ 已经存不下。** 一个复数 $16$ 字节量级，$2^{50}$ 个振幅是拍字节——笔记本内存是笑话。量子模拟的赌注是：别存振幅表，让另一堆自旋按近似同一套 $H$ 自己转。读出的是能量、关联，不是把 $2^n$ 个数搬回家。
 
 ![用量子模拟量子](./images/qi-sim-02-nature.png)
 
@@ -60,11 +62,40 @@ $$
 H = J\,Z\otimes Z + h(X\otimes I + I\otimes X)
 $$
 
-上对比「精确 `eigh`」与一阶 Trotter。你应看到：步数增加，失真度在对数图上往下掉。
+上对比「精确 `eigh`」与一阶 Trotter。参数 $J=1.0$、$h=0.7$，演化时间 $T=1.2$（令 $\hbar=1$），初态 $|00\rangle$，步数 $1,2,4,8,16,32$。你应看到：步数增加，失真度在对数图上往下掉。种子 `42`。终端打印 `步数 → 失真度`。
 
 ![Trotter 误差](./images/trotter_error.png)
 
 > **图解说明**：这是数字模拟的最小可运行内核。真实分子还要做费米到自旋的映射（Jordan–Wigner 等），本章不展开。
+
+::: details 逐步推导：两自旋横场 Ising 的 $4\times 4$ 矩阵从哪来（点击展开）
+
+单比特 $X,Z$ 是 Pauli。两比特算子用 Kronecker 积（demo 的 `np.kron`）：
+
+$$
+Z\otimes Z=\mathrm{diag}(1,-1,-1,1),\qquad
+X\otimes I=\begin{pmatrix}0&0&1&0\\0&0&0&1\\1&0&0&0\\0&1&0&0\end{pmatrix}.
+$$
+
+$I\otimes X$ 类似，在另一因子上翻。$A=J\,ZZ$ 只含相互作用，本征基是计算基；$B=h(XI+IX)$ 是横场，把 $|0\rangle$ 和 $|1\rangle$ 搅在一起。$[A,B]\neq 0$（相互作用基与横场基不同），所以 $e^{-i(A+B)t}\neq e^{-iAt}e^{-iBt}$。精确演化：对 $H_{\mathrm{tot}}=A+B$ 做 `eigh`，再 $\sum_k e^{-i\lambda_k t}|v_k\rangle\langle v_k|$。
+
+一阶 Trotter：把 $T$ 切成 $n$ 份，$\mathrm{d}t=T/n$，反复做 $e^{-iB\,\mathrm{d}t}e^{-iA\,\mathrm{d}t}$（demo 是 `ub @ ua`）。失真度 $1-|\langle\psi_{\mathrm{exact}}|\psi_{\mathrm{trotter}}\rangle|^2$ 应随 $n$ 在 log-log 图上近似斜率为 $-1$ 的直线（$O(1/n)$）。
+
+:::
+
+::: details 逐步推导：一阶 Trotter 误差为何 $\sim O(t^2/n)$（点击展开）
+
+Baker–Campbell–Hausdorff：对两个一般矩阵
+
+$$
+e^{X}e^{Y}=e^{X+Y+\frac12[X,Y]+\cdots}.
+$$
+
+令 $X=-iA\,\mathrm{d}t$、$Y=-iB\,\mathrm{d}t$，则一步的生成元是 $-i(A+B)\mathrm{d}t$ 再加上 $\tfrac12[X,Y]=O((\mathrm{d}t)^2)$ 的对易修正。$n=t/\mathrm{d}t$ 步累积：每步 $O((\mathrm{d}t)^2)$，共 $O(t^2/n)$（在 $\|[A,B]\|$ 有界、时间不太长时）。这就是「多切几刀更接近 $e^{-iHt}$」。二阶 Suzuki（对称 Trotter）把对易项再消一阶，误差 $O(t^3/n^2)$，门数大约 1.5 倍。
+
+NISQ 上 $n$ 不能无限加：每一步门都有噪声，切太细会先被退相干吃掉。实验要在 Trotter 误差和硬件误差之间折中。VQE 绕开长时间演化，改成浅线路猜基态能量，但会撞上 [QML](/quantum/qml/) 章的贫瘠高原。
+
+:::
 
 ---
 

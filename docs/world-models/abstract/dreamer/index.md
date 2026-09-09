@@ -30,6 +30,12 @@ legacyPaths:
 
 真实环境的预算主要用来**把世界模型拟合准**；策略更新消耗的是 GPU 上的想象步。这是样本效率的来源。
 
+::: details 逐步说明：想象 Actor-Critic 的梯度从哪来（点击展开）
+
+从回放里取一段真观测，用后验得到 $z_0$。之后 $H$ 步只用先验和 Actor 采样 $a_t$，得到想象轨迹 $z_{1:H},\hat r$。Critic 估 $V(z)$。Actor 的损失是「让想象回报高」（REINFORCE 或 straight-through 离散动作）。真实环境不再逐步给 TD 目标来改 $\pi$——TD 主要在潜空间里打。世界模型仍用真 $o$ 的重建+KL 训练。V2 把 $s$ 换成离散分类潜变量，Atari 这种离散观测更好拟合。V4 把 GRU 换成 Transformer，并允许纯离线。
+
+:::
+
 ---
 
 ## 2. Dreamer V1（2020）：Dream to Control

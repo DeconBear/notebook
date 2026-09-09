@@ -39,6 +39,32 @@ $$
 
 > **动画说明**：$\omega_n=3$ 固定，只改 $\zeta$。过阻尼不晃；欠阻尼越来越晃。虚线是 $r=1$。
 
+![阻尼比 ζ：振荡还是过阻尼](./images/ctrl-tf-b-zeta.png)
+
+> **图解说明**：$\omega_n$ 固定时，$\zeta>1$ 不晃，$\zeta=1$ 刚好不超调，$\zeta<1$ 振荡衰减。$s$ 平面上极点随 $\zeta$ 张开。
+
+::: details 逐步推导：标准二阶的极点怎样写成 $\zeta,\omega_n$（点击展开）
+
+特征方程 $s^2+2\zeta\omega_n s+\omega_n^2=0$，求根公式：
+
+$$
+s=-\zeta\omega_n\pm\omega_n\sqrt{\zeta^2-1}.
+$$
+
+- $\zeta>1$：两个负实根，过阻尼。
+- $\zeta=1$：重根 $-\omega_n$。
+- $0\le\zeta<1$：共轭复根 $-\zeta\omega_n\pm j\omega_n\sqrt{1-\zeta^2}$。实部决定包络 $e^{-\zeta\omega_n t}$，虚部是振荡频率。$\zeta$ 越小，极点越靠近虚轴，晃得越久。
+
+单位阶跃 $U=1/s$，$Y=G/s$。反演不必手算：demo 直接积
+
+$$
+\ddot y+2\zeta\omega_n\dot y+\omega_n^2 y=\omega_n^2 r.
+$$
+
+超调近似 $\sigma\approx\exp(-\zeta\pi/\sqrt{1-\zeta^2})$ 来自复极点的冲激响应包络在第一个峰的取值。$\zeta=0$ 时指数不衰减，等幅振荡。
+
+:::
+
 ---
 
 ## 二、阻尼比对照表

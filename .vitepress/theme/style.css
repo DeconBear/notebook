@@ -3,6 +3,32 @@
   cursor: zoom-in;
 }
 
+/* 逐步推导：默认折叠，点开看代数过程 */
+.vp-doc .custom-block.details {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  background: var(--vp-c-bg-soft);
+  padding: 0.15rem 1.1rem 0.85rem;
+  margin: 1.25rem 0;
+}
+
+.vp-doc .custom-block.details summary {
+  font-weight: 650;
+  cursor: pointer;
+  padding: 0.65rem 0;
+}
+
+.vp-doc .custom-block.details summary::marker,
+.vp-doc .custom-block.details summary::-webkit-details-marker {
+  color: var(--vp-c-brand-1);
+}
+
+.vp-doc .nanny-box {
+  border-left: 3px solid var(--vp-c-brand-1);
+  padding: 0.15rem 0 0.15rem 1rem;
+  margin: 1rem 0 1.25rem;
+}
+
 .medium-zoom-overlay {
   z-index: 100;
 }

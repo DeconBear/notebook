@@ -45,6 +45,12 @@ int32[] sequence
 3. 执行中反复发 **feedback**
 4. 结束时给 **result**（成功 / 取消 / 中止）
 
+::: details 逐步说明：Action 比「长 Service」多了什么（点击展开）
+
+把导航做成一个阻塞 Service：客户端几分钟收不到返回，也无法看走了多远，取消只能杀进程。Action 把一次任务拆成 goal（去哪）、feedback（现在在哪）、result（到了或失败），并且 goal 可抢占/取消。底层仍用若干话题，但 API 保证这套生命周期。斐波那契例子是教学骨架；真机上是 `NavigateToPose` 一类。
+
+:::
+
 ## 通俗理解
 
 Action 像**外卖订单**：

@@ -32,6 +32,12 @@ URDF 是机器人的**说明书/装配图**：有哪些零件（link）、怎么
 
 和第 08 课手写 TF 的关系：URDF + RSP 能**自动**生成一大棵 TF；手写 TF 是为了先建立直觉。
 
+::: details 逐步说明：link/joint 怎样变成 TF 树（点击展开）
+
+每个 link 一个坐标系。joint 写父子、原点和轴向。`robot_state_publisher` 读当前关节角（`joint_states`），按 URDF 里的运动学算出每条边的 $T$，往 TF 树上发。固定 joint 是静态边；转动 joint 随滑条变。RViz 的 RobotModel 只是订阅这些 TF 把 mesh 画上，没有物理。真仿真要 SDF + 插件（下一课）。差速车两个轮关节若在 URDF 里写成连续旋转，GUI 拖动只是演示，不会在 RViz 里产生 `/cmd_vel`。
+
+:::
+
 ## 常见疑问
 
 **Q：URDF 是仿真吗？**  

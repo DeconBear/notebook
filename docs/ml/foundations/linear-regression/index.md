@@ -9,6 +9,9 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> 本章只做一件事：给直线 $\hat y=wx+b$ 找最好的 $w,b$。正文永远先给**结论公式**；点开灰色「逐步推导」才看代数。数字例与 `demo.py` 一致：$y=2x+5+\varepsilon$，$n=100$，$\varepsilon\sim\mathcal N(0,3^2)$，$\eta=0.01$。微积分与梯度见 [优化](/math/optimization/)；下一步把直线换成概率见 [逻辑回归](/ml/foundations/logistic-regression/)。
+
+---
 
 ## 1. 什么是回归？
 
@@ -51,6 +54,8 @@ $$
 - $w$ 是**权重（weight）**，决定了 $x$ 每变化 1 个单位时，$\hat{y}$ 变化多少
 - $b$ 是**偏置（bias）**，当 $x=0$ 时的预测值
 
+**保姆级数字例（先不算梯度）。** 取 demo 的真值 $w^\star=2$、$b^\star=5$。若某点 $x=3$，无噪声时 $y=11$。当前猜 $w=1$、$b=0$，则 $\hat y=3$，残差 $\hat y-y=-8$。要把预测抬上去，必须**增大** $w$ 或 $b$——后面梯度会精确告诉你各拧多少。
+
 ### 2.2 多特征推广
 
 当有 $d$ 个特征时，我们使用线性组合：
@@ -86,6 +91,8 @@ $$
 这种紧凑形式在大规模计算（如深度学习框架中）非常有用。
 
 ![线性回归拟合直线：散点图上穿过数据点的红色回归线，竖直虚线表示每个点的预测误差（残差）](./images/02-01-linear-regression-fit.png)
+
+> **图解说明**：红线是 $\hat y=wx+b$；竖虚线是残差。学习 = 拧 $w,b$，让这些竖线的平方和变小。
 
 ---
 
@@ -131,7 +138,9 @@ $$
 
 在几何上，线性回归是在寻找一个超平面，使得所有数据点到该超平面的竖直距离（残差）的平方和最小。这被称为**最小二乘法（Ordinary Least Squares, OLS）**。
 
-对于二维情况（$d=1$），我们寻找的是一条直线，使得所有数据点到直线的竖直距离平方和最小。
+对于二维情况（$d=1$），我们寻找的是一条直线，使得所有数据点到直线的竖直距离平方和最小。注意是**竖直**距离（沿 $y$ 轴），不是点到直线的垂直距离——后者叫正交回归，公式不同。
+
+**卡点。** 残差是 $\hat y-y$，不是 $y-\hat y$。两者只差一个符号，但梯度公式里必须和代码一致：`demo.py` 写 $\partial J/\partial w=(2/n)\sum(\hat y-y)x$，预测偏高时这项为正，于是 $w\leftarrow w-\eta\cdot(\text{正数})$，把 $w$ 往下调。
 
 ---
 
@@ -153,41 +162,47 @@ $$
 
 ![梯度下降的 3D 可视化：碗状损失函数曲面上的小球从高处沿梯度方向滚到最低点，同时展示了不同学习率的效果——太大震荡、太小缓慢、合适高效](./images/02-02-gradient-descent-3d.png)
 
-### 4.3 推导 MSE 的梯度
+![线性回归：找一条离所有点最近的直线](./images/ml-linreg-b-residual.png)
 
-对于简单的一元线性模型 $\hat{y} = wx + b$，MSE 损失为：
+> **图解说明**：竖线是残差 $\hat y-y$。MSE 把这些竖线平方后平均；梯度下降沿碗底把直线「拧」到残差最小。
 
-$$
-J(w, b) = \frac{1}{n} \sum_{i=1}^{n} (w x^{(i)} + b - y^{(i)})^2
-$$
+::: details 逐步推导：一元 MSE 对 $w,b$ 的偏导（点击展开）
 
-**对 $w$ 求偏导**（链式法则）：
+对于 $\hat{y}=wx+b$，
 
 $$
-\begin{aligned}
+J(w, b) = \frac{1}{n} \sum_{i=1}^{n} (w x^{(i)} + b - y^{(i)})^2.
+$$
+
+对 $w$（链式法则：外层平方、内层 $wx$）：
+
+$$
 \frac{\partial J}{\partial w}
-&= \frac{1}{n} \sum_{i=1}^{n} 2 \cdot (w x^{(i)} + b - y^{(i)}) \cdot x^{(i)} \\
-&= \frac{2}{n} \sum_{i=1}^{n} (\hat{y}^{(i)} - y^{(i)}) \cdot x^{(i)}
-\end{aligned}
+= \frac{2}{n} \sum_{i=1}^{n} (\hat{y}^{(i)} - y^{(i)}) \cdot x^{(i)}.
 $$
 
-**对 $b$ 求偏导**：
+对 $b$（内层对 $b$ 的导数是 $1$）：
 
 $$
-\begin{aligned}
 \frac{\partial J}{\partial b}
-&= \frac{1}{n} \sum_{i=1}^{n} 2 \cdot (w x^{(i)} + b - y^{(i)}) \cdot 1 \\
-&= \frac{2}{n} \sum_{i=1}^{n} (\hat{y}^{(i)} - y^{(i)})
-\end{aligned}
+= \frac{2}{n} \sum_{i=1}^{n} (\hat{y}^{(i)} - y^{(i)}).
 $$
 
-梯度下降更新：
+矩阵形式 $J=\tfrac1n\|X\theta-y\|^2$ 时，梯度是 $\tfrac2n X^\top(X\theta-y)$，与 [优化](/math/optimization/) 那一章只差一个 $\tfrac12$ 约定。更新：
+
+$$
+w \leftarrow w - \eta \frac{\partial J}{\partial w},\qquad
+b \leftarrow b - \eta \frac{\partial J}{\partial b}.
+$$
+
+:::
+
+梯度下降更新（结论，可直接写进代码）：
 
 $$
 w \leftarrow w - \eta \cdot \frac{\partial J}{\partial w}
-$$
-$$
-b \leftarrow b - \eta \cdot \frac{\partial J}{\partial b}
+,\qquad
+b \leftarrow b - \eta \cdot \frac{\partial J}{\partial b}.
 $$
 
 ![导数的几何意义：在损失曲线上三个不同位置标出切线——负斜率处梯度指向参数增大方向，零斜率处为最小值，正斜率处梯度指向参数减小方向](./images/02-03-derivative-as-slope.png)
@@ -198,27 +213,46 @@ $$
 
 对于线性回归，我们不仅可以梯度下降，还可以直接求出解析解。
 
-### 5.1 推导
+### 5.1 结论：正规方程
 
-将损失函数写成矩阵形式：
-
-$$
-J(\mathbf{w}) = \frac{1}{n} (\mathbf{X}\mathbf{w} - \mathbf{y})^T (\mathbf{X}\mathbf{w} - \mathbf{y})
-$$
-
-对 $\mathbf{w}$ 求梯度并令其为零：
+把偏置吸进 $\mathbf{X}$ 的全 1 列后，令梯度为零，得到闭式解：
 
 $$
-\nabla_{\mathbf{w}} J = \frac{2}{n} \mathbf{X}^T (\mathbf{X}\mathbf{w} - \mathbf{y}) = 0
+\mathbf{w}^* = (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T \mathbf{y}.
 $$
 
-解得：
+`demo.py` 里用 `np.linalg.pinv`（伪逆）而不是 `inv`，以免 $\mathbf{X}^T\mathbf{X}$ 奇异时炸掉。一元时这就是「过原点直线」的最小二乘斜率；有截距时把 $x$ 扩成 $[x,1]$。
+
+::: details 逐步推导：从 $J$ 到正规方程（点击展开）
 
 $$
-\mathbf{w}^* = (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T \mathbf{y}
+J(\mathbf{w})=\frac1n(\mathbf{X}\mathbf{w}-\mathbf{y})^\top(\mathbf{X}\mathbf{w}-\mathbf{y}).
 $$
 
-这就是著名的**正规方程（Normal Equation）**。
+对 $\mathbf{w}$ 微分：残差 $r=Xw-y$，$\mathrm{d}J=\frac2n r^\top X\,\mathrm{d}w$，故
+
+$$
+\nabla_{\mathbf{w}} J = \frac{2}{n} \mathbf{X}^T (\mathbf{X}\mathbf{w} - \mathbf{y}).
+$$
+
+令梯度为 $0$：$X^\top Xw=X^\top y$。左边可逆则
+
+$$
+\mathbf{w}^* = (X^\top X)^{-1}X^\top y.
+$$
+
+几何：在 $\mathrm{col}(X)$ 里找离 $y$ 最近的点，误差 $y-Xw$ 必须与列空间正交，即 $X^\top(y-Xw)=0$，同一方程。
+
+**数字例。** 三点 $(0,1),(1,3),(2,3)$，设计矩阵含截距：
+
+$$
+X=\begin{pmatrix}0&1\\1&1\\2&1\end{pmatrix},\quad
+y=\begin{pmatrix}1\\3\\3\end{pmatrix}.
+$$
+
+$X^\top X=\begin{pmatrix}5&3\\3&3\end{pmatrix}$，逆是 $\tfrac13\begin{pmatrix}3&-3\\-3&5\end{pmatrix}$，$X^\top y=(9,7)^\top$，于是 $w^*=(1,5/3)^\top$。直线 $\hat y=x+5/3$。三点残差 $2/3,-2/3,0$，平方和 $8/9$，任何别的斜率都会更大。
+
+:::
 
 ### 5.2 梯度下降 vs. 正规方程
 
@@ -279,6 +313,19 @@ $$
 - **学习率衰减**：随着训练进行逐步减小学习率
 - **学习率预热**：开始用很小学习率，逐步增大到目标值
 - **自适应学习率**：每个参数有不同的学习率（Adam、RMSprop 等）
+
+`demo.py` 的 `compare_learning_rates` 用同一份 $y=2x+5$ 数据对比几档 $\eta$。$\eta$ 过大时损失曲线会抖甚至 `nan`；过小则 200 个 epoch 还在半山腰。一元特征、$x\in[0,10]$ 时 $\eta=0.01$ 通常稳；若你先把 $x$ 标准化到均值 0 方差 1，学习率可以放大一个数量级。
+
+### 卡点清单
+
+| 坑 | 症状 | 处理 |
+|----|------|------|
+| $x$ 未标准化、$\eta$ 仍用 $0.01$ | 损失爆炸或振荡 | 先减均值除标准差，或把 $\eta$ 降到 $10^{-4}$ |
+| 忘了偏置列 | 直线被强行过原点 | `X` 加全 1 列，或单独更新 $b$ |
+| `inv` 遇到共线特征 | `LinAlgError` | 用 `pinv`，或加岭回归 $\lambda I$（下一章） |
+| 把 MAE 的次梯度当成 MSE 梯度 | 大残差点几乎不改参数 | MSE 梯度含残差本身，大错先修 |
+
+对照 `demo.py`：梯度下降与正规方程、sklearn 应得到几乎同一条 $w\approx 2$、$b\approx 5$ 的直线；差几个百分点是噪声和早停，不是公式错了。
 
 ---
 

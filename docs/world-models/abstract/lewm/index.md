@@ -78,6 +78,12 @@ $$
 
 单靠这一项，最优解可以是「所有 $z$ 都等于同一个常数」——预测误差为零，世界模型却废了。这就是表征坍缩。
 
+::: details 逐步说明：两项损失如何一防坍缩、一学动力学（点击展开）
+
+MSE 要 $\mathrm{pred}(z_t,a_t)\approx z_{t+1}$。若 enc 输出常数 $c$，pred 学成常数映射就完美——无信息。SIGReg 把 batch 里的 $z$ 往标准正态推：各向同性、有方差，常数解被禁止。$\lambda$ 平衡「可预测」和「别塌」。规划时 CEM 在 $z$ 上滚 pred，用与目标嵌入的距离当代价——回到 PETS 的 MPC，只是 $s$ 换成 JEPA 嵌入。
+
+:::
+
 ### 3.2 SIGReg：用随机投影逼各向同性高斯
 
 **Sketched-Isotropic-Gaussian Regularizer（SIGReg）**（来自 LeJEPA 一脉）不直接在高维做正态性检验，而是：

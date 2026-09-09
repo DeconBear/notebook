@@ -34,6 +34,24 @@ $$
 
 **随机梯度下降（SGD）**：每次只用一个小批量估计 $\nabla L$，噪声反而有时帮着逃离差的峡谷。Adam 等自适应方法 = 给各维度不同的有效学习率，细节留给深度学习章。
 
+![梯度是最陡上坡，训练走反方向](./images/math-opt-b-grad.png)
+
+> **图解说明**：等高线碗底。绿箭头 $\nabla f$ 上坡，蓝箭头 $-\nabla f$ 下山。步长过大在谷里振荡。
+
+::: details 逐步推导：线性回归 MSE 的梯度为什么是 $X^\top(Xw-y)$（点击展开）
+
+$L(w)=\tfrac12\|Xw-y\|^2=\tfrac12(Xw-y)^\top(Xw-y)$。对 $w$ 微分：把 $Xw$ 当线性映射，残差 $r=Xw-y$，
+
+$$
+\mathrm{d}L=r^\top(X\,\mathrm{d}w)=(X^\top r)^\top\mathrm{d}w.
+$$
+
+梯度是「与 $\mathrm{d}w$ 配对的那个向量」，故 $\nabla_w L=X^\top r=X^\top(Xw-y)$。每一行 $x_i$ 把标量残差 $r_i$ 沿着特征方向推回去——多层网络只是把 $X^\top$ 换成各层雅可比的转置，这就是反向传播。
+
+学习率：对二次碗 $L=\tfrac12\lambda x^2$，一步 $x\leftarrow x-\eta\lambda x=(1-\eta\lambda)x$。$|1-\eta\lambda|<1$ 才收敛，即 $0<\eta<2/\lambda_{\max}$。$\eta$ 太大特征值大的方向会振荡，正是动画里 $\eta=0.95$ 的样子。
+
+:::
+
 ---
 
 ## 二、常见损失的梯度直觉

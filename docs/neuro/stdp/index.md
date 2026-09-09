@@ -44,6 +44,21 @@ $$
 
 邻近时刻才有效（$\tau_\pm$ 常在 10–20 ms）；$A_-$ 常常略大于 $A_+$，有助于稳定。在线实现用 pre/post **痕迹**（eligibility trace）：pre 尖峰时用 post 痕迹做 LTD，post 尖峰时用 pre 痕迹做 LTP。
 
+![STDP：谁先谁后决定突触变强还是变弱](./images/neuro-stdp-b-window.png)
+
+> **图解说明**：pre 先于 post（因果）→ LTP；反过来 → LTD。指数窗只认邻近十几毫秒。
+
+::: details 逐步推导：指数窗与痕迹实现是同一件事（点击展开）
+
+连续时间里，每次配对贡献 $\Delta w(\Delta t)$。把所有历史写成卷积：pre 尖峰在突触上留一条衰减痕迹 $x(t)$，$\dot x=-x/\tau_++\sum_k\delta(t-t_{\mathrm{pre}}^k)$；post 尖峰留 $y(t)$。则
+
+- post 发放瞬间：$\Delta w \propto A_+ x(t)$（用「刚才 pre 有多新」做 LTP）；
+- pre 发放瞬间：$\Delta w \propto -A_- y(t)$（用「刚才 post 有多新」做 LTD）。
+
+这正是把指数窗拆成两个一阶滤波器，适合在线仿真。demo 的 $\pm 10\,\mathrm{ms}$ 落在窗的中央附近，LTP/LTD 都清楚可见。
+
+:::
+
 ![STDP 学习窗](./images/stdp_window.png)
 
 > 运行 `code/demo.py` 生成。因果一侧为正、反因果为负。

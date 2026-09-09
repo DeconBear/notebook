@@ -10,8 +10,9 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> 表格装不下像素和关节角：用网络逼近 $Q$ 或直接输出 $\pi$。`demo.py` 会跑一个小网格上的 DQN/REINFORCE 对照。TD 目标与策略梯度 $\mathbb E[G\nabla\log\pi]$ 在折叠里。
 
-> 从表格到神经网络 —— 当强化学习遇见深度学习
+## 一、Q-Table 的末日：从离散到连续
 
 ---
 
@@ -34,6 +35,18 @@ legacyPaths:
 > 函数逼近 = 泛化。神经网络学会了"语义相似的状态应该有相似的 Q 值"，从而大幅减少所需经验。
 
 ![DQN 架构——神经网络替代 Q-Table](./images/20-01-dqn-architecture.png)
+
+> **图解说明**：输入状态（或像素），输出每个离散动作的 Q。目标网络慢同步，经验回放打乱时间相关。
+
+**数字例。** 当前 $Q(s,\text{右})=0.5$，走一步 $r=-0.1$，$s'$ 上 $\max_{a'}Q_{\bar\theta}(s',a')=0.8$，$\gamma=0.9$。TD 目标 $-0.1+0.72=0.62$。损失 $\tfrac12(0.62-0.5)^2$，梯度把 $Q(s,\text{右})$ 往 0.62 拉。若用同一网络既当预测又当目标，目标跟着跑，训练会抖——所以冻一份 $\bar\theta$。
+
+::: details 逐步推导：DQN 损失与 REINFORCE 梯度（点击展开）
+
+DQN 回归目标 $y=r+\gamma\max_{a'}Q_{\bar\theta}(s',a')$（终止则 $y=r$）。损失 $\mathbb E[(y-Q_\theta(s,a))^2]$。回放缓冲打破 $(s_t,s_{t+1})$ 相关；目标网每 $C$ 步 $\bar\theta\leftarrow\theta$。Double DQN：用 $\theta$ 选 $\arg\max$，用 $\bar\theta$ 估值，减轻过估计。
+
+REINFORCE：$\nabla_\theta J=\mathbb E[\sum_t G_t\nabla_\theta\log\pi_\theta(a_t\mid s_t)]$。$G_t$ 方差大。减基线 $G_t-b(s_t)$ 不改期望（$\mathbb E[\nabla\log\pi]=0$）。Actor-Critic 用 $V_w(s)$ 当 $b$。连续动作常用高斯策略，均值由网络输出。
+
+:::
 
 ---
 

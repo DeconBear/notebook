@@ -33,6 +33,12 @@ RViz 负责**可视化**；Gazebo 负责**物理仿真**。两者常一起用。
 
 `sim_stack.launch.py` 只是把第 11 课的仿真 launch **include** 进来，再加一个 RViz——这就是真实项目里“组合栈”的缩影。
 
+::: details 逐步说明：Fixed Frame 选错时你看见的是什么（点击展开）
+
+RViz 必须选一个 TF 树里存在的坐标系当「画布原点」。选 `map` 但还没有定位节点发 `map`→`odom`，模型会狂闪或全空。本课栈里常用 `odom` 或 `base_link`。Gazebo 窗口看物理；RViz 看 ROS 数据是否自洽（TF、odom、以后的激光）。两者同时开，是为了对照「仿真里车动了」和「ROS 侧是否也认为它动了」。
+
+:::
+
 ## 常见疑问
 
 **Q：为什么还要 RViz？Gazebo 里不是已经能看见车了吗？**  

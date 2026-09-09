@@ -33,6 +33,12 @@ order: 40
 
 量子信息里的幺正群 $\mathrm{U}(n)$ 是同一类故事；见 [量子信息](/quantum/overview/)。线性代数复习见 [向量与矩阵](/math/linear-algebra/)。
 
+![旋转不可交换](./images/rob-04b-so3-order.png)
+
+> **图解说明**：先 $X$ 再 $Z$ 与先 $Z$ 再 $X$ 终点姿态不同。右下：中间角到 $90^\circ$ 时两轴重合，万向节死锁。
+
+**保姆级：欧拉角为什么看起来像向量却不是。** 滚转、俯仰、偏航各是一个角，三个数排成向量很诱人。可是「加 $5^\circ$ 俯仰」依赖于你现在已经转了多少——姿态流形是弯曲的，切空间的向量只能在当地加。万向节死锁是弯曲的一个症状：参数化在某点退化，三个角不再覆盖三个独立方向。
+
 ---
 
 ## 二、无穷小旋转为什么一定是反对称矩阵
@@ -57,6 +63,26 @@ $$
 
 直接验证 $\hat\omega\, p=\omega\times p$。角速度就是「此刻姿态在切空间里的速度」。练习 `hat_02` 钉死矩阵 $(0,2)$ 格是 $+\omega_y$——符号写反则转反。
 
+::: details 逐步推导：正交性 $R^\top R=I$ 怎样逼出反对称（点击展开）
+
+设 $R(t)$ 是一条合法旋转曲线，$R(0)=I$。对任意 $t$，$R(t)^\top R(t)=I$。两边对 $t$ 求导：
+
+$$
+\dot R(t)^\top R(t)+R(t)^\top \dot R(t)=0.
+$$
+
+令 $t=0$，$R(0)=I$，得到
+
+$$
+\dot R(0)^\top+\dot R(0)=0,
+$$
+
+即 $\dot R(0)$ 反对称。三维反对称矩阵的独立元恰好三个：可放在 $(0,1)$、$(0,2)$、$(1,2)$ 位置，其余由 $A^\top=-A$ 决定。把这三个数叫做 $\omega_z,\omega_y,\omega_x$（符号约定使 $\hat\omega p=\omega\times p$），就得到正文的 `hat` 矩阵。
+
+反过来：任意反对称 $K$ 给出曲线 $R(t)=\exp(tK)$，Rodrigues 保证它永远正交且行列式为 $1$，所以切空间维数 $=$ 流形维数 $=3$。
+
+:::
+
 ---
 
 ## 三、Rodrigues：有限转角的闭式 $\exp$
@@ -77,6 +103,26 @@ $$
 - $(1-\cos\theta)$ 项：把向量往轴上「拉近」再送回去（二维旋转的 $1-\cos$）。
 
 教材若写单位轴 $\hat n$ 与转角 $\theta$，则 $K=\theta\hat n$，两种写法等价。$\theta\to 0$ 时 $\sin\theta/\theta\to 1$，代码用阈值避免除零。
+
+::: details 逐步推导：Rodrigues 公式从指数级数来（点击展开）
+
+矩阵指数 $\exp(K)=\sum_{n=0}^\infty K^n/n!$。反对称 $K=\hat\omega$ 满足 Cayley–Hamilton 的二维旋转类关系：令 $\theta=\|\omega\|$，$n=\omega/\theta$，$K_\mathrm{u}=\hat n$，则 $K=\theta K_\mathrm{u}$，且
+
+$$
+K_\mathrm{u}^3=-K_\mathrm{u}
+$$
+
+（三次叉乘绕回来，像复数 $i^3=-i$）。于是高次幂只在 $K_\mathrm{u}$ 与 $K_\mathrm{u}^2$ 之间振荡，级数收成
+
+$$
+\exp(\theta K_\mathrm{u})=I+\sin\theta\, K_\mathrm{u}+(1-\cos\theta)K_\mathrm{u}^2.
+$$
+
+代回 $K=\theta K_\mathrm{u}$ 得到正文（$\sin\theta/\theta$ 与 $(1-\cos\theta)/\theta^2$）。几何：$I$ 不动沿轴分量；$K_\mathrm{u}$ 在垂直平面里转 $90^\circ$；$K_\mathrm{u}^2$ 把垂直分量翻到轴的反方向——合起来就是绕 $n$ 转 $\theta$。
+
+$\theta\to 0$ 用等价无穷小 $\exp(K)\approx I+K$，与「角速度 × 时间 = 小转角」一致。
+
+:::
 
 对数映射反向：从 $R$ 读出转角与轴，
 

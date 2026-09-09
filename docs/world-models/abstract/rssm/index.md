@@ -48,52 +48,86 @@ PlaNet（Hafner et al., 2019）用 **RSSM（Recurrent State-Space Model）** 系
 
 ## 二、RSSM：确定性状态 + 随机状态
 
-RSSM 的核心设计是把潜状态拆成两部分：
+RSSM 把潜状态拆成两块，对应 PlaNet Figure 2(c) 里的方块 $h$ 和圆圈 $s$：
+
+| 符号 | 角色 | 这一步从哪来 | 这一步送到哪 |
+|------|------|--------------|--------------|
+| $h_t$ | 确定性记忆（GRU 隐状态） | `GRUCell` 用 $s_{t-1},a_{t-1}$ 更新内部的 $h_{t-1}$ | 先验、后验、解码器 |
+| $s_t$ | 随机状态（对角高斯采样） | 训练：后验；想象：先验 | 解码器；**下一拍**才作为 $s_{t-1}$ 进 GRU |
+
+正确的一步顺序和 `demo.py` 的 `forward` / `imagine` 循环体一一对应（先有 $h_t$，才有两套 $(\mu,\sigma)$，才有 $s_t$，最后才解码）：
 
 $$
 \begin{aligned}
-h_t &= f_\theta(h_{t-1}, s_{t-1}, a_{t-1}) && \text{（确定性状态，通常用 GRU）} \\
-s_t &\sim p_\theta(s_t \mid h_t) && \text{（随机先验：不看观测，纯预测）} \\
-s_t &\sim q_\theta(s_t \mid h_t, o_t) && \text{（随机后验：看到观测后的修正）} \\
-\hat{o}_t &\sim p_\theta(o_t \mid h_t, s_t) && \text{（解码器：重建观测）}
+h_t &= \mathrm{GRUCell}\bigl([s_{t-1};\,a_{t-1}],\ h_{t-1}\bigr) \\
+(\mu_p,\sigma_p) &= \mathrm{prior\_net}(h_t) && \text{先验：不看 } o_t \\
+e_t &= \mathrm{enc}(o_t) && \text{仅训练；像素用 CNN，本章 demo 观测已是 }\mathbb{R}^2\text{，enc 为恒等} \\
+(\mu_q,\sigma_q) &= \mathrm{posterior\_net}([h_t;\,e_t]) && \text{仅训练} \\
+s_t &= \mu_q + \sigma_q\,\varepsilon,\quad \varepsilon\sim\mathcal{N}(0,I) && \text{训练采样} \\
+s_t &= \mu_p + \sigma_p\,\varepsilon && \text{想象采样（本章评估用均值 }\mu_p\text{）} \\
+\hat o_t &= \mathrm{dec}([h_t;\,s_t]) \\
+&\quad D_{KL}\big(\mathcal{N}(\mu_q,\sigma_q)\,\|\,\mathcal{N}(\mu_p,\sigma_p)\big) && \text{只比两套参数，不经过采样节点}
 \end{aligned}
 $$
 
-![RSSM 架构：先验 / 后验 / 确定性状态](./images/wm02-01-rssm-architecture.png)
+代码就是 `h = gru(cat(s, prev_action), h)`。先验 / 后验的 MLP **只输出** $(\mu,\sigma)$，**不是**直接输出 $s_t$。PlaNet 论文把后验写成 $q(s_t\mid h_t,o_t)$，实现上一定是先编码再和 $h_t$ 拼接——像素不能直接塞进高斯头。
 
-> **图解说明**：训练时用后验 $q(s_t\mid h_t,o_t)$ 吃观测；想象（做梦）时只用先验 $p(s_t\mid h_t)$，不再看真实 $o_t$。确定性状态 $h_t$ 用 GRU 传递长期结构。
+![RSSM 一步计算：训练看观测 / 想象不看观测](./images/wm02-01-rssm-architecture.png)
+
+> **图解说明（请按编号读）**：左列是训练 `forward`，右列是想象 `imagine`。① GRU 的外部输入只有 $s_{t-1},a_{t-1}$，$h_{t-1}\to h_t$ 在 Cell 内部。② 先验只吃 $h_t$，吐 $(\mu_p,\sigma_p)$。③ 只有训练才有 $o_t\to\mathrm{enc}\to e_t$。④ 后验只吃 $(h_t,e_t)$，吐 $(\mu_q,\sigma_q)$。⑤ 训练从后验采样、想象从先验采样；$h_t$ **不进**采样节点。⑥ 解码器吃的是 $(h_t,$ 采样后的 $s_t)$。KL 连的是两套高斯参数。虚线橙色：$s_t$ 要等到**下一拍**才变成 GRU 的 $s_{t-1}$。
 
 直觉分工：
 
-- **$h_t$（确定性）**：记住"长期、确定性强"的信息——比如目标在转圈、角速度大致是多少
-- **$s_t$（随机）**：表达"不确定性"——比如观测噪声让你暂时分不清精确位置
+- **$h_t$（确定性）**：记住「长期、确定性强」的信息——比如目标在转圈、角速度大致是多少
+- **$s_t$（随机）**：表达不确定性——比如观测噪声让你暂时分不清精确位置
 - **先验 $p(s_t\mid h_t)$**：部署 / 想象时用——**闭着眼睛**只凭历史猜下一步
-- **后验 $q(s_t\mid h_t, o_t)$**：训练时用——**睁开眼睛**用真实观测修正估计
+- **后验 $q(s_t\mid h_t,e_t)$**：训练时用——先把 $o_t$ 编成 $e_t$，再睁眼修正
+
+不要画进图里的边（也是上一版示意图最容易画错的地方）：
+
+- $s_t \to$ **本步** GRU（环；$s_t$ 是在 $h_t$ **之后**才采样出来的）
+- 把 $h_{t-1}$ 画成和 $s_{t-1},a_{t-1}$ 并列的第三路外部输入（它已经在 GRUCell 里）
+- 先验 / 后验直接吐 $s_t$ 进解码器（中间必须有 $(\mu,\sigma)$ 和采样）
+- $h_t$ 进入采样节点（采样只用 $\mu,\sigma,\varepsilon$；$h_t$ 去先验网、后验网、解码器）
+- 想象路径还画编码器 / 后验 / KL（闭眼 rollout 没有 $o_t$）
+
+::: details 逐步对照：`demo.py` 循环体在算什么（点击展开）
+
+`forward` 每一步（训练，教师强制）：
+
+1. `h = gru(cat(s, prev_action), h)` → 得到本步 $h_t$。此时的 `s` 仍是 **$s_{t-1}$**。
+2. `prior_mean, prior_std = self.prior(h)` → $(\mu_p,\sigma_p)$，不看观测。
+3. `post_mean, post_std = self.posterior(h, obs_seq[:, t])` → 本章观测是 2D，等价于 $e_t=o_t$，再 `cat(h, e_t)` 进后验头。
+4. `s = reparameterize(post_mean, post_std)` → **现在**才得到 $s_t$。
+5. `obs_pred = decode(h, s)` → $\hat o_t=\mathrm{dec}(h_t,s_t)$。
+6. 重建损失用 $\hat o_t$ 对 $o_t$；KL 用两套 $(\mu,\sigma)$ 的解析式，不经过 $\varepsilon$。
+7. `prev_action = act_seq[:, t]`，循环变量 `s` 带着 $s_t$ 进入下一拍。
+
+`imagine` 热启动用后验（睁眼），之后每一步只有 ① GRU → ② 先验 → ⑤ 用 $\mu_p$（评估不去噪采样）→ ⑥ 解码。没有 ③④，也没有 KL。
+
+所以必须写成 **`GRUCell` 逐步调用**，不能包成「一整段序列进 GRU」：中间还要插先验、后验、采样。PlaNet 在 $(h,s)$ 上跑 CEM，和 PETS 同一套规划，只是状态变成学出来的潜变量。
+
+:::
 
 ```mermaid
-flowchart LR
-    subgraph t_minus["时刻 t-1"]
-        h0["h_{t-1}"]
-        s0["s_{t-1}"]
-        a0["a_{t-1}"]
+flowchart TB
+    subgraph train["训练 forward（看 o_t）"]
+        direction TB
+        sPrev["s_{t-1}"] --> gru["① GRUCell"]
+        aPrev["a_{t-1}"] --> gru
+        gru --> ht["h_t"]
+        ht --> prior["② 先验 → μ_p, σ_p"]
+        ot["o_t"] --> enc["③ enc → e_t"]
+        ht --> post["④ 后验 → μ_q, σ_q"]
+        enc --> post
+        post --> samp["⑤ s_t = μ_q + σ_q ε"]
+        prior -.-> kl["KL(q ‖ p)"]
+        post -.-> kl
+        ht --> dec["⑥ 解码器"]
+        samp --> dec
+        dec --> ohat["ô_t"]
+        samp -.-> next["下一拍的 s_{t-1}"]
     end
-    subgraph t_now["时刻 t"]
-        h1["h_t = GRU(...)"]
-        prior["先验 p(s_t|h_t)"]
-        post["后验 q(s_t|h_t,o_t)"]
-        o1["观测 o_t"]
-        dec["解码器 → ô_t"]
-    end
-    h0 --> h1
-    s0 --> h1
-    a0 --> h1
-    h1 --> prior
-    h1 --> post
-    o1 --> post
-    prior -.->|"想象时采样"| s1["s_t"]
-    post -->|"训练时采样"| s1
-    h1 --> dec
-    s1 --> dec
 ```
 
 ---

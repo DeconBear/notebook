@@ -9,6 +9,7 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> 「朴素」= 给定类别后特征互相独立，联合似然变成连乘。文本分类几乎总是这一招。`demo.py` 有 GaussianNB 边界、拉普拉斯 $\alpha\in\{0.001,1,5\}$，以及一个词袋垃圾邮件例子。零概率怎么被 $\alpha$ 救回来，见折叠。
 
 ## 1. 条件独立假设：为什么叫"朴素"
 
@@ -121,6 +122,22 @@ $$
 - $\alpha = 0$：无平滑（MLE）
 
 平滑就像是给每种可能性赋予了一个"虚拟的"先验计数 $\alpha$，确保没有任何概率为零。
+
+**数字例。** 词表 2 个词，类别 spam 里只见过「免费」3 次、「中奖」0 次。无平滑时 $P(\text{中奖}\mid\text{spam})=0$，一篇同时含两词的邮件后验直接归零。$\alpha=1$ 后 $P=(3+1)/(3+2)=0.8$、$P=(0+1)/5=0.2$，连乘还能活。`demo.py` 的 $\alpha=0.001$ 几乎贴着 MLE，$\alpha=5$ 把分布往均匀拉。
+
+::: details 逐步推导：从条件独立到对数判别 + 加一平滑（点击展开）
+
+$P(x\mid\omega)=\prod_i P(x_i\mid\omega)$ 代入 MAP：
+
+$$
+g_j=\ln P(\omega_j)+\sum_i \ln P(x_i\mid\omega_j).
+$$
+
+GaussianNB：$P(x_i\mid\omega_j)=\mathcal N(\mu_{ji},\sigma_{ji}^2)$，协方差被假设成对角阵，参数从 $O(Cd^2)$ 降到 $O(Cd)$。MultinomialNB 的 MLE 是 $\hat p_{ji}=N_{ji}/N_j$。Dirichlet$(\alpha)$ 先验给出后验均值 $(N_{ji}+\alpha)/(N_j+\alpha d)$——加一就是 $\alpha=1$。连乘里一个 0 毒死整条链，所以平滑不是调参花活，是零频事件的必选项。
+
+Explaining away（汇聚 $A\to B\leftarrow C$）：观测 $B$ 后 $A$ 与 $C$ 不再独立。草坪湿了，发现没下雨，洒水器的概率上升。朴素贝叶斯不允许这种「特征互相关」，贝叶斯网用 CPT 显式写出来。
+
+:::
 
 在 GaussianNB 中，方差估计也需要类似处理：`var_smoothing` 参数在计算方差时加上一个小的常数，防止方差为零（当某特征在某类别中所有样本取值完全相同时会发生）。
 

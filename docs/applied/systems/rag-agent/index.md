@@ -22,7 +22,7 @@ legacyPaths:
 
 **幻觉问题的严重程度**因场景而异。在创意写作中，一定的「想象力」可能是好事。但在医疗建议、法律咨询、金融分析等高风险场景中，幻觉可能导致灾难性后果。
 
-这就是 RAG（Retrieval-Augmented Generation）产生的背景——**用外部知识库来锚定模型的输出**。
+这就是 RAG（Retrieval-Augmented Generation）产生的背景——**用外部知识库来锚定模型的输出**。幻觉的机理也见 [安全](/applied/systems/safety/)；向量从哪来见 [CLIP](/applied/systems/multimodal/) 与 [文本表示](/applied/nlp/text-representation/)。
 
 ## 2. RAG：检索增强生成
 
@@ -103,6 +103,18 @@ Chunk 2 (512 tokens, overlap 128): "......在医疗领域，AI 被用于..."
 - 将口语化问题改为更适合检索的陈述句
 - 生成多个子查询来覆盖问题的不同方面
 - 添加假设性答案（HyDE: Hypothetical Document Embeddings）——先生成一个假设的答案，然后用这个答案的嵌入去做检索
+
+::: details 逐步说明：余弦检索、chunk 重叠，以及为什么「先粗检索再交叉编码」（点击展开）
+
+查询 $q$ 与文档块 $d$ 都编成单位向量。相似度 $q\cdot d=\cos\theta$。FAISS 一类 ANN 在百万级向量里找近似最大的 $k$ 个，不保证精确 argmax，但对 RAG 够用。
+
+切块：512 token、重叠 64，是为了句子不被从中间劈开后两边都缺主语。太大则一块里混进无关段落，检索粒度粗；太小则指代（「它」「该公司」）找不到先行词。
+
+两阶段：双编码器（query、doc 各编码一次）能预计算文档向量，快。交叉编码器把 `[CLS] q [SEP] d` 一起过 Transformer，能看词与词对齐，准但 $O(k)$ 次前向。所以先 ANN 取 50，再 cross-encoder 排前 5 送进 LLM。BM25 补专有名词：向量模型可能把罕见 ID 揉糊，关键词命中更稳。
+
+Agent 的 ReAct 把「想一步 → 调工具 → 看观察」写进同一段生成。工具返回值拼回上下文，再想下一步。失败模式是循环调用或幻觉工具结果——要靠最大步数和校验。
+
+:::
 
 ## 3. AI Agent：从「对话工具」到「行动主体」
 

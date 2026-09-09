@@ -31,6 +31,26 @@ $$
 
 其中 $r_\theta(x) = -u_\theta''(x) - f(x)$ 正是 as01 定义的 PDE 残差，$x_f^{(i)}$ 是在定义域内部随机/均匀采样的**配点（collocation points）**，$x_b^{(j)}$ 是边界点。这个损失函数里**没有任何来自"真解"的标注数据** —— 唯一的监督信号来自方程本身和边界条件。
 
+![PINN：把 PDE 残差当成损失函数](./images/sci-pinn-b-residual.png)
+
+> **图解说明**：网络输出 $u(x;\theta)$。对 $x$ 自动微分得到 $u''$，残差 $-u''-f$ 进损失；边界点另外惩罚。残差被训到接近 0 时，网络就是 PDE 的一个近似解。
+
+::: details 逐步推导：为什么「残差为 0」等价于满足 Poisson 方程（点击展开）
+
+一维 Poisson $-u''=f$ 在 $(0,1)$ 上，加上 $u(0)=u(1)=0$。若某个光滑函数 $u_\theta$ 使
+
+$$
+r_\theta(x)=-u_\theta''(x)-f(x)=0\quad\forall x\in(0,1),\qquad u_\theta(0)=u_\theta(1)=0,
+$$
+
+则它就是边值问题的解（解的唯一性由椭圆方程理论保证，本课 $f=\pi^2\sin(\pi x)$ 的真解就是 $\sin(\pi x)$）。
+
+训练不能在连续统上处处取零，于是在配点上把 $r_\theta^2$ 平均掉，再加边界均方。这是配置法（collocation）的神经网络版：有限差分把 $u''$ 换成网格上的差商；PINN 把 $u''$ 换成自动微分，网格换成随机点。$\lambda_{\mathrm{bc}}$ 太大则内部方程松，太小则边界漂——两边都要盯残差曲线。
+
+制造解（manufactured solution）在 [科学计算导论](/science/overview/)：先指定 $u$，反推 $f$，用来验证代码没写反符号。
+
+:::
+
 ## 2. 自动微分：PINN 相较传统数值方法的关键武器
 
 as01 中我们用有限差分近似 $u''(x)$，误差量级是 $O(\Delta x^2)$，且必须先离散化网格。PINN 用**自动微分（automatic differentiation, autograd）**代替有限差分：

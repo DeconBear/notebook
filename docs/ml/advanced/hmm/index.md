@@ -9,8 +9,7 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
-
-> 当观测背后隐藏着不可见的状态序列，如何从可见的"果"推断出隐藏的"因"？HMM 是时序概率建模的经典框架，三大问题贯穿始终：评估、解码、学习。
+> 观测是「果」，状态是看不见的「因」。评估 / 解码 / 学习对应前向、Viterbi、Baum-Welch。`demo.py` 会在小词性或天气 HMM 上跑格子图。$\alpha$ 递推如何把 $N^T$ 打成 $O(N^2 T)$，见折叠。
 
 ---
 
@@ -138,6 +137,20 @@ $$
 $$
 P(X \mid \lambda) = \sum_{i=1}^{N} \alpha_T(i)
 $$
+
+**数字例（两状态、两步）。** 状态 {晴, 雨}，观测 {走, 买伞}。$\pi=(0.6,0.4)$，$b_{\text{晴}}(\text{走})=0.9$，$\alpha_1(\text{晴})=0.6\cdot0.9=0.54$。下一步把所有 $i$ 的 $\alpha_1(i)a_{ij}$ 加总再乘发射——这就是「把昨天所有可能性汇总到今天 $j$」。Viterbi 把 $\sum$ 换成 $\max$，并记下 $\arg\max$ 以便回溯。
+
+::: details 逐步推导：前向 $\alpha$ 与维特比 $\delta$（点击展开）
+
+$\alpha_t(j)=P(x_{1:t},Z_t=j)$。用马尔可夫：
+
+$$
+\alpha_t(j)=\sum_i P(x_{1:t-1},Z_{t-1}=i)\,a_{ij}\,b_j(x_t)=\Bigl(\sum_i\alpha_{t-1}(i)a_{ij}\Bigr)b_j(x_t).
+$$
+
+每步 $N^2$ 次乘法，$T$ 步共 $O(N^2T)$。数值上 $\alpha$ 会指数衰减，实践用 log-sum-exp。Viterbi：$\delta_t(j)=\max_i\delta_{t-1}(i)a_{ij}b_j(x_t)$，存指针 $\psi_t(j)$，从 $T$ 回溯得到一条状态路径——这是 MAP 路径，不是边缘最大状态的拼接（后者可能非法）。学习：E 步用前向后向算 $\gamma_t(i)=P(Z_t=i\mid x)$ 与 $\xi_t(i,j)$，M 步把它们当软计数更新 $A,B,\pi$。
+
+:::
 
 ![前向算法递推图示：格子图（trellis）显示 t-1 时刻所有状态 i 以权重 α_{t-1}(i) 指向 t 时刻状态 j，每条边标注转移概率 a_{ij}，t 时刻节点 j 标注 α_t(j) = [Σ_i α_{t-1}(i)·a_{ij}] · b_j(x_t)](./images/ml11-02-forward-algorithm.png)
 

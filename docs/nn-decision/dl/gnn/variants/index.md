@@ -7,7 +7,7 @@ order: 20
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
-> 上一章的三步是 \(\phi\) → AGG → \(\psi\)。[消息传递](/nn-decision/dl/gnn/message-passing/) 不重复。这里每个变体单独成节：公式、直觉、什么时候用、和邻居变体差在哪。
+> 上一章的三步是 \(\phi\) → AGG → \(\psi\)。[消息传递](/nn-decision/dl/gnn/message-passing/) 不重复。这里每个变体单独成节。`demo.py` 从零实现 GCN vs GAT（不装 PyG）。对称归一化 $1/\sqrt{d_i d_j}$ 的来源在折叠里。
 
 ---
 
@@ -48,6 +48,16 @@ $$
 - \(\psi\)：非线性 \(\sigma\)（通常 ReLU）
 
 **何时用。** 引用网络、同配社团（邻居标签往往相同）：消息相当于在图上做一次平滑，同类会被拉近。便宜，是任何节点分类的第一基线。
+
+**数字例。** 节点 $i$ 度数 1、邻居 $j$ 度数 3，自环后 $\tilde d_i=2$、$\tilde d_j=4$，边权 $1/\sqrt{8}\approx 0.35$。若改成均权 1，高度数节点会淹没别人。GAT 则学 $\alpha_{ij}\propto \exp(\mathrm{LeakyReLU}(a^\top[Wh_i\|Wh_j]))$，同一条边权重可随特征变。
+
+::: details 逐步推导：GCN 对称归一化与 GAT 注意力（点击展开）
+
+谱卷积一阶近似：$I+D^{-1/2}AD^{-1/2}$ 特征值可 $>2$，Kipf 改用 $\tilde D^{-1/2}\tilde A\tilde D^{-1/2}$ 把谱压到 $[0,2]$，再常乘 $\tilde A$ 重标。矩阵形式一次稀疏乘：`A_hat @ H @ W`。
+
+GAT：对每个 $i$ 在邻居上做 softmax，AGG 是加权和。多头再拼接或平均。SAGE：先对邻居采样固定个 $k$，mean 后与 $h_i$ 拼接过线性——归纳，未见过的节点也能推。GIN：$h_i\leftarrow \mathrm{MLP}\bigl((1+\varepsilon)h_i+\sum_j h_j\bigr)$，sum 可区分度数，逼近 WL 测试。
+
+:::
 
 **何时不用。** 异配图（好友标签经常相反）、必须数清「有几个碳」的分子图（mean 型归一化会丢掉计数，见 GIN）、超大图不能把整图 \(A\) 放进显存（改 SAGE）。
 
@@ -201,6 +211,10 @@ python demo.py
 | GraphTransformer | 注意力补长程 |
 
 > 下一站：[应用与坑](/nn-decision/dl/gnn/applications/)。科学网格 / 分子仍看 [as05](/science/gnn/)。
+
+**对照 demo.py。** 同一张小图上 GCN 与 GAT 的节点分类。GCN 边界更「糊」（平滑）；GAT 会把注意力压在少数边上，边界可以更尖。若把所有边权打成一样，GAT 退化成近似 GCN。卡点：没有自环时 GCN 公式里的 $\tilde A=A+I$ 被你忘了加，节点会丢掉自身特征；注意力温度太大则 $\alpha_{ij}$ 变均匀，学了等于没学。
+
+---
 
 ## 参考
 

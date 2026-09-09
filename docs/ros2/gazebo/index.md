@@ -34,6 +34,12 @@ ROS 和 Gazebo 本来是两套系统，中间靠 **bridge（桥）** 翻译话�
 
 所以第 09 课学的 `cmd_vel`，在这里第一次真正“开到车”。
 
+::: details 逐步说明：bridge 为何必须，以及 odom 和 TF 谁发（点击展开）
+
+Gazebo 里的话题名字、消息类型与 ROS 2 不完全同一套。`ros_gz_bridge` 按配置把 `/cmd_vel` 译成仿真插件订阅的速度，再把仿真里程计译回 `nav_msgs/Odometry`。DiffDrive 插件内部才做上一课的 $v,\omega\to$ 轮速和积分。`odom`→`base_link` 的 TF 通常由里程计或 `robot_state_publisher` 配合发出，RViz 才能把车画在世界里。桥没配上：ROS 侧 `topic echo` 有速度，车不动。
+
+:::
+
 本机装的是 **Gazebo Fortress（Ignition Gazebo 6）**，不是很老的 Gazebo Classic；命令常见 `ign gazebo` / `ros_gz_sim`。
 
 ## 常见疑问

@@ -9,6 +9,7 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> 一棵深树方差大：换一批 bootstrap 数据，边界就换一张脸。把许多棵平均掉，再在每个节点只看 $\sqrt d$ 个特征，树与树就不那么像。`demo.py` 对照 Bagging 与随机森林的边界，并算 OOB。OOB 的 $e^{-1}$ 和集成方差公式在折叠里。
 
 ## 1. 集成学习的基本思想
 
@@ -54,6 +55,25 @@ P(\text{样本不在 Bootstrap 中}) = \left(1 - \frac{1}{n}\right)^n \approx e^
 $$
 
 大约有 **36.8%** 的原始样本不会出现在某个 Bootstrap 样本中——这些样本称为 **Out-of-Bag (OOB) 样本**，它们是"免费"的验证集。
+
+**数字例。** $n=1000$，某条样本每次被抽中概率 $1/1000$，不被抽中 $(1-1/1000)^{1000}\approx 0.3677$。100 棵树里大约 37 棵从没见过它，用这 37 棵给它投票，就是它的 OOB 预测。不必再切验证集。
+
+::: details 逐步推导：OOB 比例与集成方差 $\rho\sigma^2+(1-\rho)\sigma^2/B$（点击展开）
+
+有放回抽 $n$ 次：$\bigl(1-\tfrac1n\bigr)^n\to e^{-1}$。期望被抽中次数是 1（泊松），所以有的点出现两次、有的零次——这就是 bootstrap 的噪声来源，也是每棵树不同的原因。
+
+$B$ 个同分布预测 $h_b$，相关系数 $\rho$：
+
+$$
+\mathrm{Var}\Bigl(\frac1B\sum_b h_b\Bigr)
+=\frac1{B^2}\sum_b\mathrm{Var}(h_b)+\frac1{B^2}\sum_{b\neq b'}\mathrm{Cov}
+=\frac{\sigma^2}B+\frac{B(B-1)}{B^2}\rho\sigma^2
+=\rho\sigma^2+\frac{1-\rho}{B}\sigma^2.
+$$
+
+$B\to\infty$ 后剩下 $\rho\sigma^2$。只加树不够，还得把 $\rho$ 压下去：bootstrap 换数据 + 每个节点随机 $m\approx\sqrt d$ 个特征。普通 Bagging 只做前者，最强特征会在每棵树上反复被选，森林长得像。
+
+:::
 
 ### 2.2 Bagging 算法流程
 

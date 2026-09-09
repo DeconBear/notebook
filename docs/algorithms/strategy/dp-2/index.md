@@ -34,6 +34,14 @@ for length in range(2, n + 1):         # 枚举区间长度
             dp[l][r] = merge(dp[l][k], dp[k+1][r])
 ```
 
+::: details 逐步推导：区间 DP 为何按长度枚举，以及矩阵链乘法的 $O(n^3)$（点击展开）
+
+计算 $dp[l][r]$ 需要所有更短区间 $dp[l][k]$、$dp[k+1][r]$。若按 $l,r$ 乱序填，可能用到尚未算完的格子。按 `length` 从 2 到 $n$：长度为 $\ell$ 的区间只依赖长度 $<\ell$ 的，依赖已就绪。
+
+矩阵链：$A_l\cdots A_r$ 在 $k$ 处切开，代价 $dp[l][k]+dp[k+1][r]+p_{l-1}p_k p_r$。$k$ 有 $O(n)$ 个，$l,r$ 对 $O(n^2)$，故 $O(n^3)$。石子合并同形，只是合并代价改成区间和。
+
+:::
+
 ### 1.2 矩阵链乘法（Matrix Chain Multiplication）
 
 **问题**：给定 $n$ 个矩阵的维度序列 $p_0, p_1, \dots, p_n$（矩阵 $A_i$ 的维度为 $p_{i-1} \times p_i$），求最少标量乘法次数。

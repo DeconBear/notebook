@@ -10,8 +10,9 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> 拿到了梯度，怎么用？Momentum 惯性、RMSProp 按坐标缩放、Adam 两者相乘。`demo.py` 会在香蕉形曲面上对比轨迹。动量如何把锯齿平均掉，见折叠。
 
-> 拿到了梯度，怎么用？Momentum、RMSProp、Adam 一步步解决梯度下降的困境
+## 一、回顾：梯度下降的基本公式
 
 ---
 
@@ -30,6 +31,20 @@ $$
 这行公式简单优美，但在实践中会遇到一系列问题。本节的目标就是：**理解每个问题是什么，以及 Momentum、RMSProp、Adam 分别如何解决它们**。
 
 ![SGD 在狭长峡谷中的锯齿问题](./images/08-01-sgd-zigzag.png)
+
+> **图解说明**：峡谷窄边梯度大，SGD 左右撞墙；沿谷底的方向梯度小，前进极慢。
+
+**数字例。** 二次碗 $L=\tfrac12(100\,x^2+y^2)$。$\nabla L=(100x,y)$。$\eta=0.015$ 时 $x$ 方向 $|1-\eta\cdot 100|=0.5$ 还收敛；$x$ 方向 $\eta>0.02$ 就振荡。$y$ 方向同样 $\eta$ 却走得像蜗牛。Momentum 把连续几步的 $x$ 振荡正负抵消，把 $y$ 的同号梯度累起来。
+
+::: details 逐步推导：Momentum / RMSProp / Adam 各改了哪一项（点击展开）
+
+动量：$v_t=\mu v_{t-1}+g_t$，$\theta\leftarrow\theta-\alpha v_t$（或先写 $\theta\leftarrow\theta-\alpha(\mu v+g)$）。低频（一致）方向被放大 $1/(1-\mu)$，高频锯齿被平滑。$\mu=0.9$ 相当于大约 10 步平均。
+
+RMSProp：$v_t=\rho v_{t-1}+(1-\rho)g_t^2$（逐元素），$\theta\leftarrow\theta-\alpha g/\sqrt{v+\varepsilon}$。梯度长期大的坐标自动用小步。Adam：$m_t$ 是动量，$v_t$ 是 RMS，再除。偏差修正见下一章：$\hat m=m/(1-\beta_1^t)$，因为 $m_0=0$ 会让早期 $m$ 偏小。
+
+卡点：Adam 的 $\varepsilon=10^{-8}$ 在 $v$ 极小时避免除零；学习率 $\alpha=10^{-3}$ 是论文默认，不是神圣数字。权重衰减若写成 $L+\frac\lambda2\|\theta\|^2$ 再丢给 Adam，与解耦的 AdamW 不等价。
+
+:::
 
 ---
 

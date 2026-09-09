@@ -10,8 +10,9 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> 偏差修正、AdamW、学习率调度、梯度诊断。`demo.py` 对比带/不带 bias correction 的早期步长。$\hat m_t=m_t/(1-\beta_1^t)$ 为什么出现，折叠里展开几何级数。
 
-> 偏差修正、AdamW、学习率调度、梯度诊断——把 Adam 用对、用好的完整指南
+## 一、回顾：Adam 的核心公式
 
 ---
 
@@ -56,6 +57,20 @@ m_1 = \beta_1 \cdot 0 + (1 - \beta_1) g_1 = (1 - \beta_1) g_1
 $$
 
 如果 $\beta_1 = 0.9$，那么 $m_1 = 0.1 g_1$。也就是说，第一步的动量估计只保留了真实梯度的 **10%**。这会让训练初期步长过小，收敛缓慢。
+
+**数字例。** $\beta_1=0.9$，$g_1=g_2=\cdots=1$。无修正：$m_1=0.1$，$m_2=0.19$，$m_5\approx 0.41$，很久才靠近 1。除以 $1-\beta_1^t$：$t=1$ 时 $\hat m=0.1/0.1=1$，一步就无偏。$\beta_2=0.999$ 更极端：$1-\beta_2^{10}\approx 0.01$，$v$ 几乎还是 0，**必须**修正，否则 $\hat m/\sqrt{v}$ 爆炸或乱跳。
+
+::: details 逐步推导：权重和为何是 $1-\beta^t$（点击展开）
+
+$m_t=(1-\beta)\sum_{i=1}^t \beta^{t-i}g_i$。令 $g_i\equiv g$ 常数，等比数列
+
+$$
+\sum_{i=1}^t \beta^{t-i}=\frac{1-\beta^t}{1-\beta},
+$$
+
+故 $m_t=g(1-\beta^t)$。除以 $1-\beta^t$ 得到 $g$。$t\to\infty$ 时 $\beta^t\to 0$，修正消失，这就是「只在开头重要」。AdamW：把 $\lambda\theta$ 从自适应分母里拿出来，写成 $\theta\leftarrow\theta-\alpha\hat m/(\sqrt{\hat v}+\varepsilon)-\alpha\lambda\theta$，与「损失里加 $\tfrac\lambda2\|\theta\|^2$ 再让 Adam 吃梯度」不同——后者衰减强度被 $\sqrt{v}$ 调制。
+
+:::
 
 ### 偏差修正的数学
 

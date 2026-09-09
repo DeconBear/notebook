@@ -56,6 +56,20 @@ $$
 
 $y_w$ 比 $y_l$ 更受偏好。RM 是一个**偏好分类器**，输出标量分数，不是生成模型。
 
+**数字例。** $R(y_w)=2.0$，$R(y_l)=0.5$，$\sigma(1.5)\approx 0.82$，损失 $-\log 0.82\approx 0.20$。若模型把两者打成一样分，损失 $-\log 0.5\approx 0.69$。DPO 不训 $R$：直接让 $\beta\log(\pi_\theta(y_w)/\pi_{\mathrm{ref}}(y_w))$ 比输家那侧更大。`demo.py` 在玩具词表上对比 PPO 与 DPO。
+
+::: details 逐步推导：Bradley-Terry → RM 损失 → DPO（点击展开）
+
+BT：$P(y_w\succ y_l\mid x)=\sigma(R(x,y_w)-R(x,y_l))$。负对数就是正文的 $\mathcal L_R$。KL 约束的最优奖励满足 $R(x,y)=\beta\log(\pi(y\mid x)/\pi_{\mathrm{ref}}(y\mid x))+Z(x)$。代入 BT，$Z(x)$ 相减消掉，得到
+
+$$
+\mathcal L_{\mathrm{DPO}}=-\mathbb E\log\sigma\Bigl(\beta\log\frac{\pi_\theta(y_w)}{\pi_{\mathrm{ref}}(y_w)}-\beta\log\frac{\pi_\theta(y_l)}{\pi_{\mathrm{ref}}(y_l)}\Bigr).
+$$
+
+PPO 路线：在线采 $y\sim\pi_\theta$，奖励 $R_{\mathrm{RM}}-\beta\mathrm{KL}(\pi_\theta\|\pi_{\mathrm{ref}})$，再用 PPO 章的 clip。KL 是橡皮筋，防止奖励黑客把模型拧成刷分怪。卡点：RM 过拟合人类标注会把策略带沟里；DPO 对偏好数据噪声同样敏感。
+
+:::
+
 ### 阶段 3：用已经学过的优化器微调策略
 
 - 初始策略：$\pi_{\mathrm{SFT}}$

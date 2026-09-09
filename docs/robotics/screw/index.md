@@ -88,6 +88,33 @@ $$
 
 （与三维 $\omega\times r$ 差一个二维定向约定，练习会钉死）。于是矩形绕黑叉瞬心转，而不是绕原点转——这正是「旋量比原点速度直观」的地方：你先选轴，再写 $v$。
 
+![旋量：瞬时运动 = 绕轴转 + 沿轴移](./images/rob-06b-twist-icr.png)
+
+> **图解说明**：平面刚体绕瞬时转动中心的速度场。右：$\mathrm{SE}(2)$ 的 twist $(\omega,v_x,v_y)$。
+
+::: details 逐步推导：平面 $\exp(t\hat\xi)$ 的平移块从哪来（点击展开）
+
+$\omega=0$ 时 $\hat\xi$ 幂次很快变零，$\exp(t\hat\xi)=I+t\hat\xi$，右上角就是 $t(v_x,v_y)$，纯平移。
+
+$\omega\neq 0$ 时，把刚体运动看成「绕瞬心转」。转角 $\phi=\omega t$。指数级数对 $3\times 3$ 的 $\hat\xi$ 可以像 Rodrigues 那样收成 $\sin\phi$ 与 $1-\cos\phi$。右上角（平移部分）作用在 $v$ 上，得到正文的 $2\times 2$：
+
+$$
+\begin{pmatrix}x\\ y\end{pmatrix}
+=
+\frac{1}{\omega}
+\begin{pmatrix}
+\sin\phi & -(1-\cos\phi)\\
+1-\cos\phi & \sin\phi
+\end{pmatrix}
+\begin{pmatrix}v_x\\ v_y\end{pmatrix}.
+$$
+
+若 $v$ 按纯转动选取 $v=\omega(q_y,-q_x)$，瞬心 $q$ 处速度为零，刚体上每点走圆。这就是 demo：矩形不绕原点转，而绕你标出的黑叉转。
+
+与 $\mathrm{SO}(3)$ 对照：那边只有转动，指数落在 $3\times 3$ 的 $R$；这里多一列平移，群变成 $\mathrm{SE}(2)$。空间 $\mathrm{SE}(3)$ 是同一故事的 $4\times 4$ 版。
+
+:::
+
 ---
 
 ## 三、和 DH、雅可比、四杆的关系

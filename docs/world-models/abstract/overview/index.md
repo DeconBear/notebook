@@ -34,6 +34,12 @@ $$
 
 建议顺序与上表一致。MuZero 可在 Dreamer 后穿插：对比「重建观测」vs「只为搜索服务的隐式模型」。
 
+::: details 逐步说明：路径三共用骨架里 $z$、$f_\theta$ 和规划各干什么（点击展开）
+
+$z_t=\mathrm{enc}(o_{\le t},a_{<t})$ 是压缩信念，不必是物理状态。$f_\theta(z_t,a_t)$ 在这个空间里走一步。MPC：在 $z$ 上采样动作序列，用 $f$ 滚 $H$ 步，挑回报最高的第一条动作执行。Actor-Critic：在想象轨迹上对 $\pi$ 反传，不再每步问真环境。PETS 假定 $z$ 已是干净状态；RSSM 要从像素学出 $z$；Dreamer 把规划换成可微策略；MuZero 连重建都可以不要，只要搜索准。
+
+:::
+
 PETS、Dreamer、LeWM（以及 JEPA 的火柴杆附录）共用同一套**倒立摆物理**（θ=0 竖直向上，观测 $[\cos\theta,\sin\theta,\omega]$ 或由其渲染的帧）：先看状态空间 CEM，再看想象里的 Actor-Critic，最后看像素嵌入上的目标 CEM。
 
 ---

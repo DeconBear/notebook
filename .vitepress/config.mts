@@ -17,6 +17,14 @@ export default withMermaid(
     description: '图解笔记 · AI、算法、ROS 2',
     lang: 'zh-CN',
     ignoreDeadLinks: true,
+    // Windows 上 Vite 默认只绑 [::1]，用 127.0.0.1 打开会连不上
+    vite: {
+      server: {
+        host: true,
+        port: 5173,
+        strictPort: true,
+      },
+    },
     publicDir: path.join(repoRoot, 'public'),
     srcExclude: ['README.md', '**/image_prompts.md', '**/CODE.md', '**/_gone.yaml', '**/_meta.yaml', '**/_manim/**'],
     head: [

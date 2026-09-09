@@ -177,8 +177,24 @@ $$
 
 $$
 \frac{\partial L}{\partial w}
-= \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} \cdot \frac{\partial z}{\partial w}
+= \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} \cdot \frac{\partial z}{\partial w}.
 $$
+
+![反向传播：链式法则从输出往回乘](./images/dl-bp-b-chain.png)
+
+> **图解说明**：前向算出 $z,a,L$；反向从 $\partial L/\partial a$ 起，每层只乘自己的局部雅可比，一直乘到 $\partial L/\partial W$。
+
+::: details 逐步推导：三层小神经元上的 $\partial L/\partial w$（点击展开）
+
+$z=wx+b$，$a=\phi(z)$，$L=\ell(a,y)$。链式：
+
+$$
+\frac{\partial L}{\partial w}=\frac{\partial L}{\partial a}\frac{\partial a}{\partial z}\frac{\partial z}{\partial w}.
+$$
+
+最后一项 $\partial z/\partial w=x$。中间 $\partial a/\partial z=\phi'(z)$。最外层 $\partial L/\partial a$ 由你选的损失决定（MSE 时是 $a-y$）。三者相乘就是一次反向传播。多层只是把这段重复：每一层缓存前向的 $z$，反向时用后一层送来的 $\partial L/\partial a$ 乘本地 $\phi'$ 再乘 $x$（或 $W^\top$）。这就是「反向」：信息从损失往输入流，参数就地更新。
+
+:::
 
 逐项拆解：
 
@@ -204,6 +220,8 @@ $$
 $$
 
 > **直观理解**：$w$ 的梯度 = "损失对你的输出有多不满" $\times$ "激活函数在当前点的斜率" $\times$ "这个参数对应的输入值的大小"。如果输入 $x$ 很大，那么 $w$ 的梯度也大，意味着这个 $w$ 对最终结果影响大，需要更大的调整。
+
+`demo.py` 用手算表达式 $f=(x+y)z$ 对账框架的 `backward`。再对照单神经元：$\hat y=wx$，$x=2$，$y=1$，$w=1$ 时 $\partial L/\partial w=2$，见第 1 节。卡点：fan-out 必须 `grad +=`；忘了 `zero_grad` 会把上一步梯度叠进来。
 
 ---
 

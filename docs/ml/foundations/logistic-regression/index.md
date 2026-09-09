@@ -9,6 +9,7 @@ legacyPaths:
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
+> 把 [线性回归](/ml/foundations/linear-regression/) 的 $wx+b$ 塞进 $\sigma$，输出就变成概率。正文保留结论公式 $\partial\mathcal L/\partial z=\hat y-y$；代数在折叠里。`demo.py` 用 Iris 前两维做二分类（$\eta=0.5$）和 Softmax 三分类。
 
 ## 1. 从回归到分类
 
@@ -64,6 +65,19 @@ $$
 
 ![Sigmoid 函数曲线：从实数 z 到概率 (0,1) 的平滑 S 形映射，标注了中心点 (0, 0.5) 和正负类置信度区域](./images/03-01-sigmoid-function.png)
 
+> **图解说明**：$z$ 从负到正，概率从 0 爬到 1。$|z|$ 很大时曲线几乎水平——这就是「饱和」，用 MSE 时梯度会消失。
+
+**保姆级数字例。**
+
+| $z$ | $\sigma(z)$ | 含义 |
+|-----|-------------|------|
+| $0$ | $0.5$ | 压在边界上，最没把握 |
+| $1$ | $1/(1+e^{-1})\approx 0.731$ | 略偏正类 |
+| $2$ | $\approx 0.881$ | 比较确信 |
+| $-2$ | $\approx 0.119$ | 比较确信是负类 |
+
+`demo.py` 里 `np.clip(z, -500, 500)`：否则 $z=-1000$ 时 $e^{-z}$ 溢成 `inf`。对称性可手算：$\sigma(-2)=1-\sigma(2)$。
+
 ### 2.3 逻辑回归模型
 
 将 Sigmoid 套在线性模型上，就得到了逻辑回归模型：
@@ -96,6 +110,8 @@ $$
 点到决策边界的**有符号距离**与 $\mathbf{w}^T \mathbf{x} + b$ 成正比，决定了预测概率的置信度。越远离边界，$\sigma$ 越接近 0 或 1——模型越「确信」。
 
 ![二维特征空间中的决策边界：一条直线将红蓝两类数据点分隔，法向量 w 指向正类区域，标注了误分类点](./images/03-02.png)
+
+> **图解说明**：边界仍是直线 $w^\top x+b=0$。离线越远颜色越深，对应 $\sigma$ 越接近 0 或 1。
 
 ---
 
@@ -143,35 +159,38 @@ $$
 
 ---
 
-## 5. 梯度推导
+## 5. 梯度：结论与卡点
 
-让我们推导逻辑回归 + 交叉熵的完整梯度。
+单样本交叉熵对得分的梯度（记住这一行就够写代码）：
 
-### 5.1 单样本梯度
+$$
+\frac{\partial \mathcal{L}}{\partial z}=\hat y-y,\qquad
+\frac{\partial \mathcal{L}}{\partial \mathbf{w}}=(\hat y-y)\mathbf{x},\qquad
+\frac{\partial \mathcal{L}}{\partial b}=\hat y-y.
+$$
 
-对于单个样本 $(\mathbf{x}, y)$，令 $z = \mathbf{w}^T \mathbf{x} + b$，$\hat{y} = \sigma(z)$。
+和线性回归 + MSE **长得一样**，只是 $\hat y=\sigma(wx+b)$ 而不是 $wx+b$。`demo.py` 里就是 `errors = y_pred - y`，再 `X.T @ errors`。
 
-损失对 $z$ 的导数（这步用到了 Sigmoid 的性质 $\sigma'(z) = \sigma(z)(1 - \sigma(z))$）：
+**数字例。** $y=1$，$\hat y=0.2$（该判正却只有两成把握）。$\partial\mathcal L/\partial z=0.2-1=-0.8$。$w\leftarrow w-\eta(-0.8)x$，即沿 $x$ 方向**增大** $w$，把得分抬上去。若 $y=0$ 且 $\hat y=0.9$，梯度 $+0.9$，把 $w$ 往反方向拧。
+
+::: details 逐步推导：交叉熵 + Sigmoid 为何 $\partial\mathcal L/\partial z=\hat y-y$（点击展开）
+
+$\mathcal L=-y\log\sigma(z)-(1-y)\log(1-\sigma(z))$，$\sigma'=\sigma(1-\sigma)$。
 
 $$
 \begin{aligned}
-\frac{\partial \mathcal{L}}{\partial z}
-&= \frac{\partial}{\partial z} \left[ -y \log(\sigma(z)) - (1-y) \log(1-\sigma(z)) \right] \\
-&= -y \cdot \frac{\sigma'(z)}{\sigma(z)} - (1-y) \cdot \frac{-\sigma'(z)}{1-\sigma(z)} \\
-&= -y(1-\sigma(z)) + (1-y)\sigma(z) \\
-&= \sigma(z) - y = \hat{y} - y
+\frac{\partial\mathcal L}{\partial z}
+&= -y\frac{\sigma'}{\sigma}-(1-y)\frac{-\sigma'}{1-\sigma}
+= -y(1-\sigma)+(1-y)\sigma
+= \sigma-y.
 \end{aligned}
 $$
 
-然后利用链式法则传播到参数：
+$\sigma'$ 被约掉：饱和区 $\sigma'\approx 0$ 不再把梯度掐死。这就是交叉熵相对 MSE 的关键。再乘 $\partial z/\partial w=x$ 得到 $(\hat y-y)x$。
 
-$$
-\frac{\partial \mathcal{L}}{\partial \mathbf{w}} = \frac{\partial \mathcal{L}}{\partial z} \cdot \frac{\partial z}{\partial \mathbf{w}} = (\hat{y} - y) \cdot \mathbf{x}
-$$
+$\sigma'(z)$ 本身：$\sigma= (1+e^{-z})^{-1}$，对数求导 $\log\sigma=- \log(1+e^{-z})$，$\sigma'/\sigma=e^{-z}/(1+e^{-z})=1-\sigma$，故 $\sigma'=\sigma(1-\sigma)$。
 
-$$
-\frac{\partial \mathcal{L}}{\partial b} = \frac{\partial \mathcal{L}}{\partial z} \cdot \frac{\partial z}{\partial b} = \hat{y} - y
-$$
+:::
 
 ### 5.2 批量梯度
 
@@ -209,6 +228,10 @@ $$
 - **保序性**：如果 $z_i > z_j$，则 $\text{softmax}(z_i) > \text{softmax}(z_j)$
 
 ![Softmax 函数：将原始得分 [2.0, 1.0, 0.1] 通过 exp 和 normalize 两步变换为概率分布 [0.66, 0.24, 0.10]](./images/03-04.png)
+
+> **图解说明**：先 $\exp$，再除以总和。最大分 $2.0$ 变成约 $0.66$，不是 $1$——Softmax 永远留一点质量给其他类。
+
+**数字例（与图相同）。** $z=[2.0,1.0,0.1]$。减最大值再 $\exp$：$[1, e^{-1}, e^{-1.9}]\approx[1,0.368,0.150]$，和 $\approx 1.518$，概率 $\approx[0.659,0.242,0.099]$。`demo.py` 的 `z - max(z)` 就是为了避免 $e^{100}$ 溢出；减常数不改变 Softmax。
 
 ### 6.3 多分类交叉熵
 
@@ -257,6 +280,8 @@ Iris 数据集包含 150 个样本，3 个类别（Setosa, Versicolor, Virginica
 - **F1-Score**：精确率和召回率的调和平均
 - **混淆矩阵（Confusion Matrix）**：直观展示各类别的预测情况
 
+**对照 demo.py。** Iris 取两类、前两维，$\eta=0.5$。损失应单调下降，决策边界是直线，热力图从一侧蓝到另一侧红。三分类 Softmax 用同一套 $\hat y-y$ 梯度，只是 $W$ 变成矩阵。sklearn 的 `LogisticRegression` 默认带 L2，和从零实现的无正则版本系数不会逐位相同，但准确率应接近。卡点：把概率当成类别去算 MSE；以及 `log(0)` 没 clip。
+
 ---
 
 ## 本章总结
@@ -269,6 +294,8 @@ Iris 数据集包含 150 个样本，3 个类别（Setosa, Versicolor, Virginica
 4. 用梯度下降（或更高级的优化器）来最小化损失
 
 这个框架——线性变换 + 非线性激活 + 交叉熵损失——是几乎所有现代神经网络的基石。逻辑回归本质上就是一个**没有隐藏层的神经网络**。
+
+**卡点。** (1) `log(0)`：预测贴 0 或 1 时要 `clip` 到 $(10^{-15},1-10^{-15})$。 (2) 标签必须是 $\{0,1\}$，不能把感知机的 $\pm 1$ 直接塞进来。 (3) 决策阈值不必是 $0.5$：疾病筛查可把阈值降到 $0.3$ 以提高召回，见 [贝叶斯决策](/ml/classic/bayesian-decision/) 的风险矩阵。
 
 ---
 

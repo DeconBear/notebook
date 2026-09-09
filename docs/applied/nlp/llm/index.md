@@ -11,7 +11,7 @@ legacyPaths:
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
 
 
-> 当模型参数从 1 亿涨到 1000 亿，它不再只是"更准确"——它开始拥有了小模型完全不具备的能力。这就是涌现。
+> 当模型参数从 1 亿涨到 1000 亿，它不再只是"更准确"——它开始拥有了小模型完全不具备的能力。这就是涌现。预训练目标见 [BERT/GPT](/applied/nlp/pretrained/)；对齐的 RL 细节见 [RLHF](/nn-decision/rl/rlhf/)。本章把 Kaplan / Chinchilla 的幂律和 DPO 的 log-比写成可手算的配比。
 
 ---
 
@@ -63,6 +63,22 @@ $$
 
 ![Scaling Laws](./images/18-01-scaling-laws.png)
 
+> **图解说明**：log-log 上损失随参数、数据近似直线下降。Chinchilla 提醒：固定算力时，别只堆参数，token 数要跟上来。
+
+::: details 逐步推导：固定 FLOPs 时为何 $D\sim 20N$，以及 DPO 的两个 log 比（点击展开）
+
+训练算力粗算 $C\sim 6ND$（前向约 $2ND$，反向约两倍）。$N$ 翻倍而 $D$ 不变，等于把同一批 token 用更大模型再读一遍，很快过拟合、欠训练。Chinchilla 拟合出最优大约 $D/N\approx 20$：70B 参数配 1.4T token。GPT-3 的 175B / ~300B token 远低于这条线，所以更小但读得更久的 LLaMA 能打过它。
+
+DPO：偏好 $y_w\succ y_l$。策略相对参考策略的 log 密度差
+
+$$
+\Delta = \beta\left(\log\frac{\pi_\theta(y_w\mid x)}{\pi_{\mathrm{ref}}(y_w\mid x)}-\log\frac{\pi_\theta(y_l\mid x)}{\pi_{\mathrm{ref}}(y_l\mid x)}\right)
+$$
+
+要让 $\sigma(\Delta)\to 1$，即 $\pi_\theta$ 相对 $\pi_{\mathrm{ref}}$ 更抬高胜者、压低败者。$\beta$ 相当于 KL 温度：太大则不敢离 SFT 参考，太小则容易把语言能力冲掉。不需要单独的奖励模型，因为最优策略与奖励在 KL 约束下一一对应，损失直接写在 $\pi$ 上。
+
+:::
+
 ---
 
 ## 三、涌现能力：量变引起质变
@@ -92,6 +108,8 @@ Wei et al. (2022) 在 Google 的研究中系统性地记录了这些涌现能力
 **解释三：记忆与模式匹配**：更大模型、更多数据意味着模型见过更多模式。当模型记住了足够多的"加法例子"，它"看起来"就会做加法——尽管模型内部可能并没有学到抽象的加法规则。
 
 ![涌现能力](./images/18-02-emergent-abilities.png)
+
+> **图解说明**：横轴规模，纵轴某项任务准确率。小模型在随机水平附近爬，过了阈值才陡升——度量是非线性的，底层 perplexity 未必突变。
 
 ---
 
@@ -185,6 +203,8 @@ $$
 
 ![RLHF vs DPO](./images/18-04-dpo-vs-rlhf.png)
 
+> **图解说明**：RLHF 先训奖励模型再 PPO；DPO 把偏好直接写成对 $\pi_\theta$ 的分类损失，少一个不稳定的 RL 环。
+
 ---
 
 ## 七、LLM 的实用技术概览
@@ -212,7 +232,11 @@ LLM 的知识截止于训练数据。RAG 通过外部知识库来弥补这一缺
 
 核心思想：不修改原始权重 $W$，而是在旁边附加一个低秩更新 $\Delta W = BA$，其中 $B \in \mathbb{R}^{d \times r}$，$A \in \mathbb{R}^{r \times k}$，$r$ 远小于 $d$ 和 $k$（通常 $r=8$ 或 $16$）。
 
+核心思想：不修改原始权重 $W$，而是在旁边附加一个低秩更新 $\Delta W = BA$，其中 $B \in \mathbb{R}^{d \times r}$，$A \in \mathbb{R}^{r \times k}$，$r$ 远小于 $d$ 和 $k$（通常 $r=8$ 或 $16$）。
+
 ![RLHF 三阶段 Pipeline](./images/18-03-rlhf-pipeline.png)
+
+> **图解说明**：SFT 先学会听话的格式；人类给成对偏好训奖励模型；PPO 用奖励在线改策略，并用 KL 拴在 SFT 旁边。
 
 ---
 

@@ -11,6 +11,8 @@ order: 10
 
 本领域紧接 **[信息论](/information/)**：经典熵、信道与 [香农容量](/information/shannon/) 说清楚以后，再把比特换成量子比特。线性代数是硬前置，请先有 [向量 / 矩阵 / 内积](/math/linear-algebra/) 的几何直觉。具身与规划见 [控制论](/control/overview/) 与 [世界模型](/world-models/intro/)。
 
+第一遍只抓住：量子比特是归一化复向量；叠加有相位、混合没有；不可克隆和退相干是后面每一章的墙。需要把 $H|+\rangle=|0\rangle$ 或不可克隆证一遍时，点开「逐步推导」。
+
 ---
 
 ## 一、量子信息在问什么？
@@ -26,6 +28,8 @@ $$
 测量在计算基上只能得到 0 或 1，概率分别是 $|\alpha|^2$、$|\beta|^2$。**叠加不是「同时是 0 又是 1 的魔法」**，而是：在测量之前，系统由振幅描述；测量之后，坍缩成一个经典结果。
 
 多个量子比特的空间是张量积 $\mathbb{C}^{2}\otimes\mathbb{C}^{2}\otimes\cdots$，维度 $2^n$。这既是算力叙事的来源（状态空间指数大），也是模拟它之所以难的原因。
+
+**保姆级：振幅可以相消，概率不能。** 经典随机是「50% 是 0、50% 是 1」的混合，再做一个 $H$ 门仍然是 50/50。相干叠加 $|+\rangle$ 的相对相位是齐的，同一个 $H$ 能把它收成几乎确定的 $|0\rangle$。demo 就是在画这件事。
 
 ---
 
@@ -59,6 +63,28 @@ $$
 - 量子密钥分发里，偷听会扰动态，从而留下痕迹；
 - 纠错必须绕开「先复制再投票」的经典思路，改用纠缠与稳定子。
 
+::: details 逐步推导：线性复制机为什么不可能（不可克隆）（点击展开）
+
+假设存在一个与未知态无关的酉 $U$，使得对所有 $|\psi\rangle$
+
+$$
+U\bigl(|\psi\rangle\otimes|0\rangle\bigr)=|\psi\rangle\otimes|\psi\rangle.
+$$
+
+取两个不同的纯态 $|0\rangle$、$|+\rangle$（或任意不正交的一对）。则
+
+$$
+U(|0\rangle|0\rangle)=|00\rangle,\qquad U(|+\rangle|0\rangle)=|+\rangle|+\rangle.
+$$
+
+左边对第一因子线性，所以 $U(|+\rangle|0\rangle)=\bigl(U|00\rangle+U|10\rangle\bigr)/\sqrt{2}$ 必须等于 $\bigl(|00\rangle+|11\rangle+|01\rangle+|10\rangle\bigr)/2$ 那种展开，与 $|+\rangle|+\rangle=(|00\rangle+|01\rangle+|10\rangle+|11\rangle)/2$ **相位与归一化都对不上**——更干净的说法：内积必须被复制保持。
+
+酉保持内积：$\langle 0|+\rangle=\langle 00|++\rangle$。左边是 $1/\sqrt{2}$，右边是 $(1/\sqrt{2})^2=1/2$，矛盾。因此这样的 $U$ 不存在。
+
+推论：未知态不能先复印再测量两份取平均；传态是「搬走」不是「复制」；QKD 里 Eve 的拦截-重发过不了完美复印这一关。正交态（已知的计算基）可以复制——那已经是经典比特。
+
+:::
+
 ### 3.2 退相干
 
 真实系统会与环境纠缠，相对相位被冲刷。常用两个时间尺度：
@@ -81,9 +107,26 @@ $$
 - **相干叠加** $|+\rangle=(|0\rangle+|1\rangle)/\sqrt{2}$：有相对相位，再用 $H$ 可以几乎确定地变回 $|0\rangle$；
 - **经典混合** $\rho=I/2$：真随机，再做 $H$ 仍然是 50/50。
 
-`demo.py` 用两次测量把这件事画出来。纯度 $\mathrm{Tr}(\rho^2)$ 是配套练习：纯态为 1，单比特完全混合为 $1/2$。
+`demo.py` 用两次测量把这件事画出来。每次 $2000$ 次抽样（`shots`），种子 `42`。纯度 $\mathrm{Tr}(\rho^2)$ 是配套练习：纯态为 1，单比特完全混合为 $1/2$。
 
 ![叠加与混合的测量对比](./images/superposition_vs_mixture.png)
+
+::: details 逐步推导：为什么 $H|+\rangle=|0\rangle$，而 $H$ 对 $I/2$ 毫无办法（点击展开）
+
+Hadamard（与 demo 矩阵一致）
+
+$$
+H=\frac{1}{\sqrt{2}}\begin{pmatrix}1&1\\1&-1\end{pmatrix},\qquad
+H|0\rangle=|+\rangle,\quad H|+\rangle=|0\rangle.
+$$
+
+第二式：把 $|+\rangle=(|0\rangle+|1\rangle)/\sqrt{2}$ 乘进去，$H|1\rangle=|-\rangle$，于是 $H|+\rangle=(|+\rangle+|-\rangle)/\sqrt{2}=|0\rangle$。密度矩阵 $\rho_+=|+\rangle\langle +|$ 经 $H\rho H^\dagger$ 变成 $|0\rangle\langle 0|$，测 $Z$ 几乎全是 $0$。
+
+完全混合 $\rho=I/2$。$H(I/2)H^\dagger=I/2$（$H$ 酉），测什么基都是 $1/2$。直方图左栏两种情况都像抛硬币；右栏只有叠加被「收回」。这就是「叠加不是不知道，混合才是真随机」。
+
+不可克隆与这件事兼容：你不能通过复印 $|+\rangle$ 再分别测 $X$ 和 $Z$ 来同时知道两个不相容可观测量——测一次就毁一次。
+
+:::
 
 ---
 
