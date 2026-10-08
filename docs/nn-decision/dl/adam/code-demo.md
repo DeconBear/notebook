@@ -17,6 +17,9 @@ cd docs/nn-decision/dl/adam/code
 python demo.py
 ```
 
+> [!WARNING]
+> 2026-10-08 静态审查修复了梯度键名不匹配（原先会跳过所有参数更新）、AdamW 衰减顺序、warmup 首步及批次指标加权。已有训练曲线和数值输出尚未重新运行生成，不能作为修复后结果；请运行本页命令重新验证。
+
 ## 代码逐段详解
 
 ### 第1步：导入库 — 每个库是做什么的
@@ -101,9 +104,9 @@ class AdamWOptimizer:
     def step(self, params, grads):
         # ... (与 Adam 相同的 m_t, v_t, 偏差修正) ...
 
-        # AdamW 关键：先做自适应更新，再独立应用权重衰减
-        param -= self.lr * m_hat / (np.sqrt(v_hat) + self.eps)   # 自适应更新
-        param -= self.lr * self.weight_decay * param             # 独立权重衰减
+        # AdamW 关键：先衰减旧参数，再做自适应更新
+        param *= 1.0 - self.lr * self.weight_decay
+        param -= self.lr * m_hat / (np.sqrt(v_hat) + self.eps)
 ```
 
 **Adam vs AdamW 的区别**：
@@ -269,12 +272,12 @@ def train_one_epoch(model, optimizer, X, Y_labels, batch_size,
         # ④ 记录梯度范数
         grad_norm = compute_gradient_norm(grads)
 
-        # ⑤ 参数更新
-        optimizer.step(model.params, grads)
-
-        # ⑥ 学习率调度
+        # ⑤ 设置本次更新的学习率（这是本页手写调度器）
         if scheduler is not None:
             scheduler.step()
+
+        # ⑥ 参数更新；grads 的 W1/b1 等键必须与 params 一致
+        optimizer.step(model.params, grads)
 ```
 
 六步训练流水线：
@@ -282,8 +285,8 @@ def train_one_epoch(model, optimizer, X, Y_labels, batch_size,
 2. **反向**：计算所有参数的梯度（$\delta$ 递推）
 3. **裁剪**：限制梯度最大范数（可选）
 4. **记录**：保存梯度范数用于诊断
-5. **更新**：优化器用梯度更新参数
-6. **调度**：调整学习率（可选）
+5. **调度**：设置本次更新的学习率（可选）
+6. **更新**：优化器用梯度更新参数
 
 ---
 
@@ -298,7 +301,7 @@ for use_bc, label in [(True, "With Bias Correction"), (False, "Without Bias Corr
 
 这个对比实验只在 5 个 epoch 上运行（偏差修正在早期最明显），对比：
 - **有修正**：`m_hat = m / (1 - beta1^t)` → 早期步长正常
-- **无修正**：直接用 `m` 和 `v` → 早期步长偏小，损失下降更慢
+- **无修正**：直接用 `m` 和 `v`，两种矩的缩放并不相同。忽略 $\epsilon$，默认 $\beta_1=0.9,\beta_2=0.999$ 的首步幅度是修正版的 $(1-\beta_1)/\sqrt{1-\beta_2}\approx3.16$ 倍，并非更小；实际收敛速度需要实验比较。
 
 ---
 
