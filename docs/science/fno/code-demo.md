@@ -109,6 +109,12 @@ u_pred = model(a_batch, grid_batch)
 loss = F.mse_loss(u_pred, u_batch)
 ```
 
+**尾批与损失平均。** `range(0, n_train, batch_size)` 保留最后不足一批的样本；训练集小于 batch 时也有一次更新。每个 batch 的 MSE 已按其样本与网格点取均值，因此 epoch 日志用
+$
+L_{\mathrm{epoch}}=\frac{\sum_b n_b L_b}{\sum_b n_b}
+$
+按实际样本数加权，不能把大小不同的 batch 均值直接等权平均。这里各 batch 的损失来自更新过程中的不同参数状态，是训练轨迹摘要，不是最终模型在整个训练集上的重新评估。
+
 与 PINN 的对比：
 
 | | PINN | FNO |
@@ -122,11 +128,14 @@ loss = F.mse_loss(u_pred, u_batch)
 ```python
 # 模型只在 grid_size=64 上训练过
 # 直接在 grid_size=192 上推理——同一套权重，无需重训
-x_grid, A, U = generate_dataset(1, N=192, ...)
+x_grid, A, U = generate_dataset(1, grid_size=192)
 u_pred = model(a_t, grid_t)
 ```
 
-这是 FNO 相对普通 CNN / MLP 的杀手级特性：参数定义在频率空间，与空间网格解耦。
+可学习谱权重不依赖网格点数，因此可以复用参数。复用参数不等于误差不变：网格采样、频率截断、边界处理和训练分布都会影响结果；应在每个新分辨率上与参考解重新比较。
+
+> [!NOTE]
+> 2026-10-08：已修复尾批处理与 epoch 损失权重。本次未重跑训练或重新生成配图；尤其修改训练样本数或 batch 大小时，请以重新运行所得结果为准。
 
 ### 关键概念速查表
 
