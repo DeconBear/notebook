@@ -61,7 +61,7 @@ bits2[t] = nl & 1
 
 ### 第3步：`teleport_once` — 线路逐步对应
 
-1. 制备 Bell：$|\Phi^+\rangle_{12}=\mathrm{CNOT}(H\otimes I)|00\rangle$，再与 $|\psi\rangle$ Kronecker 成 8 维。
+1. 制备 Bell：$|\Phi^+\rangle_{12}=\mathrm{CNOT}(H\otimes I)|00\rangle$，按小端基序 $|q_2q_1q_0\rangle$，用 `np.kron(bell, psi)` 得到 $|\Phi^+\rangle_{21}\otimes|\psi\rangle_0$ 的 8 维向量。
 2. Alice：`apply_3(CNOT, state, (0, 1))` 然后 `apply_3(H, state, (0,))`。
 3. 按 Born 抽 8 个基之一：`outcome = choice(8, p=...)`。
 4. **`m0 = outcome & 1`**，**`m1 = (outcome >> 1) & 1`**：最低位是比特 0，再下一位是比特 1。
@@ -72,9 +72,9 @@ if (i & 1) == m0 and ((i >> 1) & 1) == m1:
     bob[(i >> 2) & 1] += amp
 ```
 
-6. 归一化后 Pauli 修正：`if m1: bob = X @ bob`；`if m0: bob = Z @ bob`。与标准传态表一致（$X^{m_1}Z^{m_0}$）。
+6. 归一化后 Pauli 修正：`if m1: bob = X @ bob`；`if m0: bob = Z @ bob`。代码的总修正矩阵是 $Z^{m_0}X^{m_1}$（先右后左）；反过来只差不可观测的全局相位。
 
-`nrm < 1e-12` 时退回原 `psi`：数值上不该发生，防除零。无噪声时保真度应极接近 1（抽样投影后修正是幺正的）。
+`nrm < 1e-12` 时抛出 `RuntimeError`：零概率分支不应被抽到，不能用原 `psi` 掩盖初始化或投影错误。无噪声时保真度应极接近 1（抽样投影后修正是幺正的）。
 
 ```python
 def fidelity(a, b):
@@ -129,7 +129,7 @@ return float(np.mean(received[sift] != alice_bits[sift]))
 | Haar 单比特 | 复高斯归一化 | `random_qubit` |
 | `>>` / `& 1` | 取第 $k$ 比特 | `apply_3`、测量 |
 | `(0,)` | 一元元组 | 单比特 `wires` |
-| 传态修正 | $X^{m_1}Z^{m_0}$ | `teleport_once` 末尾 |
+| 传态修正 | $Z^{m_0}X^{m_1}$ | `teleport_once` 末尾 |
 | `vdot` | $\langle a\|b\rangle$ | `fidelity` |
 | sift | 基一致才留 | `alice_bases == bob_bases` |
 | 拦截-重发 | 两次错基 | `eve=True` 两段 flip |
