@@ -53,7 +53,7 @@ def _wrap_pi(angle):
     return float((angle + np.pi) % (2.0 * np.pi) - np.pi)
 ```
 
-**语法 `%`**：浮点取模。把角折回 $(-\pi,\pi]$。积分 $\theta\leftarrow\theta+\Delta t\cdot\omega$ 会无限增大，不折回来奖励里的 $\theta^2$ 会炸。
+**语法 `%`**：浮点取模。把角折回 $[-\pi,\pi)$。积分 $\theta\leftarrow\theta+\Delta t\cdot\omega$ 会无限增大，不折回来奖励里的 $\theta^2$ 会炸。
 
 ```python
 u = float(np.clip(action, -1.0, 1.0)) * self.max_torque
@@ -178,7 +178,7 @@ Actor（第二段再想象一遍）：
 actor_loss = -v_lam.mean()
 ```
 
-**直通梯度**：最大化想象回报的均值。`PendulumWorld` 的参数**不在** `actor_opt` 里，所以 `backward` 不会改动力学（即使没有 `no_grad`，Adam 也碰不到它们）。走廊版则显式 `with torch.no_grad(): imagine_step`，两种写法一个意思：策略更新不准把世界模型当「作弊通道」去改奖励头。
+**直通梯度**：最大化想象回报的均值。`PendulumWorld` 的参数**不在** `actor_opt` 里，所以 `backward` 不会改动力学（即使没有 `no_grad`，Adam 也碰不到它们）。Actor 更新时，Critic 的价值输出和终点 bootstrap **不能 detach**，否则会丢掉价值经潜状态回到动作的梯度；只有 Critic 回归用的目标需要 detach。走廊版使用离散 REINFORCE，因此可以 `with torch.no_grad(): imagine_step`；连续版依赖穿过动力学的梯度，不能照搬这段 `no_grad`。两者都不更新世界模型参数，但梯度路径不同。
 
 `torch.clamp(v_lam, -15, 15)`：想象初期模型很瞎，$V_\lambda$ 可能极大，夹一下防一步把 Actor 打飞。
 
