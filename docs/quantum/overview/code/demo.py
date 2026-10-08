@@ -53,7 +53,7 @@ def demo():
         ax.set_ylim(0, 1)
         ax.legend(fontsize=8)
     axes[0].set_ylabel('频率')
-    fig.suptitle('叠加不是「不知道」，混合才是「真随机」')
+    fig.suptitle('相干叠加与完全混合：换测量基才能区分')
     fig.tight_layout()
     path = os.path.join(_IMAGES_DIR, 'superposition_vs_mixture.png')
     fig.savefig(path, dpi=140)
