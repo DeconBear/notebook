@@ -762,16 +762,16 @@ def demo_contrastive_loss():
     logits_p = S_perfect / tau
     loss_p = -np.log(np.exp(np.diag(logits_p)) / np.sum(np.exp(logits_p), axis=1)).mean()
     print(f"\n  极端场景分析:")
-    print(f"  1) 完美对齐 (S=单位矩阵): L ≈ {loss_p:.6f}  (理论最小值)")
+    print(f"  1) 完美对齐 (S=单位矩阵): L ≈ {loss_p:.6f}  (单位矩阵相似度的示例值，不是通用最小值)")
     print(f"     对角线相似度=1，其余=0 → 分类器 100% 确定")
 
-    # 场景 2: 完全随机（所有相似度相等）
+    # 场景 2: 所有相似度相等的均匀预测基线
     S_random = np.full((batch_size, batch_size), 0.0)
     np.fill_diagonal(S_random, 0.0)
     logits_r = S_random / tau
     loss_r = -np.log(np.exp(np.diag(logits_r)) / np.sum(np.exp(logits_r), axis=1)).mean()
-    print(f"  2) 完全随机 (S≈0 矩阵): L ≈ {loss_r:.6f}")
-    # 理论上随机时 loss ≈ -log(1/batch_size)
+    print(f"  2) 均匀预测 (S=0 矩阵): L ≈ {loss_r:.6f}")
+    # logits 全相等时 loss = log(batch_size)，不是上限
     print(f"     理论值 = -log(1/N) = -log(1/{batch_size}) = {(-np.log(1.0/batch_size)):.4f}")
     print(f"     → 对比学习通过增大 batch size 提供更多负样本，提高学习难度")
 
