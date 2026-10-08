@@ -10,6 +10,9 @@ title: "LeWM — demo.py"
 
 <a href="/notebook/code/world-models/abstract/lewm/demo.py" target="_blank" download>Download demo.py</a>
 
+> [!WARNING]
+> 静态审查后的图片状态：梯度与动作边界已修正，`lewm_cem_mpc.png`、`lewm_cem_iters.png`、`lewm_pendulum.png` 尚未按新版源码重新生成。 本次未执行脚本或验证新输出。
+
 ## 运行方式
 
 ```bash
@@ -49,7 +52,7 @@ def sigreg_proxy(z):
     return float(np.mean(mu ** 2) + np.mean((std - 1.0) ** 2))
 ```
 
-逼各维零均值、单位方差。`+1e-6` 防 `std=0`。这是**对角高斯**正则，不是完整特征函数 SIGReg。
+逼各维零均值、单位方差。`+1e-6` 防 `std=0`。这是**均值/方差矩匹配**正则，不是完整特征函数 SIGReg。
 
 倒立摆版：
 
@@ -59,7 +62,7 @@ dirs /= np.linalg.norm(dirs, axis=0, keepdims=True) + 1e-8
 h = z @ dirs
 ```
 
-**Cramér–Wold**：多维分布由一维投影决定。随机方向上逼近 $\mathcal{N}(0,1)$ 比只看坐标轴更接近「各向同性」。`keepdims=True` 才能按列广播除范数。
+**Cramér–Wold**：多维分布由一维投影决定。这里只匹配有限个投影的均值和方差，不是检验整个投影分布，不能据此推出高斯性；它提供有限的方向性矩诊断。`keepdims=True` 才能按列广播除范数。
 
 ---
 
@@ -143,8 +146,67 @@ cost -= z[0] * np.exp(-0.05 * z[2] ** 2)
 | 潜空间规划 | CEM 滚 `predict`，对齐 $z_g$ |
 | 停梯度目标 | 不让目标嵌入追预测 |
 | 恒等编码 | 摆的 CPU 妥协 |
-| `x.T @ err` | 线性层 MSE 梯度 |
+| `x.T @ (2 * err / err.size)` | mean MSE 的权重梯度 |
 | `np.ndim` | 标量动作对齐 batch |
+
+## 推导补充：从损失到手写梯度
+
+记批量大小为 $B$、嵌入维度为 $d$，线性编码与预测为
+$
+Z=OW_e+\mathbf1b_e^\top,\quad Z'=O'W_e+\mathbf1b_e^\top,\quad
+X=[Z,A],\quad \widehat Z'=XW_p+\mathbf1b_p^\top.
+$
+本实现报告的预测目标是
+$
+L_{\rm pred}=\frac1{Bd}\|\widehat Z'-\operatorname{sg}(Z')\|_F^2.
+$
+目标侧的 $\operatorname{sg}$ 表示停梯度。设 $E=\widehat Z'-Z'$，逐元素求导得
+$
+D=\frac{2E}{Bd},\quad \nabla_{W_p}L_{\rm pred}=X^\top D,\quad
+\nabla_{b_p}L_{\rm pred}=\sum_iD_i,\quad G_Z^{\rm pred}=DW_{p,z}^\top.
+$
+$W_{p,z}$ 是预测器对应 $Z$ 的前 $d$ 行，必须使用本次前向时、更新前的权重。若先更新预测器再算编码器梯度，就不是在同一个参数点上求导。$E/B$ 对应的是 $\|E\|_F^2/(2B)$，与这里的 mean MSE 不同；仅对预测项漏掉 $2/d$ 会改变它和正则项的相对权重。
+
+把两侧嵌入拼成 $Q=[Z;Z']\in\mathbb R^{M\times d}$，其中 $M=2B$。代理正则为
+$
+\mu_j=\frac1M\sum_iQ_{ij},\quad s_j=\sqrt{\frac1M\sum_i(Q_{ij}-\mu_j)^2},
+\quad \sigma_j=s_j+\varepsilon,
+$
+$
+R(Q)=\frac1d\sum_j[\mu_j^2+(\sigma_j-1)^2].
+$
+在 $s_j>0$ 时，链式法则给出
+$
+\frac{\partial R}{\partial Q_{ij}}
+=\frac{2}{Md}\left[\mu_j+(\sigma_j-1)\frac{Q_{ij}-\mu_j}{s_j}\right].
+$
+第一项移动均值，第二项改变离散程度。只保留均值项无法防止嵌入全变为零。按前后 $B$ 行拆开正则梯度，得到
+$
+G_Z=G_Z^{\rm pred}+\lambda G_Z^{\rm reg},\quad
+G_{Z'}=\lambda G_{Z'}^{\rm reg},
+$
+$
+\nabla_{W_e}L=O^\top G_Z+O'^\top G_{Z'},\quad
+\nabla_{b_e}L=\sum_iG_{Z,i}+\sum_iG_{Z',i}.
+$
+预测误差不通过目标侧，但正则仍作用于目标侧。梯度已含批量平均，偏置必须求和，不能再次取平均；所有梯度计算完再统一更新参数。
+
+当 $s_j=0$ 时标准差不可微，代码把对应标准差导数置零以避免除零。这不是“保证从完全塌缩恢复”的定理。矩匹配也不保证高斯性：等概率取 $\{-1,+1\}$ 的变量均值零、方差一，却不是高斯。因此这里只是均值/方差代理，不能等同完整 SIGReg。
+
+### 单位圆归一化也必须反传
+
+倒立摆预测的前两维原始输出记为 $u\in\mathbb R^2$，实际输出为
+$
+p(u)=\frac{u}{\|u\|+\varepsilon}.
+$
+对 $\rho=\|u\|>0$，
+$
+J_p(u)=\frac{I}{\rho+\varepsilon}
+-\frac{uu^\top}{\rho(\rho+\varepsilon)^2}.
+$
+若归一化后的 MSE 梯度为 $g$，线性层应收到 $J_p(u)^\top g$，不能直接收到 $g$。当 $\varepsilon=0$ 时，径向扰动被归一化消除，可用来检查公式。实现另处理 $\rho=0$ 的数值分支。
+
+倒立摆编码器为恒等映射，没有可训练参数。其随机投影矩统计只作诊断，对预测器梯度为零，不能用来证明学到了抗塌缩表示。
 
 ## 源码位置
 
