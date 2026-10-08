@@ -20,7 +20,7 @@ np.random.seed(42)
 
 def sample_observational(n=2000):
     z = np.random.randn(n)
-    # 观测策略：动作几乎由混淆决定
+    # 观测策略：动作几乎由上游变量决定
     a = np.tanh(1.5 * z) + 0.1 * np.random.randn(n)
     y = a + 0.15 * np.random.randn(n)  # 机制：只靠 a
     return z, a, y
@@ -50,7 +50,7 @@ def mse(y_hat, y):
 def main():
     print('=== 观测相关 vs 干预 ===')
     z_tr, a_tr, y_tr = sample_observational()
-    w_z = fit_linear(z_tr, y_tr)   # 关联模型：用混淆预测结果
+    w_z = fit_linear(z_tr, y_tr)   # 关联模型：用上游变量预测结果
     w_a = fit_linear(a_tr, y_tr)   # 因果模型：用动作预测结果
 
     z_te, a_te, y_te = sample_observational()
@@ -69,7 +69,7 @@ def main():
     axes[0].scatter(z_tr[::5], y_tr[::5], s=8, alpha=0.4, label='观测 (Z,Y)')
     xs = np.linspace(z_tr.min(), z_tr.max(), 100)
     axes[0].plot(xs, predict(w_z, xs), 'C1', lw=2, label='用 Z 拟合')
-    axes[0].set_xlabel('Z（混淆）')
+    axes[0].set_xlabel('Z（上游变量）')
     axes[0].set_ylabel('Y')
     axes[0].set_title('观测数据上：Z 看似能预测 Y')
     axes[0].legend()
