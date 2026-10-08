@@ -609,8 +609,9 @@ def main():
 
     print('\n[第4步] 可视化训练结果...')
     plot_loss_curve(loss_history)
+    test_images = make_synthetic_images(n=200, size=20)  # 独立生成，未参与训练
     avg_err = plot_prediction_error_map(
-        ctx_encoder, tgt_encoder, predictor, images, patch_size, n_h, n_w)
+        ctx_encoder, tgt_encoder, predictor, test_images, patch_size, n_h, n_w)
 
     print('\n[第5步] 倒立摆帧：预测下一帧嵌入（V-JEPA 直觉，不重建像素）...')
     run_pendulum_frame_jepa()
