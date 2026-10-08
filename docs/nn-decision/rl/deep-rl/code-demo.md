@@ -2,6 +2,10 @@
 title: "s20 深度强化学习：DQN 与 Policy Gradient — demo.py"
 ---
 
+> [!WARNING]
+> 2026-10-08 静态审查：已修复 Gymnasium DQN 对时间上限截断的自举处理。已有图片和数值尚未按修复代码重新生成或运行验证，不能作为修复后结果。
+
+
 
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
@@ -323,3 +327,14 @@ def finish_episode(self):
 clone 后打开（相对仓库根目录）：
 
 `docs/nn-decision/rl/deep-rl/code/demo.py`
+
+
+## 终止与截断：为什么有时仍需自举
+
+回合结束条件是 terminated 或 truncated，但 DQN 的目标为
+$$
+y=r+\gamma(1-\mathrm{terminated})\max_a Q_{\mathrm{target}}(s',a).
+$$
+CartPole 失败是真实终止，后续价值为零；TimeLimit 截断只表示采样预算耗尽，不表示底层过程无法继续。例如 r=1、gamma=0.99、下一状态最大 Q=10 时，截断目标为 10.9，真实终止目标为 1。把两者混为 done 会低估时间上限附近的价值。
+
+本示例在 Gymnasium 路径中以 terminated 写入 replay buffer 的 done 字段，以 terminated or truncated 控制回合循环。旧 Gym 回退路径只有合并 done，仍保留其历史行为；该兼容路径尚未运行验证。
