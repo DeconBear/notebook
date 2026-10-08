@@ -73,7 +73,7 @@ $$
 
 拉格朗日 $\mathcal L=\tfrac12\|w\|^2-\sum_i\alpha_i[y_i(w^\top x_i+b)-1]$。$\partial_w\mathcal L=0$ 给出 $w=\sum_i\alpha_i y_i x_i$；$\partial_b\mathcal L=0$ 给出 $\sum_i\alpha_i y_i=0$。代回去只剩 $\alpha$ 和对 $x_i^\top x_j$ 的依赖——换成 $K(x_i,x_j)$ 就是核技巧，不必写出 $\phi(x)$。
 
-Hinge：$\max(0,1-yf)$。$yf\ge 1$ 时子梯度对 $w$ 只有正则项 $w$（demo 里 `lambda_*w`）；掉进间隔或分错才累加 $-yx$。这就是 `LinearSVM.fit` 的 if/else。
+Hinge：$\max(0,1-yf)$。$yf\ge 1$ 时子梯度对 $w$ 只有正则项 $w$（demo 里 `2*lambda_*w`）；掉进间隔或分错才累加 $-yx$。这就是 `LinearSVM.fit` 的 if/else。
 
 :::
 
@@ -132,7 +132,7 @@ $$
 - **$C$ 很大**（如 $10^6$）：对错误的惩罚很重，模型近似硬间隔 SVM，容易过拟合
 - **$C$ 很小**（如 $0.01$）：允许更多错误，间隔更大，模型更简单
 
-$C$ 是 SVM 最重要的超参数，通常通过交叉验证选择。它的角色类似于正则化中的 $\lambda^{-1}$——$C$ 越大正则化越弱。
+$C$ 是 SVM 最重要的超参数，通常通过交叉验证选择。把本节求和目标除以 $Cn>0$，得到平均 hinge 损失加 $\lambda\|w\|^2$，其中 $\lambda=1/(2Cn)$。`demo.py` 的单样本 SGD 使用这个系数，与 `SVC` 保持同一 $C$ 约定；`C` 必须有限且严格为正。固定步长、有限轮数的 SGD 不保证已经达到 `SVC` 的最优解。
 
 ![软间隔 SVM：展示松弛变量 ξ_i 的含义——正确分类但落在间隔内的点 vs 错误分类的点，对比不同 C 值的决策边界](./images/ml04-02-soft-margin.png)
 
@@ -259,11 +259,13 @@ $$
 
 ```python
 margin = y_i * (w^T x_i + b)
-sv_mask = (margin >= 0.99) & (margin <= 1.01)
+sv_mask = margin <= 1.01  # 软间隔候选集，包含间隔内部与误分类点
 # 或使用对偶变量: alpha_i > 0 的样本
 ```
 
-在 SGD 方法中，所有满足 $y_i(\mathbf{w}^T \mathbf{x}_i + b) \leq 1$ 的样本都会贡献梯度，使它们"被推向"决策边界。最终落在间隔边界上的就是支持向量。
+软间隔不能只保留间隔边界上的点。KKT 条件为 $\alpha_i(m_i-1+\xi_i)=0$、$(C-\alpha_i)\xi_i=0$，其中 $m_i=y_if(x_i)$。若 $m_i<1$，则 $\xi_i=1-m_i>0$，所以 $\alpha_i=C>0$；这些误分类或间隔内部点也是支持向量。只有 $0<\alpha_i<C$ 才必有 $m_i=1$。SGD 没有直接输出对偶系数，`margin <= 1.01` 只是含容差的可视化候选集，不能替代精确的 $\alpha_i>0$ 判定。
+
+**复现说明。** 核对比先划分数据，再仅在训练集拟合标准化参数，避免测试集泄漏；支持向量候选与 $C$ 缩放已修正，相关输出图片尚未重新生成。
 
 **对照 demo.py。** 线性可分点云上 $C=10^5$ 近似硬间隔，支持向量少、马路宽。$C$ 减小后更多点掉进间隔。moons/circles 上线性核失败，RBF 能弯。$\gamma$ 过大决策岛碎成一块块。卡点：标签必须是 $\pm 1$ 不是 $\{0,1\}$，否则 hinge 的 $y\cdot f$ 符号全错。
 
@@ -278,7 +280,7 @@ sv_mask = (margin >= 0.99) & (margin <= 1.01)
 | 最大间隔 | $\max 1/\|\mathbf{w}\|$ s.t. $y_i(\mathbf{w}^T\mathbf{x}_i+b) \geq 1$ | 选择离数据最远的超平面 |
 | 支持向量 | $\alpha_i > 0$ 的样本 | 唯一影响决策的训练样本 |
 | 对偶问题 | $\max_\alpha \sum\alpha_i - \frac{1}{2}\sum\alpha_i\alpha_j y_i y_j \mathbf{x}_i^T\mathbf{x}_j$ | 仅以内积形式出现 |
-| KKT 条件 | $\alpha_i (y_i(\mathbf{w}^T\mathbf{x}_i+b) - 1) = 0$ | 支持向量的判定 |
+| KKT 条件 | $\alpha_i(y_if_i-1+\xi_i)=0$，$(C-\alpha_i)\xi_i=0$ | 软间隔包含间隔违例支持向量 |
 | 松弛变量 | $\xi_i \geq 0$ | 允许违反间隔 |
 | 惩罚参数 $C$ | $C\sum\xi_i$ | $C$ 大 → 硬间隔；$C$ 小 → 软间隔 |
 | Hinge Loss | $\max(0, 1 - y f(\mathbf{x}))$ | SGD 可优化形式 |
