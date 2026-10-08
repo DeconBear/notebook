@@ -86,6 +86,38 @@ $I=\mathbb E_{x\sim p}[f(x)/p(x)]$。样本均值无偏。方差 $\sigma^2/N$，
 
 ---
 
+::: details 把误差、置信区间和稀有事件方差逐步算清楚
+
+令 $Y_i=f(X_i)/q(X_i)$，$X_i$ 独立同分布来自 $q$。若 $q>0$ 覆盖 $f\ne0$ 的区域，且 $\int |f|<\infty$，则
+$\mathbb E_qY_i=\int(f/q)q=\int f=I$，所以 $\hat I_N=N^{-1}\sum_iY_i$ 无偏，强大数定律给出一致性。
+若还满足 $\mathbb E_qY_i^2<\infty$，独立性消去协方差项：
+
+$
+\operatorname{Var}(\hat I_N)
+=\frac1{N^2}\sum_{i=1}^N\operatorname{Var}(Y_i)
+=\frac{\sigma_Y^2}{N},\qquad
+\operatorname{RMSE}(\hat I_N)=\frac{\sigma_Y}{\sqrt N}.
+$
+
+用 $s_Y^2=(N-1)^{-1}\sum_i(Y_i-\bar Y)^2$ 估计方差时，CLT 的近似区间为
+$\hat I_N\pm1.96s_Y/\sqrt N$；它要求渐近近似已经合理，不能把“公式算得出”当作“覆盖率有保证”。MCMC 样本相关时，方差还包含自协方差，不能直接套独立公式。
+
+**稀有事件反例。** 本例 $Y_i=\mathbf1\{X_i>5\}$，$p=\Pr(X>5)\approx2.87\times10^{-7}$。
+$\operatorname{Var}(\hat p)=p(1-p)/N$；$N=10^4$ 时，相对标准差
+$\sqrt{(1-p)/(Np)}\approx18.7$，即约 $1870\%$。
+零命中的概率 $(1-p)^N\approx e^{-Np}\approx0.9971$。因此几乎总会看到样本均值与样本方差都为零，二者都不能证明真实概率为零。
+零命中时，一侧 $95\%$ 二项上界由 $(1-p_{\rm upper})^N=0.05$ 给出：
+$p_{\rm upper}=1-0.05^{1/N}\approx3/N$，比目标概率大约三个数量级。
+代码比较方差时使用已知 $p$ 的理论 MC 方差，避免零命中的假象。
+
+**重要性权重为什么能纠偏。** 从 $q=\mathcal N(5,1)$ 采样时，
+$\log w=\log p(x)-\log q(x)=-5x+12.5$；
+$Y=w(X)\mathbf1\{X>5\}$ 才是用于取平均和计算样本方差的量。
+约一半提议落在 $x>5$，但每个点的权重都很小，平均后仍恢复原分布的极小尾概率。
+已知归一化密度时应除以 $N$；改成除以 $\sum w_i$ 是自归一化重要性采样，通常有限样本有偏，是另一种估计器。
+
+:::
+
 ## 三、重要性采样（Importance Sampling）
 
 ### 3.1 为什么需要重要性采样？
