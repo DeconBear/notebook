@@ -19,6 +19,8 @@ python demo.py
 
 ## 代码逐段详解
 
+> **复现提示**：已修正 Gibbs 绘图变量、稀有事件方差比较与 MH 数值稳定性。现有输出图片尚未重新运行生成，不能作为修复后的验收结果。
+
 ### 第1步：蒙特卡洛估计 $\pi$
 
 ```python
@@ -31,7 +33,7 @@ def estimate_pi_mc(N=10000):
 数学原理：
 
 $$
-\pi = 4 \times \frac{\text{圆内点数}}{N} \approx 4 \times \mathbb{P}(x^2 + y^2 \le 1)
+\hat\pi_N = 4 \times \frac{\text{圆内点数}}{N} \approx \pi = 4 \times \mathbb{P}(x^2 + y^2 \le 1)
 $$
 
 这是一个从几何直觉到统计估计的优雅转换：单位圆的面积是 $\pi$，外接正方形的面积是 $4$，所以圆内点的比例 $\times 4$ 就是 $\pi$ 的估计。
@@ -53,11 +55,11 @@ def importance_sampling_demo():
 
 这是重要性采样最经典的演示案例。目标是估计 $\mathbb{P}(X > 5)$ 其中 $X \sim \mathcal{N}(0,1)$，真实概率约为 $2.87 \times 10^{-7}$。
 
-**普通 MC 的灾难**：从 $\mathcal{N}(0,1)$ 采样 10000 次，落在 $x>5$ 区域的数学期望只有 $10000 \times 2.87 \times 10^{-7} \approx 0.003$ 个样本——几乎肯定一个都没有。估计值是 $0$，完全无意义。
+**普通 MC 的灾难**：从 $\mathcal{N}(0,1)$ 采样 10000 次，落在 $x>5$ 区域的数学期望只有 $10000 \times 2.87 \times 10^{-7} \approx 0.003$ 个样本——几乎肯定一个都没有。估计值通常为 $0$；估计器仍然无偏，但相对误差极大，零命中也不能证明尾部概率为零。
 
-**重要性采样的解法**：从 $\mathcal{N}(5,1)$ 采样，99.9% 的样本都落在目标区域附近。然后通过权重 $w(x) = p(x)/q(x)$ 来修正——权重本身已经编码了"这个样本来自 $q$ 而非 $p$"的修正因子。
+**重要性采样的解法**：从 $\mathcal{N}(5,1)$ 采样，约 50% 的样本满足 $x>5$。然后通过权重 $w(x) = p(x)/q(x)$ 来修正——权重本身已经编码了"这个样本来自 $q$ 而非 $p$"的修正因子。
 
-**方差缩减**：重要性采样的方差远小于普通 MC（在本次设置中通常缩减 100 倍以上）。
+**方差缩减**：本例使用普通 MC 的理论方差 $p(1-p)/N$（$p=\mathbb P(X>5)$）与重要性采样的样本方差除以 $N$ 比较。普通 MC 零命中时算出的经验方差为零，并不表示估计准确。
 
 ### 第3步：Metropolis-Hastings 采样
 
@@ -68,7 +70,7 @@ def metropolis_hastings(n_iter=5000, proposal_std=1.0):
         x_proposal = x_current + rng.randn(d) * proposal_std
         # 接受率: α = min(1, p(x')/p(x))
         log_alpha = log_p_proposal - log_p_current
-        alpha = min(1.0, np.exp(log_alpha))
+        alpha = np.exp(min(0.0, log_alpha))
         # 接受/拒绝
         if rng.rand() < alpha:
             x_current = x_proposal
@@ -113,8 +115,8 @@ $$
 
 代码中包含了几个关键的诊断工具：
 - **Trace Plot**：展示采样值随迭代的变化，用于判断 burn-in 和链的混合
-- **接受率时序**：展示 MH 接受率的滑动平均，应在 0.2-0.5 之间稳定
-- **自相关函数**：展示样本间的相关性，显示 thinning 的必要性
+- **接受率时序**：展示 MH 接受率的滑动平均；20–50% 只是部分随机游走场景的调参参考，不能单独证明收敛
+- **自相关函数**：展示样本间的相关性；thinning 主要节省存储，不能修复未混合的链，通常应保留全部采样用于估计
 - **有效样本量（ESS）**：$ESS = N / (1 + 2\sum_{k} \rho_k)$，量化了自相关造成的"样本浪费"
 
 ## 关键概念速查表
@@ -122,7 +124,7 @@ $$
 | 概念 | 数学形式 | 代码位置 | 关键说明 |
 |------|---------|---------|---------|
 | MC 积分 | $\hat{I}_N = \frac{1}{N}\sum f(x_i)$ | `estimate_pi_mc()` | 收敛率 $O(1/\sqrt{N})$ |
-| 重要性采样 | $\sum w_i f(x_i)$, $w_i = p/q$ | `importance_sampling_demo()` | 减少方差的关键技术 |
+| 重要性采样 | $\frac1N\sum w_i f(x_i)$, $w_i = p/q$ | `importance_sampling_demo()` | 减少方差的关键技术 |
 | MH 算法 | $\alpha = \min(1, p(x')/p(x))$ | `metropolis_hastings()` | 提议 + 接受/拒绝 |
 | 细致平衡 | $p(x)T(x \to x') = p(x')T(x' \to x)$ | 隐含在接受率中 | 平稳分布的充分条件 |
 | Gibbs 采样 | $x_i \sim p(x_i | \mathbf{x}_{-i})$ | `gibbs_sampling_*()` | 条件分布采样，$\alpha=1$ |

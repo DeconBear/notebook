@@ -65,7 +65,7 @@ return np.random.choice(len(state), size=n_shots, p=p)
 
 - **`np.abs ** 2`**：振幅模方。复数态必须先 `abs`，不能 `state**2`。
 - **`choice(len(state), ...)`**：对 **基矢下标** 抽样，单比特是 `{0,1}`，两比特是 `{0,1,2,3}` 对应 `00,01,10,11`。
-- 默认 2000 shots，直方图方差大约 $1/\sqrt{n}$。
+- 默认 2000 shots，频率的标准差为 $\sqrt{p(1-p)/n}$，按 $1/\sqrt{n}$ 缩小；方差为 $p(1-p)/n$。
 
 ---
 

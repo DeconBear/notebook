@@ -79,7 +79,15 @@ $$
 
 $I\otimes X$ 类似，在另一因子上翻。$A=J\,ZZ$ 只含相互作用，本征基是计算基；$B=h(XI+IX)$ 是横场，把 $|0\rangle$ 和 $|1\rangle$ 搅在一起。$[A,B]\neq 0$（相互作用基与横场基不同），所以 $e^{-i(A+B)t}\neq e^{-iAt}e^{-iBt}$。精确演化：对 $H_{\mathrm{tot}}=A+B$ 做 `eigh`，再 $\sum_k e^{-i\lambda_k t}|v_k\rangle\langle v_k|$。
 
-一阶 Trotter：把 $T$ 切成 $n$ 份，$\mathrm{d}t=T/n$，反复做 $e^{-iB\,\mathrm{d}t}e^{-iA\,\mathrm{d}t}$（demo 是 `ub @ ua`）。失真度 $1-|\langle\psi_{\mathrm{exact}}|\psi_{\mathrm{trotter}}\rangle|^2$ 应随 $n$ 在 log-log 图上近似斜率为 $-1$ 的直线（$O(1/n)$）。
+一阶 Trotter：把 $T$ 切成 $n$ 份，$\mathrm{d}t=T/n$，反复做 $e^{-iB\,\mathrm{d}t}e^{-iA\,\mathrm{d}t}$（demo 是 `ub @ ua`）。这里必须区分误差度量：固定 $T$ 时，一阶公式的演化算子误差、态矢量误差为 $O(1/n)$；图中画的却是失真度 $1-|\langle\psi_{\mathrm{exact}}|\psi_{\mathrm{trotter}}\rangle|^2$。对归一化纯态，失真度对小的态偏差是二阶量，通常为 $O(1/n^2)$，在渐近区对应 log-log 斜率约 $-2$，不能把一阶算子误差的 $-1$ 直接当成图的斜率。特殊初态或参数可能使最低阶系数消失。
+
+更直接地，令近似归一化态 $|\tilde\psi\rangle=a|\psi\rangle+|\epsilon_\perp\rangle$，其中 $\langle\psi|\epsilon_\perp\rangle=0$。归一化给出 $|a|^2+\|\epsilon_\perp\|^2=1$，所以
+
+$
+1-|\langle\psi|\tilde\psi\rangle|^2=\|\epsilon_\perp\|^2.
+$
+
+若态误差的正交分量为 $O(1/n)$，失真度就是 $O(1/n^2)$。纯粹的全局相位误差不会降低保真度。因而在小误差区，步数加倍通常使图中失真度约缩小到四分之一，而不是二分之一；这不保证步数很小时也严格满足该比例。
 
 :::
 

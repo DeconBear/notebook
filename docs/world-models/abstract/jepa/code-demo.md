@@ -10,6 +10,9 @@ title: "wm05 JEPA — demo.py"
 
 <a href="/notebook/code/world-models/abstract/jepa/demo.py" target="_blank" download>Download demo.py</a>
 
+> [!WARNING]
+> 静态审查后的图片状态：评估已改为独立测试图，`jepa_prediction_error_map.png` 尚未重新生成；新增测试抽样也影响后续随机序列，应一并刷新 `jepa_pendulum_frames.png`。 本次未执行脚本或验证新输出。
+
 ## 运行方式
 
 ```bash
@@ -86,7 +89,7 @@ loss = F.mse_loss(pred_repr, tgt_repr)
 
 目标编码器看**整图**，再 `gather` 出被遮挡位置的表征当回归靶。损失是表征 L2，**不是像素重建**。只把 `ctx_encoder` 和 `predictor` 放进 Adam。
 
-热力图用 `1 - cosine_similarity`，不是训练时的 MSE，读图时注意量纲不同。
+热力图在训练结束后独立生成的 200 张测试图上评估，用 `1 - cosine_similarity`，不是训练时的 MSE，读图时注意量纲不同。
 
 ---
 
@@ -94,7 +97,7 @@ loss = F.mse_loss(pred_repr, tgt_repr)
 
 这是文件后半段独立的一条线，不是上面那个 Transformer。
 
-`render_stick(theta)`：从中心沿角度画一条折线像素，再加噪声。`_wrap_pi` 把角折回 $(-\pi,\pi]$。
+`render_stick(theta)`：从中心沿角度画一条折线像素，再加噪声。`_wrap_pi` 把角折回 $[-\pi,\pi)$。
 
 `collect_pendulum_frames`：随机力矩 $a\in[-1,1]$，用
 
@@ -126,7 +129,7 @@ loss_lat = F.mse_loss(z_hat, z_tgt)
 loss_pix = F.mse_loss(xn[idx], xt[idx])   # 对照：把当前帧当下一帧
 ```
 
-`loss_pix` **不反传**，只记录「复制当前像素当预测」有多差。表征 MSE 应对准下一帧语义；像素复制 MSE 几乎是常数（噪声+杆动了）。右图两条曲线对照这一点。
+`loss_pix` **不反传**，只记录「复制当前像素当预测」有多差。表征 MSE 应对准下一帧语义；像素复制 MSE 几乎是常数（噪声+杆动了）。两条曲线所在的空间、维度和尺度不同，不能按数值大小得出 JEPA 更准的结论；低表征 MSE 也可能伴随塌缩，需要另查表征方差或下游任务。
 
 ---
 

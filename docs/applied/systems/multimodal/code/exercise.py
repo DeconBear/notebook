@@ -112,9 +112,9 @@ def test_infonce_loss():
         print(f"\n  InfoNCE 损失: {loss:.6f}")
 
         # 验证损失是否在合理范围内
-        # 随机情况下，损失应接近 -log(1/N)
+        # logits 全相等时为 log(N)；随机嵌入不保证 logits 相等
         expected_random = -np.log(1.0 / N)
-        print(f"  随机情况下的理论值: -log(1/{N}) = {expected_random:.4f}")
+        print(f"  均匀预测基线（非损失上限）: -log(1/{N}) = {expected_random:.4f}")
         print(f"  (实际值可能因随机初始化而不同)")
 
         # 附加验证：完美对齐的情况
@@ -123,8 +123,8 @@ def test_infonce_loss():
         numerator = np.exp(np.diag(logits_p))
         denominator = np.sum(np.exp(logits_p), axis=1)
         perfect_loss = -np.mean(np.log(numerator / denominator))
-        print(f"  完美对齐时的理论最小值: {perfect_loss:.6f}")
-        print(f"  损失范围: [{perfect_loss:.4f}, {expected_random:.4f}]")
+        print(f"  单位矩阵相似度的示例值: {perfect_loss:.6f}")
+        print("  以上是两个参考场景，不是损失范围；错误匹配更自信时可超过 log(N)。")
         print(f"  损失越小 = 图文对齐越好")
 
     print()

@@ -3,19 +3,27 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { DOCS_DIR } from './lib/docs-tree.mjs'
 
-function arg(name, fallback) {
-  const idx = process.argv.indexOf(`--${name}`)
-  if (idx !== -1 && process.argv[idx + 1]) return process.argv[idx + 1]
-  return fallback
+const positional = []
+const options = {}
+const args = process.argv.slice(2)
+for (let i = 0; i < args.length; i++) {
+  const token = args[i]
+  if (!token.startsWith('--')) {
+    positional.push(token)
+    continue
+  }
+  if (!['--title', '--order'].includes(token) || !args[i + 1] || args[i + 1].startsWith('--')) {
+    console.error(`未知选项或缺少值: ${token}`)
+    process.exit(1)
+  }
+  options[token.slice(2)] = args[++i]
 }
-
-const positional = process.argv.slice(2).filter((a) => !a.startsWith('--'))
 const parent = positional[0]
 const slug = positional[1]
-const title = arg('title', slug || '新章节')
-const order = Number(arg('order', '50'))
+const title = options.title ?? slug ?? '新章节'
+const order = Number(options.order ?? '50')
 
-if (!parent || !slug) {
+if (!parent || !slug || positional.length !== 2) {
   console.error('用法: npm run new-chapter -- <领域路径> <slug> --title "标题" --order 25')
   console.error('示例: npm run new-chapter -- ml/foundations kernel-methods --title "核方法入门" --order 25')
   process.exit(1)
@@ -23,6 +31,11 @@ if (!parent || !slug) {
 
 if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
   console.error('slug 只能包含小写字母、数字和连字符')
+  process.exit(1)
+}
+
+if (!/^[a-z0-9][a-z0-9-]*(\/[a-z0-9][a-z0-9-]*)*$/.test(parent) || !Number.isFinite(order)) {
+  console.error('领域路径必须由小写 slug 组成，order 必须是有限数值')
   process.exit(1)
 }
 
@@ -50,7 +63,7 @@ const fm = [
 fs.writeFileSync(path.join(dest, 'index.md'), fm, 'utf8')
 
 fs.writeFileSync(path.join(dest, 'code-demo.md'), `---
-title: "${title} — demo.py"
+title: ${JSON.stringify(`${title} — demo.py`)}
 ---
 
 # ${title} — demo.py 代码详解
@@ -72,7 +85,7 @@ clone 后打开（相对仓库根目录）：
 `, 'utf8')
 
 fs.writeFileSync(path.join(dest, 'code-exercise.md'), `---
-title: "${title} — exercise.py"
+title: ${JSON.stringify(`${title} — exercise.py`)}
 ---
 
 # ${title} — 练习
@@ -94,18 +107,12 @@ clone 后打开（相对仓库根目录）：
 `, 'utf8')
 
 fs.writeFileSync(path.join(dest, 'code', 'demo.py'), `# -*- coding: utf-8 -*-
-"""
-=== ${title} ===
-运行: python demo.py
-"""
-print("TODO: 实现 ${title} demo")
+${JSON.stringify('=== ' + title + ' ===\n运行: python demo.py')}
+print(${JSON.stringify('TODO: 实现 ' + title + ' demo')})
 `, 'utf8')
 
 fs.writeFileSync(path.join(dest, 'code', 'exercise.py'), `# -*- coding: utf-8 -*-
-"""
-=== ${title} 练习 ===
-运行: python exercise.py
-"""
+${JSON.stringify('=== ' + title + ' 练习 ===\n运行: python exercise.py')}
 # TODO: 完成练习
 print("TODO")
 `, 'utf8')

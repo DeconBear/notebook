@@ -101,7 +101,7 @@ class SimpleAttention:
             (总耗时, 总计算次数)
         """
         # 初始化一个模拟的序列（用随机向量代替 token embedding）
-        sequence = np.random.randn(seq_len, self.d_model).astype(np.float32)
+        sequence = np.random.RandomState(42).randn(seq_len, self.d_model).astype(np.float32)
 
         total_compute = 0  # 统计计算次数
         start_time = time.perf_counter()
@@ -130,6 +130,7 @@ class SimpleAttention:
             total_compute += t  # 记录计算量
 
         elapsed = time.perf_counter() - start_time
+        self.last_output = np.concatenate([out[-1] for out in head_outputs])
         return elapsed, total_compute
 
     def generate_with_kv_cache(self, seq_len: int) -> Tuple[float, int]:
@@ -146,7 +147,7 @@ class SimpleAttention:
         返回:
             (总耗时, 总计算次数)
         """
-        sequence = np.random.randn(seq_len, self.d_model).astype(np.float32)
+        sequence = np.random.RandomState(42).randn(seq_len, self.d_model).astype(np.float32)
 
         # KV Cache：为每个头分别存储 K 和 V
         cached_K = [None] * self.n_heads  # 每头缓存 K
@@ -156,24 +157,20 @@ class SimpleAttention:
         start_time = time.perf_counter()
 
         for t in range(1, seq_len + 1):
-            # 第一步：还是需要计算所有 t 个 token
-            X_t = sequence[:t]  # (t, d_model)
+            # 每步只投影一个新 token；历史 K/V 已在缓存中。
+            X_new = sequence[t - 1:t]  # (1, d_model)
+            Q = X_new @ self.W_q
+            K = X_new @ self.W_k
+            V = X_new @ self.W_v
 
-            # 只计算前 t 个 token 的 Q, K, V（第一步无缓存可用）
-            Q = X_t @ self.W_q  # (t, d_model)
-            K = X_t @ self.W_k  # (t, d_model)
-            V = X_t @ self.W_v  # (t, d_model)
+            # 计数单位是完成 K/V 投影的 token 数，不是 FLOPs。
+            total_compute += 1
 
-            # 统计计算量：仅新 token 需要 K, V，但这里简化为全部
-            # 在有缓存时，实际只需计算最后一个
-            new_compute = 1  # 只需要计算新 token
-            total_compute += new_compute
+            Q_heads = Q.reshape(1, self.n_heads, self.d_head).transpose(1, 0, 2)
+            K_heads = K.reshape(1, self.n_heads, self.d_head).transpose(1, 0, 2)
+            V_heads = V.reshape(1, self.n_heads, self.d_head).transpose(1, 0, 2)
 
-            # 多头拆分并应用注意力
-            Q_heads = Q.reshape(t, self.n_heads, self.d_head).transpose(1, 0, 2)
-            K_heads = K.reshape(t, self.n_heads, self.d_head).transpose(1, 0, 2)
-            V_heads = V.reshape(t, self.n_heads, self.d_head).transpose(1, 0, 2)
-
+            head_outputs = []
             for h in range(self.n_heads):
                 # 如果有缓存，拼接缓存和新 K, V
                 if cached_K[h] is not None:
@@ -188,9 +185,10 @@ class SimpleAttention:
                 cached_V[h] = full_V
 
                 # 注意力计算
-                self._single_head_attention(Q_heads[h], full_K, full_V)
+                head_outputs.append(self._single_head_attention(Q_heads[h], full_K, full_V))
 
         elapsed = time.perf_counter() - start_time
+        self.last_output = np.concatenate([out[-1] for out in head_outputs])
         return elapsed, total_compute
 
 
@@ -216,7 +214,10 @@ def demo_kv_cache():
     results = []
     for seq_len in test_lengths:
         t_nocache, comp_nocache = attn.generate_without_kv_cache(seq_len)
+        expected_output = attn.last_output.copy()
         t_cache, comp_cache = attn.generate_with_kv_cache(seq_len)
+        if not np.allclose(expected_output, attn.last_output, rtol=1e-5, atol=1e-6):
+            raise AssertionError("缓存与无缓存的末 token 输出不一致")
 
         speedup = t_nocache / t_cache if t_cache > 0 else float('inf')
         comp_ratio = comp_nocache / comp_cache if comp_cache > 0 else float('inf')
@@ -239,9 +240,9 @@ def demo_kv_cache():
 
         # 左图：时间对比
         ax1.plot(seq_lens, times_no, 'o-', color='#E74C3C', linewidth=2,
-                 markersize=6, label='Without KV Cache (O(n²))')
+                 markersize=6, label='Without KV Cache (measured total time)')
         ax1.plot(seq_lens, times_cache, 's-', color='#27AE60', linewidth=2,
-                 markersize=6, label='With KV Cache (O(n))')
+                 markersize=6, label='With KV Cache (measured total time)')
         ax1.set_xlabel('Sequence Length (tokens)', fontsize=11)
         ax1.set_ylabel('Inference Time (s)', fontsize=11)
         ax1.set_title('Inference Time Comparison', fontsize=13, fontweight='bold')
@@ -256,8 +257,8 @@ def demo_kv_cache():
         ax2.plot(seq_lens, comp_cache, 's-', color='#27AE60', linewidth=2,
                  markersize=6, label='With Cache (O(n))')
         ax2.set_xlabel('Sequence Length (tokens)', fontsize=11)
-        ax2.set_ylabel('Compute Count (K/V Projections)', fontsize=11)
-        ax2.set_title('Compute Complexity Comparison', fontsize=13, fontweight='bold')
+        ax2.set_ylabel('Tokens projected to K/V (cumulative)', fontsize=11)
+        ax2.set_title('K/V Projection Work Comparison', fontsize=13, fontweight='bold')
         ax2.legend(fontsize=10)
         ax2.grid(True, alpha=0.3)
 
@@ -287,12 +288,12 @@ def quantize_fp32_to_int8(
     per_channel: bool = True
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    将 FP32 权重矩阵量化为 INT8 格式。
+    将 FP32 权重矩阵仿射量化为 uint8；函数名为兼容旧调用保留 int8。
 
     量化公式:
-        W_int8 = round((W - z) / s)
-        s = (max(W) - min(W)) / 255  (per-tensor)
-        或 s = (max(W, axis) - min(W, axis)) / 255  (per-channel)
+        W_uint8 = clip(round(W / s) + z, 0, 255)
+        s = (max(max(W), 0) - min(min(W), 0)) / 255  (per-tensor)
+        per-channel 时每行独立计算；范围包含 0，z = clip(round(-min / s), 0, 255)
 
     参数:
         weights: FP32 权重矩阵，shape 如 (out_features, in_features)
@@ -302,7 +303,7 @@ def quantize_fp32_to_int8(
     返回:
         w_int8: 量化后的 INT8 权重，值域 [0, 255] 对应 uint8
         scales: 缩放因子
-        zero_points: 零点（最小值对应的 INT8 值，通常为 0 或 128）
+        zero_points: 实数零对应的量化整数值
     """
     if per_channel:
         # 逐通道量化：每行（每个输出通道）独立计算 scale 和 zero_point
@@ -316,18 +317,22 @@ def quantize_fp32_to_int8(
         w_min = np.full((weights.shape[0], 1), w_min, dtype=np.float32)
         w_max = np.full((weights.shape[0], 1), w_max, dtype=np.float32)
 
+    # 仿射量化范围须包含实数零，确保单侧或常量权重仍能正确还原。
+    w_min = np.minimum(w_min, 0.0)
+    w_max = np.maximum(w_max, 0.0)
+
     # 计算缩放因子 s = (max - min) / (2^bits - 1)
     # INT8: 256 个量化级别 (0-255)
     scales = (w_max - w_min) / 255.0  # 形状与 w_min 相同
     # 避免除零
-    scales = np.where(scales < 1e-10, 1.0, scales)
+    scales = np.where(scales == 0, 1.0, scales)
 
     # 计算零点 z = round(-min / s)
     zero_points = np.round(-w_min / scales)  # 零点 = -min/s 映射后的位置
     zero_points = np.clip(zero_points, 0, 255)  # 确保在 [0, 255] 内
 
-    # 量化: w_int8 = round((w - w_min) / s)
-    w_int8 = np.round((weights - w_min) / scales)
+    # 量化与反量化共用同一个整数零点，不混用 min-based 偏移。
+    w_int8 = np.round(weights / scales) + zero_points
     w_int8 = np.clip(w_int8, 0, 255).astype(np.uint8)  # 限制范围并转类型
 
     return w_int8, scales.astype(np.float32), zero_points.astype(np.float32)
@@ -341,8 +346,8 @@ def dequantize_int8_to_fp32(
     """
     将量化后的 INT8 权重反量化为近似的 FP32 权重。
 
-    反量化公式: W_deq = s * (W_int8 - z) + min
-    等价于: W_deq = s * W_int8 - s * z + min ≈ s * W_int8 + (min - s*z)
+    反量化公式: W_deq = s * (W_uint8 - z)
+    z 是实数零映射到的整数位置，无需再加 min。
 
     参数:
         w_int8: INT8 权重矩阵 (uint8)
@@ -356,8 +361,7 @@ def dequantize_int8_to_fp32(
     w_float = w_int8.astype(np.float32)
     # 反量化
     w_deq = scales * (w_float - zero_points)
-    # 由于我们用了 symmetric min-based 量化:
-    # 实际还原: W_deq = w_int8 * s + min ≈ w_int8 * s + z*s (当 z = -min/s 时)
+    # 此处为非对称 affine uint8，不是有符号对称 INT8。
     return w_deq
 
 

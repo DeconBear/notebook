@@ -2,6 +2,10 @@
 title: "s21 RLHF：当强化学习遇见大模型 — demo.py"
 ---
 
+> [!WARNING]
+> 2026-10-08 静态审查：已修复 prompt 预填充、PPO token 对齐、动作前价值索引和 KL/熵计算。已有图片和数值尚未按修复代码重新生成或运行验证，不能作为修复后结果。
+
+
 
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
@@ -18,6 +22,14 @@ python demo.py
 ```
 
 **重要说明**：PPO 的裁剪与 GAE 已在 [PPO](/nn-decision/rl/ppo/) 讲过。本 demo 只是把同一套公式套在玩具语言模型上，再对比 DPO。完整 RLHF 需要数百 GPU 天；这里用小词汇表 LSTM，CPU 可跑完。
+
+## 对齐检查：同一动作必须对应同一段历史
+
+设 prompt 长度为 $P$，回复长度为 $T$。完整序列长 $P+T$，位置 j 的 logit 预测位置 j+1 的 token。因此预测回复的位置是 $P-1,\ldots,P+T-2$，目标位置是 $P,\ldots,P+T-1$，恰好各有 T 项。只把回复传入网络会丢掉 prompt，并漏掉第一个回复 token；当 T=1 时甚至会产生空损失。
+
+生成首步编码完整 prompt，再缓存 LSTM 状态，每步仅输入新 token。PPO 训练路径使用温度 1.0；若另行修改采样温度，重算概率也必须使用同一温度。参数尚未更新时，每个回复 token 的新旧概率比应接近 1，可作为回归检查目标。
+
+本例 Critic 只看动作发生前最后一个 token 的 embedding，是仅含部分历史的教学基线；完整状态价值通常需要上下文隐藏状态。本例每条轨迹只有一次 Actor 更新，保留裁剪公式，但不能由此展示多轮更新时的裁剪效果。
 
 ## 代码逐段详解
 
@@ -82,13 +94,16 @@ def get_log_probs(self, input_ids):
 
 ```python
 def generate(self, prompt, max_len, temperature=1.0):
-    for _ in range(max_len):
-        logits, hidden = self.forward(generated[:, -1:], hidden)
-        logits = logits.squeeze(1) / temperature    # 温度缩放
+    generated, hidden, log_probs = prompt.clone(), None, []
+    for step in range(max_len):
+        model_input = generated if step == 0 else generated[:, -1:]
+        logits, hidden = self.forward(model_input, hidden)
+        logits = logits[:, -1, :] / temperature    # 温度缩放
         probs = F.softmax(logits, dim=-1)
         dist = Categorical(probs)
         next_token = dist.sample()
         log_probs.append(dist.log_prob(next_token))
+        generated = torch.cat([generated, next_token.unsqueeze(0)], dim=1)
         if next_token.item() == EOS_TOKEN:
             break
     return generated, log_probs
@@ -181,7 +196,10 @@ $$
 ```python
 def ppo_update(self, old_log_probs, advantages, returns, states, actions, values, ref_log_probs):
     # 1. 计算概率比 r_t(θ)
-    new_log_probs = self.policy.get_log_probs(actions)
+    # actions 包含 prompt + 回复，只取最后 T 个回复 token
+    T = old_log_probs.numel()
+    new_lp = self.policy.get_log_probs(actions).flatten()[-T:]
+    old_lp, adv = old_log_probs.flatten(), advantages.detach()
     log_ratio = new_lp - old_lp.detach()       # log r_t(θ)
     ratio = torch.exp(log_ratio)                # r_t(θ)
 
@@ -191,13 +209,15 @@ def ppo_update(self, old_log_probs, advantages, returns, states, actions, values
     policy_loss = -torch.min(surr1, surr2).mean()  # 取 min 确保保守更新
 
     # 3. KL 惩罚：防止奖励黑客
-    kl_div = (new_lp - ref_lp).mean()            # KL(π_θ || π_ref)
-    policy_loss = policy_loss + self.kl_coef * kl_div
+    # 完整词表上的 KL/熵，分布的构造见下一节
+    kl_div = (probs_all * (log_probs_all - ref_log_probs_all)).sum(-1).mean()
+    entropy = -(probs_all * log_probs_all).sum(-1).mean()
+    policy_loss += self.kl_coef * kl_div - self.entropy_coef * entropy
 ```
 
 **裁剪机制的直观理解**：
-- **当 $\hat{A}_t > 0$（好动作）**：想增加概率，但最多允许 $r_t(\theta) \leq 1+\varepsilon$（防止过度自信）
-- **当 $\hat{A}_t < 0$（坏动作）**：想降低概率，但最多允许 $r_t(\theta) \geq 1-\varepsilon$（防止过度惩罚）
+- **当 $\hat{A}_t > 0$（好动作）**：想增加概率，超过 $1+\varepsilon$ 后代理收益不再增加
+- **当 $\hat{A}_t < 0$（坏动作）**：想降低概率，低于 $1-\varepsilon$ 后代理收益不再增加
 - **取 $\min$ 的关键**：确保无论 advantage 符号如何，都不会因为更新幅度过大而获得更高的代理目标——这实现了"保守更新"
 
 #### 4.4 KL 惩罚 — 防止奖励黑客的核心机制
@@ -213,10 +233,24 @@ $$
 KL 惩罚像一根"橡皮筋"，把策略拉向初始模型——允许策略偏离一点来适应人类偏好，但不允许完全脱离预训练期间学到的语言能力。
 
 ```python
-kl_div = self.compute_kl_divergence(new_lp, ref_lp)
-# KL(π_θ || π_ref) ≈ mean(log π_θ - log π_ref)
-policy_loss = policy_loss + self.kl_coef * kl_div  # β=0.1
+start = actions.shape[1] - T - 1
+logits, _ = self.policy(actions)
+log_probs_all = F.log_softmax(logits[:, start:-1, :], dim=-1)
+with torch.no_grad():
+    ref_logits, _ = self.ref_model(actions)
+    ref_log_probs_all = F.log_softmax(ref_logits[:, start:-1, :], dim=-1)
+probs_all = log_probs_all.exp()
+kl_div = (probs_all * (log_probs_all - ref_log_probs_all)).sum(-1).mean()
 ```
+
+本例词表只有 30 项，直接对每个采样历史 s 的全词表求和：
+$
+D_{\mathrm{KL}}(\pi_\theta\|\pi_{\mathrm{ref}})
+=\sum_a\pi_\theta(a|s)\left[\log\pi_\theta(a|s)-\log\pi_{\mathrm{ref}}(a|s)\right].
+$
+固定旧策略样本上的 log 概率差可以作为采样统计，但直接对它求导，不等于上述完整 KL 的梯度：还缺少分布权重随参数变化的贡献。本例将精确条件 KL 加在 Actor 损失中，没有再重复加入奖励；熵也对全词表求和后再平均。当前策略与参考策略相同时 KL 应为 0，且其梯度应为 0。
+
+裁剪改变的是代理目标的形状，不保证真实概率比始终落在区间内。对应代码仍需通过实际运行验证；这里未报告训练或数值测试通过。
 
 #### 4.5 Value Network — Critic 的设计
 
@@ -228,7 +262,7 @@ class ValueNetwork(nn.Module):
         self.fc3 = nn.Linear(hidden_dim, 1)   # 输出标量 V(s)
 ```
 
-**输入**：LM embedding 层的输出（状态嵌入）—— 而非原始 token ID。这保证了 Critic 看到的表示与 Actor 看到的表示在同一个语义空间。
+**输入**：LM embedding 层的输出（状态嵌入），取动作发生前最后一个 token，仍缺少完整历史，见本页开头的适用限制。
 
 **输出**：标量 $V(s)$，表示从当前状态开始的期望累计奖励。Critic 用 MSE 损失训练：
 
@@ -340,7 +374,7 @@ loss = F.cross_entropy(shift_logits.view(-1, vocab_size), shift_labels.view(-1))
 | RLHF 形式化 | 状态=已生成token序列, 动作=下一个token, 奖励=RM打分 | `ToyLanguageModel.generate()` |
 | SFT | 监督微调 —— 交叉熵学习语言模式 | `pretrain_policy()` |
 | PPO 裁剪目标 | $\min(r\hat{A}, \text{clip}(r,1-\varepsilon,1+\varepsilon)\hat{A})$ | `PPOAgent.ppo_update()` |
-| KL 惩罚 | 防止策略偏离初始模型太远导致奖励黑客 | `compute_kl_divergence()` |
+| KL 惩罚 | 在同一历史的完整词表上精确求和 | `ppo_update()` |
 | GAE | 平衡偏差方差的优势估计，$\lambda=0.95$ | `compute_gae()` |
 | DPO 损失 | 绕过 RM，直接从偏好数据优化策略 | `compute_dpo_loss()` |
 | $F.\!logsigmoid$ | 数值稳定的 $\log\sigma(x)$，避免 softmax 溢出 | `-F.logsigmoid(diff)` |

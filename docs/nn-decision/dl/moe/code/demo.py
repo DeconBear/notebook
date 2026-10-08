@@ -45,13 +45,16 @@ def softmax(logits, axis=-1):
 
 
 def sigmoid(x):
-    return 1.0 / (1.0 + np.exp(-np.clip(x, -40, 40)))
+    z = np.exp(-np.abs(x))
+    return np.where(x >= 0, 1.0 / (1.0 + z), z / (1.0 + z))
 
 
 class TinyMoE:
     """线性路由器 + N 个线性专家（输出标量 logit）。"""
 
     def __init__(self, n_experts=N_EXPERTS, in_dim=2):
+        if n_experts < TOP_K:
+            raise ValueError("专家数不能小于 TOP_K")
         self.n = n_experts
         scale = 0.5
         self.W_r = np.random.randn(in_dim, n_experts) * scale
@@ -66,8 +69,8 @@ class TinyMoE:
         top_idx = np.argsort(probs, axis=1)[:, -TOP_K:]
         # 取出对应概率并重归一化
         rows = np.arange(len(X))[:, None]
-        top_p = probs[rows, top_idx]
-        top_p = top_p / (top_p.sum(axis=1, keepdims=True) + 1e-9)
+        # 对入选 logits 直接 softmax，等价于截取全量概率后精确归一化。
+        top_p = softmax(logits[rows, top_idx], axis=1)
         return probs, top_idx, top_p
 
     def expert_out(self, X):
@@ -97,8 +100,8 @@ class TinyMoE:
         y_hat, probs, top_idx, top_p = self.forward(X)
         # 二元交叉熵
         p = sigmoid(y_hat)
-        eps = 1e-9
-        loss = float(-np.mean(y * np.log(p + eps) + (1 - y) * np.log(1 - p + eps)))
+        # 稳定的 BCE-with-logits，与下面 (p-y)/B 的导数一致。
+        loss = float(np.mean(np.logaddexp(0.0, y_hat) - y * y_hat))
         aux = self.load_balance_loss(probs, top_idx) if use_aux else 0.0
         total = loss + (AUX_COEF * aux if use_aux else 0.0)
 
@@ -116,30 +119,26 @@ class TinyMoE:
                 dW_e[e] += dlogit[b] * w * X[b]
                 db_e[e] += dlogit[b] * w
 
-        # 路由器：对 top-k 概率用直通近似——把 dlogit * expert_out 当作对门控的信号
-        # 简化：用「被选专家输出」与平均输出的差来推路由
-        d_probs = np.zeros_like(probs)
+        # 固定 Top-k 集合时精确反传；排序边界处不对离散选择求导。
+        d_logits = np.zeros_like(probs)
         for b in range(len(X)):
             for j in range(TOP_K):
                 e = top_idx[b, j]
-                d_probs[b, e] += dlogit[b] * eo[b, e]
-        # Softmax 雅可比的粗糙近似：d_logits ≈ d_probs - sum(d_probs*probs)
-        d_logits = d_probs - (d_probs * probs).sum(axis=1, keepdims=True) * probs
+                d_logits[b, e] = dlogit[b] * top_p[b, j] * (eo[b, e] - y_hat[b])
         if use_aux:
-            # 轻推路由概率更均匀：对 P 的梯度回传到 batch 平均
-            P = probs.mean(axis=0)
+            # f 是离散选择频率，视为常数；P 的梯度必须经过完整 softmax 雅可比。
             f = np.zeros(self.n)
             for k in range(TOP_K):
                 for i in top_idx[:, k]:
                     f[i] += 1.0
             f = f / (len(X) * TOP_K)
             dP = AUX_COEF * self.n * f / len(X)
-            d_logits += dP  # 广播到每个样本
+            d_logits += probs * (dP - (probs * dP).sum(axis=1, keepdims=True))
 
         self.W_e -= LR * dW_e
         self.b_e -= LR * db_e
         self.W_r -= LR * (X.T @ d_logits)
-        self.b_r -= LR * d_logits.mean(axis=0)
+        self.b_r -= LR * d_logits.sum(axis=0)  # d_logits 已含 1/B
         return total, loss, aux, probs, top_idx
 
 

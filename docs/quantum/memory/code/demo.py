@@ -19,7 +19,9 @@ os.makedirs(_IMAGES_DIR, exist_ok=True)
 np.random.seed(42)
 
 T1 = 1.0
-T2 = 0.4
+T2 = 0.4  # 总相干时间，包含能量弛豫和纯退相位
+# 1/T2 = 1/(2*T1) + 1/TPHI，因此本例 TPHI = 0.5
+TPHI = 1.0 / (1.0 / T2 - 1.0 / (2.0 * T1))
 
 
 def amp_damping(rho, t, t1=T1):
@@ -30,11 +32,11 @@ def amp_damping(rho, t, t1=T1):
     return e0 @ rho @ e0.conj().T + e1 @ rho @ e1.conj().T
 
 
-def dephase(rho, t, t2=T2):
-    """纯退相位：非对角元乘 e^{-t/T2}。"""
+def dephase(rho, t, t_phi=TPHI):
+    """纯退相位：非对角元乘 e^{-t/Tphi}；Tphi 不等于总 T2。"""
     out = rho.copy()
-    out[0, 1] *= np.exp(-t / t2)
-    out[1, 0] *= np.exp(-t / t2)
+    out[0, 1] *= np.exp(-t / t_phi)
+    out[1, 0] *= np.exp(-t / t_phi)
     return out
 
 
@@ -48,13 +50,13 @@ def demo_t1_t2():
     plus = np.array([1, 1], dtype=complex) / np.sqrt(2)
     rho_plus = np.outer(plus, plus.conj())
     pop1 = [np.real(amp_damping(rho1, t)[1, 1]) for t in times]
-    coh = [np.abs(dephase(rho_plus, t)[0, 1]) for t in times]
+    coh = [np.abs(dephase(amp_damping(rho_plus, t), t)[0, 1]) for t in times]
     fig, ax = plt.subplots(figsize=(6.0, 3.8))
     ax.plot(times, pop1, label=r'$T_1$：$\langle 1|\rho|1\rangle$')
-    ax.plot(times, coh, label=r'$T_2$：$|\rho_{01}|$（赤道态）')
+    ax.plot(times, coh, label=r'$T_2$：$|\rho_{01}|$（总相干衰减，赤道态）')
     ax.set_xlabel('等待时间（任意单位）')
     ax.set_ylabel('残留')
-    ax.set_title('存储：能量弛豫 vs 相位噪声')
+    ax.set_title('存储：能量弛豫与总相干衰减')
     ax.legend()
     fig.tight_layout()
     path = os.path.join(_IMAGES_DIR, 't1_t2_decay.png')

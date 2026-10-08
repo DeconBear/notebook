@@ -19,6 +19,18 @@ python demo.py
 
 ## 代码逐段详解
 
+> **复现提示**：已修正距离图的协方差来源、非零余弦参考向量和高维实验中的自配对。相关旧图片尚未重新生成；标准化对比也已改为仅在训练集拟合，测试结果需重跑。
+
+### 先厘清距离图的三个前提
+
+- 协方差必须半正定。本例原矩阵 $\begin{pmatrix}2&1.5\\1.5&1\end{pmatrix}$ 的行列式为 $-0.25$，不是合法协方差；现改成非对角元 $1.2$，行列式 $0.56>0$，两个主轴方差才都是正的。
+- 马氏距离中的 $\Sigma$ 描述数据分布，不能只由“距离参考点”一个样本估计。单样本无偏协方差分母 $n-1=0$，产生 NaN，伪逆也不能救回不存在的统计量。代码先由整团数据估计协方差，再通过可选参数传入。
+- 余弦相似度需要两个非零向量。零向量没有方向，用 $\varepsilon$ 防除零不能赋予它几何含义；距离图改用 $(1,0)$ 为参考方向。$1-\cos\theta$ 常被叫余弦距离，但一般不满足三角不等式，并非严格的度量。
+
+**马氏距离为什么等于白化后的欧氏距离？** 当 $\Sigma=Q\Lambda Q^\top$ 正定时，令 $W=\Lambda^{-1/2}Q^\top$，则
+$\|W(x-y)\|_2^2=(x-y)^\top Q\Lambda^{-1}Q^\top(x-y)=(x-y)^\top\Sigma^{-1}(x-y)$。
+大方差方向被缩短，小方差方向被放大；等距面因此是椭圆。若改用奇异矩阵的伪逆，零特征值方向会被忽略，得到的可能只是伪度量，不应声称它总是与可逆白化相同。
+
 ### 第1步：导入库 — 每个库是做什么的
 
 ```python
@@ -87,7 +99,7 @@ $$
 d_{\text{Man}}(\mathbf{x}, \mathbf{y}) = \sum_{i=1}^{d} |x_i - y_i|
 $$
 
-与欧氏距离平方不一样，L1 不放大差异。如果数据中有异常值，异常值在某个维度上的大偏差对 L1 距离的影响远小于对 L2 距离的影响（因为 L2 会平方放大）。
+L1 逐坐标线性累加，与平方 L2 损失对大偏差的平方惩罚不同。但欧氏距离最后有平方根，L1 与 L2 距离都随整体缩放线性变化，不能简单说“欧氏距离一定把异常值平方放大”。哪种度量更合适取决于数据尺度与几何。
 
 这里用了 broadcasting：`X_test[:, np.newaxis, :]` 将形状 `(m, d)` 变为 `(m, 1, d)`，与 `(1, n, d)` 相减得到 `(m, n, d)`。
 
@@ -116,13 +128,14 @@ def cosine_distance(X_test, X_train):
 #### 2.4 马氏距离
 
 ```python
-def mahalanobis_distance(X_test, X_train):
-    Sigma = np.cov(X_train.T)
+def mahalanobis_distance(X_test, X_train, covariance=None):
+    # 若显式传入 covariance，就不再由参考点重新估计
+    Sigma = np.atleast_2d(np.cov(X_train.T) if covariance is None else covariance)
     Sigma_inv = np.linalg.pinv(Sigma)
     ...
     for i in range(m):
         diff = X_test[i] - X_train
-        distances[i] = np.sqrt(np.sum((diff @ Sigma_inv) * diff, axis=1))
+        distances[i] = np.sqrt(np.maximum(np.sum((diff @ Sigma_inv) * diff, axis=1), 0.0))
 ```
 
 马氏距离的公式：
@@ -232,13 +245,13 @@ def plot_curse_of_dimensionality():
     for d in dims:
         points = np.random.uniform(0, 1, (n_points, d))
         idx1 = np.random.choice(n_points, size=min(500, n_points), replace=False)
-        idx2 = np.random.choice(n_points, size=min(500, n_points), replace=False)
+        idx2 = (idx1 + np.random.randint(1, n_points, size=len(idx1))) % n_points
         diffs = points[idx1] - points[idx2]
         dists = np.sqrt(np.sum(diffs ** 2, axis=1))
         ratios.append(dists.min() / (dists.max() + 1e-10))
 ```
 
-这段代码用**Mento Carlo 模拟**验证维数灾难：在 $d$ 维超立方体中均匀采样点，计算随机点对之间的距离，然后看 `min(dist) / max(dist)` 的比值。
+这段代码用**Monte Carlo 模拟**展示距离集中：在 $d$ 维超立方体中均匀采样点，计算随机点对之间的距离，然后看 `min(dist) / max(dist)` 的比值。
 
 关键发现：随着 $d$ 增大，这个比值趋近于 1。原因是在高维空间中，向量的平方和（即 $\| \mathbf{x} - \mathbf{y} \|^2$）近似于正态分布（中心极限定理），其方差随 $d$ 增大相对减小，使得所有距离都集中在均值附近。
 
@@ -255,7 +268,7 @@ def plot_sklearn_comparison():
     sklearn_acc.append(accuracy_score(y_test, knn_sk.predict(X_test)))
 ```
 
-用相同的数据、相同的 $k$ 值、相同的距离度量和投票策略，自定义实现应该和 sklearn 给出**完全相同的预测**。如果两条曲线在图中重合，就验证了自定义实现的正确性。
+用相同数据、$k$、度量与投票规则时，两种实现通常应接近；邻居距离相同或类别票数并列时，具体排序和破平局约定可能带来差异。准确率相同也不代表逐样本预测相同，验证时还应比较预测数组及并列案例。测试集不能参与拟合标准化参数，代码在划分后仅用训练集拟合 `StandardScaler`。
 
 ## 关键概念速查表
 
@@ -277,3 +290,7 @@ def plot_sklearn_comparison():
 clone 后打开（相对仓库根目录）：
 
 `docs/ml/classic/knn/code/demo.py`
+
+## 实现参考
+
+- [NumPy 多元正态采样](https://numpy.org/doc/stable/reference/random/generated/numpy.random.multivariate_normal.html)：协方差必须对称半正定。

@@ -21,7 +21,7 @@ $$
 
 - 事件越不可能，$-\log p$ 越大（越「惊喜」）；
 - 熵是按 $p$ 平均的惊喜；
-- 均匀分布熵最大；确定性分布熵为 $0$。
+- 在固定有限的 $K$ 个可能取值上，均匀分布熵最大（$H\le\log K$）；确定性分布熵为 $0$。
 
 对数底决定单位：$\log_2$ 得 **bit**；$\ln$（demo 用的 `np.log`）得 **nat**。公平硬币两种算法差一个常数 $\ln 2$：$H=\log_2 2=1\,\mathrm{bit}= \ln 2\approx 0.6931\,\mathrm{nat}$。偏硬币更「好猜」，熵更小。
 
@@ -62,7 +62,7 @@ $$
 
 两点分布 $H(q)=-q\ln q-(1-q)\ln(1-q)$ 在 $q=1/2$ 最大，向两端单调下降——demo 条形图就是这两个点。
 
-编码视角：用长度 $-\log_2 p(x)$ 的码字（理想香农码），平均码长正好是 $H_2(p)$ bit。更短的码会和别的消息撞车，这是无损压缩的下界。通信侧的展开见 [熵与编码](/information/entropy/)。
+编码视角：$-\log_2 p(x)$ 是理想实数码长，平均为 $H_2(p)$ bit。实际二进制码长必须是整数；香农码取 $\lceil-\log_2 p(x)\rceil$，平均码长满足 $H_2(p)\le L<H_2(p)+1$（只计正概率符号）。对长数据块编码可使每个符号的额外代价趋于零。不能把实数理想码长当成总能精确实现的单符号码长。通信侧的展开见 [熵与编码](/information/entropy/)。
 
 ![公平 vs 偏置硬币的熵](./images/info_entropy_bars.png)
 
@@ -135,7 +135,7 @@ D_{\mathrm{KL}}(q\|p)
 \end{aligned}
 $$
 
-两个数不同。$p\|q$ 惩罚的是「$p$ 有质量而 $q$ 几乎没有」的地方（这里是第二类 $0.3$ vs $0.1$）；$q\|p$ 惩罚的方向反过来。VAE 里 $\mathrm{KL}(q_\phi(z\mid x)\|p(z))$ 是正向 KL：后验必须覆盖先验支持的地方，否则散度炸。
+两个数不同。$p\|q$ 惩罚的是「$p$ 有质量而 $q$ 几乎没有」的地方（这里是第二类 $0.3$ vs $0.1$）；$q\|p$ 惩罚的方向反过来。VAE 里的 $\mathrm{KL}(q_\phi(z\mid x)\|p(z))$ 要求先验在后验有概率质量的地方也有支持：若 $q_\phi>0$ 而 $p=0$，散度会发散；它并不要求后验覆盖先验的全部支持。
 
 ### 在世界模型里出现的样子
 
@@ -164,20 +164,24 @@ $$
 
 这就是「交叉熵减去熵」。$p=q$ 时两项相等，KL 为 $0$。
 
-**非负（Gibbs / Jensen）。** $-\log$ 是凸函数。令 $Y=q(X)/p(X)$，$X\sim p$：
+**非负（Gibbs / Jensen）。** 先假设 $p(x)>0$ 时均有 $q(x)>0$；否则 KL 为正无穷，非负性显然成立。以下比值和期望只在 $p$ 的支持集上取。$-\log$ 是凸函数。令 $Y=q(X)/p(X)$，$X\sim p$：
 
 $$
 D_{\mathrm{KL}}(p\|q)
 =\mathbb{E}_p\big[-\log(q/p)\big]
 \ge -\log\mathbb{E}_p[q/p]
-=-\log\sum_x p\cdot\frac{q}{p}
-=-\log\sum_x q(x)
-=0,
+=-\log\sum_{x:p(x)>0}q(x)
+\ge 0,
 $$
 
-最后一步用了 $\sum q=1$。等号当且仅当 $q/p$ 几乎处处为常数，即 $p=q$。这叫 Gibbs 不等式。
+最后一步用了 $\sum_{x:p(x)>0}q(x)\le 1$。要让最终 KL 等于 $0$，两步不等式都要取等号：
 
-**不对称没有神秘处。** 求和的权重是左边那个分布。$D_{\mathrm{KL}}(p\|q)$ 在 $p$ 有质量的点上检查 $q$ 够不够大；$D_{\mathrm{KL}}(q\|p)$ 在 $q$ 有质量的点上检查 $p$。demo 右图对同一串 $q_1\in[0.05,0.95]$ 同时画两条曲线，只有 $q=p$ 处相交于 $0$。
+1. 严格凸函数 $-\log$ 的 Jensen 等号要求 $q(x)/p(x)=c$ 在 $p$ 的支持上为常数；
+2. $-\log\sum_{p>0}q=0$ 还要求 $q$ 在该支持上的总质量是 $1$。
+
+于是 $1=\sum_{p>0}q=c\sum_{p>0}p=c$，所以支持内 $q=p$，支持外两者都为 $0$。这才得到“KL 为零当且仅当 $p=q$”。仅说比值为常数还不够：例如 $p=(1,0)$、$q=(1/2,1/2)$，Jensen 取等号，但第二步严格，KL 仍为 $\ln2$。这叫 Gibbs 不等式。
+
+**不对称没有神秘处。** 求和的权重是左边那个分布。$D_{\mathrm{KL}}(p\|q)$ 在 $p$ 有质量的点上检查 $q$ 够不够大；$D_{\mathrm{KL}}(q\|p)$ 在 $q$ 有质量的点上检查 $p$。demo 右图对同一串 $q_1\in[0.05,0.95]$ 同时画两条曲线，二者仅在 $q=p$ 时同时为 $0$，但也可能在正值处相交；例如 $p=(0.7,0.3)$、$q=(0.3,0.7)$。
 
 **二分类交叉熵。** 标签 $y\in\{0,1\}$ 是 one-hot 的 $p$，预测 $\hat y=q(Y=1)$：
 
@@ -185,7 +189,7 @@ $$
 H(p,q)=-y\log\hat y-(1-y)\log(1-\hat y).
 $$
 
-这就是网络里那行 `binary_cross_entropy`。多类则换成 $-\sum_k y_k\log\hat y_k$。它对 $\hat y$ 的梯度在「预测很自信但错了」时最大——和「$-\log q$ 在 $q\to 0$ 爆炸」是同一件事。
+这就是网络里那行 `binary_cross_entropy`。多类则换成 $-\sum_k y_k\log\hat y_k$。对概率的导数为 $\partial\ell/\partial\hat y=-y/\hat y+(1-y)/(1-\hat y)$，自信但错误时确实会发散。但对 logit $z$，还要乘 $\sigma'(z)=\hat y(1-\hat y)$，得到 $\partial\ell/\partial z=\hat y-y\in[-1,1]$。不要把“概率梯度发散”误读成“logit 梯度也发散”。
 
 两个对角高斯的 KL 有闭式（RSSM 常用）——实现时查公式即可，本章 demo 用离散分布把直觉算清楚。
 
@@ -205,7 +209,25 @@ $$
 \ell = -y\log\hat y-(1-y)\log(1-\hat y).
 $$
 
-**两个对角高斯**的 KL 有闭式（RSSM 常用）——实现时查公式即可，本章 demo 用离散分布把直觉算清楚。
+**两个对角高斯**。设 $q=\mathcal N(\mu_q,\operatorname{diag}\sigma_q^2)$、$p=\mathcal N(\mu_p,\operatorname{diag}\sigma_p^2)$，所有方差严格为正，则
+
+$
+D_{\rm KL}(q\|p)=\frac12\sum_j\left[
+\log\frac{\sigma_{p,j}^2}{\sigma_{q,j}^2}
++\frac{\sigma_{q,j}^2+(\mu_{q,j}-\mu_{p,j})^2}{\sigma_{p,j}^2}-1
+\right].
+$
+
+推导只用两个期望。展开 $\mathbb E_q[\log q(z)-\log p(z)]$，高斯密度中的 $\log(2\pi)$ 抵消；由于
+$\mathbb E_q[(z_j-\mu_{q,j})^2]=\sigma_{q,j}^2$，
+且把 $z_j-\mu_{p,j}=(z_j-\mu_{q,j})+(\mu_{q,j}-\mu_{p,j})$ 展开后交叉项期望为零，
+$\mathbb E_q[(z_j-\mu_{p,j})^2]=\sigma_{q,j}^2+(\mu_{q,j}-\mu_{p,j})^2$，代入即可。
+
+特别地，标准正态先验 $p=\mathcal N(0,I)$ 给出
+$D_{\rm KL}(q\|p)=\tfrac12\sum_j(\mu_{q,j}^2+\sigma_{q,j}^2-1-\log\sigma_{q,j}^2)$。
+若网络输出 $\mathrm{logvar}_j=\log\sigma_{q,j}^2$，对应代码是
+$-\tfrac12\sum_j(1+\mathrm{logvar}_j-\mu_{q,j}^2-\exp(\mathrm{logvar}_j))$。
+这里的求和是潜变量维度，批次是否取平均由损失约定决定；交换 $p,q$ 必须重新代入，不能只换符号。
 
 ---
 
@@ -246,3 +268,5 @@ $$
 
 1. Cover & Thomas, *Elements of Information Theory*（经典）
 2. MacKay, *Information Theory, Inference, and Learning Algorithms*（免费电子书）
+
+3. Kingma & Welling, [Auto-Encoding Variational Bayes，Appendix B](https://arxiv.org/html/1312.6114v11)：标准高斯先验下的解析 KL。

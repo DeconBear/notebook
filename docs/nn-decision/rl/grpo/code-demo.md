@@ -17,7 +17,7 @@ cd docs/nn-decision/rl/grpo/code
 python demo.py
 ```
 
-CPU 即可。36 道 $a+b$ 口算题，答案 $0\ldots 12$。每道题采 $G=8$ 个答案：无基线 REINFORCE 用绝对 0/1 奖励；GRPO 用组内 z-score 当 $\hat A$，再套 PPO 的 clip，并加一项对冻结参考策略的 KL。看左图正确率、右图「一组全对/全错被跳过」的比例。本文件没有 LLM、没有 token 级损失，只把「组相对优势」和裁剪跑通。
+CPU 即可。36 道 $a+b$ 口算题，答案 $0\ldots 12$。每道题采 $G=8$ 个答案：无基线 REINFORCE 用绝对 0/1 奖励；GRPO 用组内 z-score 当 $\hat A$，再套 PPO 的 clip，并加一项对冻结参考策略的 KL。看左图正确率、右图「一组全对/全错被跳过」的比例。本文件没有 LLM、没有 token 级损失，演示组相对优势与 KL 的连接；裁剪公式保留，但单次更新没有展示裁剪激活后的效果。
 
 ## 代码逐段详解
 
@@ -32,7 +32,7 @@ CLIP_EPS = 0.2
 KL_BETA = 0.02
 ```
 
-- **`N_ANS=13`**：和 $0+0$ 到 $5+5$ 的合法和一致，动作空间刚好盖住所有正确答案，没有「超出范围」的干扰项。
+- **`N_ANS=13`**：动作空间为 0 到 12；$0+0$ 到 $5+5$ 的正确答案范围是 0 到 10，因此 11、12 是永远不会正确的干扰动作。
 - **`GROUP=8`**：同一 prompt 采 8 条。太小则 $\sigma$ 估不准；太大则每步太贵。真 GRPO 往往 $G=4\sim 16$。
 - **`CLIP_EPS`**：和 [PPO](/nn-decision/rl/ppo/code-demo) 同一套盒子。
 - **`KL_BETA`**：把 $\pi$ 拴在参考策略旁，对应正文里「别离 SFT / 旧策略太远」。这里参考是**初始化那一刻冻结的 logits**。
@@ -66,7 +66,7 @@ class AnswerPolicy(nn.Module):
 - **`self.logits[q_idx]`**：`q_idx` 是 Python `int` 时取出长度为 13 的 1 维张量；`Categorical` 在这 13 维上做 Softmax。
 - **必须 `super().__init__()`**：否则这张表进不了 `parameters()`，`SGD` 更新不到。
 
-`accuracy`：`argmax(dim=-1)` 贪心取每题最可能的答案，和 `gold` 比均值。评估不算梯度（`no_grad`）。
+`accuracy`：`argmax(dim=-1)` 贪心取每题最可能的答案，和 `gold` 比均值。评估不算梯度（`no_grad`），但仍在同一张训练题库上计算，没有测试新题的泛化。
 
 ---
 
@@ -88,13 +88,13 @@ return ((r - r.mean()) / (std + eps)).astype(np.float32)
 ```
 
 - **比组内平均好** → $\hat A>0$，提高这些答案的概率；差的压低。这就是「相对」：全员 0 分或全员 1 分时，没有谁比平均更好。
-- **`std < 1e-6`**：方差塌掉，整组优势为 0。后面 `grpo_step` 直接跳过 `backward`——没信号就别更新，避免 $0/0$ 附近的噪声梯度。
+- **`std < 1e-6`**：方差塌掉，整组优势为 0。后面 `grpo_step` 提前返回，不仅跳过奖励项，还跳过 KL 正则更新。这是示例的简化，不代表 KL 梯度也必然为零。
 - **`float64` 算、`float32` 回**：和 PPO 里 GAE 的写法一样，先用更宽的浮点减均值。
 - **没有 `compute_gae`，没有 `self.v`**：长思维链上训 $V$ 又贵又不稳，组采样反正都要做，基线就用组均值。
 
-**同一组数，两种优势差在哪。** 设 $G=4$，奖励 $[1,0,1,0]$。$\mu=0.5$，样本标准差 $0.5$，z-score 约为 $[+1,-1,+1,-1]$：两个对的往上推、两个错的往下压，幅度对称。REINFORCE 则对的乘 $+1$、错的乘 $0$——只推对的，不主动压错的，也没有「比这道题的平均好多少」这把尺。若一组全是 $[1,1,1,1]$，z-score 全 0，GRPO 跳过；REINFORCE 仍会对四个 $\log\pi$ 各乘 1 再平均，把已经对的题继续顶尖。
+**同一组数，两种优势差在哪。** 设 $G=4$，奖励 $[1,0,1,0]$。$\mu=0.5$，总体标准差 $0.5$（`np.std` 默认除以 G），z-score 约为 $[+1,-1,+1,-1]$：两个对的往上推、两个错的往下压，幅度对称。REINFORCE 则对的乘 $+1$、错的乘 $0$——只推对的，不主动压错的，也没有「比这道题的平均好多少」这把尺。若一组全是 $[1,1,1,1]$，z-score 全 0，GRPO 跳过；REINFORCE 仍会对四个 $\log\pi$ 各乘 1 再平均，把已经对的题继续顶尖。
 
-和 [PPO 的 GAE](/nn-decision/rl/ppo/code-demo) 对照：那边 $\hat A_t$ 是时间轴上的多步 TD；这里 $\hat A_i$ 是**并列的 $G$ 个样本**之间的相对分。裁剪公式一字不差。同一组里 $\hat A$ 有正有负时，`min` 与 `clamp` 仍按样本各自生效：好答案的 $r$ 不能靠冲出 $1+\varepsilon$ 刷分，坏答案的 $r$ 也不能无底下降。
+和 [PPO 的 GAE](/nn-decision/rl/ppo/code-demo) 对照：那边 $\hat A_t$ 是时间轴上的多步 TD；这里 $\hat A_i$ 是**并列的 $G$ 个样本**之间的相对分。裁剪公式一字不差。同一组里 $\hat A$ 有正有负时，`min` 与 `clamp` 仍按样本各自生效：好答案的 $r$ 不能靠冲出 $1+\varepsilon$ 刷分，坏答案的 $r$ 低于 $1-\varepsilon$ 后，代理收益不再增加。这不是对真实概率比施加硬约束；本例单次更新时比率尚为 1，实际不会触发这段截断。
 
 ---
 
@@ -118,7 +118,7 @@ if np.allclose(adv, 0):
     return float(np.mean(rewards)), True
 ```
 
-`allclose` 把「全零优势」判定为跳过。返回的 `True` 累进 `skipped`，画右图。
+`allclose` 把「全零优势」判定为跳过。返回的 `True` 累进 `skipped`，画右图。提前返回发生在 KL 计算之前，因此这一步不会执行任何更新；不能从零奖励优势推出零 KL 梯度。
 
 有方差才更新：
 
@@ -141,9 +141,9 @@ kl = torch.distributions.kl.kl_divergence(dist, ref)
 loss = clip_loss + KL_BETA * kl
 ```
 
-离散 Categorical 的 KL 有闭式，不必 Monte Carlo。`ref_logits` 在 `train` 开头 `detach().clone()`，**整段训练不更新**——相当于「SFT 参考」。没有这项，clip 仍限制一步跨多远，但多步之后可以漂到只会背当前这几题。
+离散 Categorical 的 KL 有闭式，不必 Monte Carlo。`ref_logits` 在 `train` 开头 `detach().clone()`，**整段训练不更新**——相当于「SFT 参考」。它与裁剪承担不同作用：KL 比较当前策略与冻结参考策略，裁剪比较当前策略与采样策略。裁剪本身不保证实际步长有硬上界；而本例每批仅更新一次，计算目标时比率为 1，裁剪没有进入截断区。
 
-`opt` 是 **SGD 不是 Adam**：表很小，固定步长更直观。`zero_grad` → `backward` → `step` 一次，对应论文里对一组样本的一拍（玩具没有再套 K 个 epoch）。
+`opt` 是 **SGD 不是 Adam**：表很小，固定步长更直观。`zero_grad` → `backward` → `step` 一次，对应论文里对一组样本的一拍（玩具没有再套 K 个 epoch）。因此对照曲线反映的是此查表任务中的组相对更新、KL、跳过策略及不同随机种子等共同影响，不能把差异归因于裁剪，也不能据此推断 GRPO 普遍更稳定。
 
 ---
 
@@ -183,7 +183,7 @@ i = int(np.random.randint(0, len(qs)))
 |------|-------------|------|
 | 组采样 | 同一 $q$ 抽 $G$ 个答案 | `for _ in range(group)` |
 | 组优势 | $\hat A_i=(r_i-\mu)/\sigma$ | `group_advantages` |
-| 零方差 | 全对或全错 → 没梯度 | `std<1e-6` / `allclose` → `skip` |
+| 零方差 | 奖励优势为零；本例连 KL 一起跳过 | `std<1e-6` / `allclose` → `skip` |
 | 裁剪 | 与 PPO 同一 $L^{\mathrm{CLIP}}$ | `clamp` + `min` |
 | KL | $D_{\mathrm{KL}}(\pi\|\pi_{\mathrm{ref}})$ | `kl_divergence(dist, ref)` |
 | 参考策略 | 初始化冻结的 logits | `ref_logits = ...clone()` |

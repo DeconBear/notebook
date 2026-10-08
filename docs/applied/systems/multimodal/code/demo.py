@@ -124,22 +124,34 @@ def load_clip_model(device: str = "cpu"):
 # 第 2 部分：零样本图像分类
 # ============================================================================
 
+def is_usable_sample(image_path: str) -> bool:
+    """排除缺失、损坏及纯色占位图片，避免把占位文件当成真实分类样本。"""
+    from PIL import Image
+
+    try:
+        with Image.open(image_path) as image:
+            image = image.convert("RGB")
+            return min(image.size) > 1 and any(
+                low != high for low, high in image.getextrema()
+            )
+    except (OSError, ValueError):
+        return False
+
+
 def download_sample_images() -> List[str]:
     """
-    下载用于演示的样本图片。如果本地已有则跳过下载。
+    下载用于演示的样本图片，仅返回可读取的非纯色图片。现有无效文件保留并跳过。
 
     返回:
         图片文件路径的列表
     """
     import urllib.request
-    from io import BytesIO
-    from PIL import Image
 
     # 创建图片存储目录
     os.makedirs(os.path.join(_IMAGES, "samples"), exist_ok=True)
     image_paths = []
 
-    # 演示图片：从网络下载或生成简单的纯色分类图片
+    # 下载真实示例图片；下载失败时跳过，不生成会误导分类结果的占位图
     sample_sources = [
         ("golden_retriever", "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Golden_Retriever_Carlos_%2810581910556%29.jpg/320px-Golden_Retriever_Carlos_%2810581910556%29.jpg"),
         ("orange_cat", "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/320px-Cat_November_2010-1a.jpg"),
@@ -149,22 +161,26 @@ def download_sample_images() -> List[str]:
 
     for name, url in sample_sources:
         save_path = os.path.join(_IMAGES, "samples", f"{name}.jpg")
-        image_paths.append(save_path)
-
-        # 如果文件已存在，跳过下载
+        # 保留现有无效文件，明确跳过，避免产生虚假的图文匹配结果。
         if os.path.exists(save_path):
-            print(f"  图片已存在: {save_path}")
+            if is_usable_sample(save_path):
+                print(f"  图片已存在: {save_path}")
+                image_paths.append(save_path)
+            else:
+                print(f"  [跳过] 图片损坏或为纯色占位图，请替换为真实样本: {save_path}")
             continue
 
         try:
             print(f"  下载图片: {name}...")
             urllib.request.urlretrieve(url, save_path)
         except Exception as e:
-            print(f"  下载失败 ({name}): {e}")
-            # 如果下载失败，创建一个纯色占位图片
-            img = Image.new('RGB', (224, 224), color=(100, 100, 100))
-            img.save(save_path)
-            print(f"  已创建占位图片: {save_path}")
+            print(f"  [跳过] 下载失败 ({name}): {e}")
+            continue
+
+        if is_usable_sample(save_path):
+            image_paths.append(save_path)
+        else:
+            print(f"  [跳过] 下载结果不是有效的非纯色图片: {save_path}")
 
     return image_paths
 
@@ -261,9 +277,12 @@ def demo_zero_shot_classification(model, processor, tokenizer, device: str):
     # 获取样本图片
     print("\n准备样本图片...")
     image_paths = download_sample_images()
+    if not image_paths:
+        print("  [跳过] 没有有效图片，无法演示零样本图像分类。")
+        return
 
     for img_path in image_paths:
-        if not os.path.exists(img_path):
+        if not is_usable_sample(img_path):
             continue
 
         print(f"\n{'─' * 50}")
@@ -362,8 +381,8 @@ def demo_image_text_similarity(model, processor, tokenizer, device: str):
     print("\n--- 2a: 对图片排序候选描述 ---")
 
     # 检查是否有可用的图片
-    dog_img = "images/samples/golden_retriever.jpg"
-    if os.path.exists(dog_img):
+    dog_img = os.path.join(_IMAGES, "samples", "golden_retriever.jpg")
+    if is_usable_sample(dog_img):
         # 构建候选描述 —— 有些正确，有些错误
         captions = [
             "a golden retriever dog playing in the grass",  # 正确
@@ -392,6 +411,9 @@ def demo_image_text_similarity(model, processor, tokenizer, device: str):
             marker = "[匹配 ✓]" if is_correct else "[不匹配 ✗]"
             print(f"  {rank:<6} {score:<10.4f} {marker} {caption}")
 
+    else:
+        print("  [跳过] 金毛犬样本缺失、损坏或为纯色占位图。")
+
     # ---- 2b: 演示跨模态语义搜索 ----
     print("\n--- 2b: 文本到图像搜索模拟 ---")
     print("  给定查询文本，在多张图片中找到最佳匹配...")
@@ -399,8 +421,8 @@ def demo_image_text_similarity(model, processor, tokenizer, device: str):
     # 获取所有可用的图片
     available_images = []
     for fname in ["golden_retriever.jpg", "orange_cat.jpg", "red_car.jpg", "pizza.jpg"]:
-        fpath = f"images/samples/{fname}"
-        if os.path.exists(fpath):
+        fpath = os.path.join(_IMAGES, "samples", fname)
+        if is_usable_sample(fpath):
             available_images.append(fpath)
 
     if len(available_images) >= 2:
@@ -466,22 +488,27 @@ def demo_embedding_space(model, processor, tokenizer, device: str):
     # 使用多个类别的图片和文本描述
     categories = {
         "Dog": {
-            "images": ["images/samples/golden_retriever.jpg"],
+            "images": [os.path.join(_IMAGES, "samples", "golden_retriever.jpg")],
             "texts": ["a dog", "a golden retriever", "a cute puppy"]
         },
         "Cat": {
-            "images": ["images/samples/orange_cat.jpg"],
+            "images": [os.path.join(_IMAGES, "samples", "orange_cat.jpg")],
             "texts": ["a cat", "an orange cat", "a feline"]
         },
         "Car": {
-            "images": ["images/samples/red_car.jpg"],
+            "images": [os.path.join(_IMAGES, "samples", "red_car.jpg")],
             "texts": ["a car", "a red vehicle", "an automobile"]
         },
         "Food": {
-            "images": ["images/samples/pizza.jpg"],
+            "images": [os.path.join(_IMAGES, "samples", "pizza.jpg")],
             "texts": ["pizza", "Italian food", "a delicious meal"]
         },
     }
+
+    if not any(is_usable_sample(path)
+               for data in categories.values() for path in data["images"]):
+        print("  [跳过] 没有有效图片，无法展示图文嵌入空间。")
+        return
 
     # ---- 收集所有嵌入 ----
     all_embeddings = []  # 存储所有嵌入向量
@@ -491,7 +518,7 @@ def demo_embedding_space(model, processor, tokenizer, device: str):
     for category_name, data in categories.items():
         # --- 提取图像嵌入 ---
         for img_path in data["images"]:
-            if not os.path.exists(img_path):
+            if not is_usable_sample(img_path):
                 continue
             img = Image.open(img_path).convert("RGB")
             with torch.no_grad():
@@ -735,16 +762,16 @@ def demo_contrastive_loss():
     logits_p = S_perfect / tau
     loss_p = -np.log(np.exp(np.diag(logits_p)) / np.sum(np.exp(logits_p), axis=1)).mean()
     print(f"\n  极端场景分析:")
-    print(f"  1) 完美对齐 (S=单位矩阵): L ≈ {loss_p:.6f}  (理论最小值)")
+    print(f"  1) 完美对齐 (S=单位矩阵): L ≈ {loss_p:.6f}  (单位矩阵相似度的示例值，不是通用最小值)")
     print(f"     对角线相似度=1，其余=0 → 分类器 100% 确定")
 
-    # 场景 2: 完全随机（所有相似度相等）
+    # 场景 2: 所有相似度相等的均匀预测基线
     S_random = np.full((batch_size, batch_size), 0.0)
     np.fill_diagonal(S_random, 0.0)
     logits_r = S_random / tau
     loss_r = -np.log(np.exp(np.diag(logits_r)) / np.sum(np.exp(logits_r), axis=1)).mean()
-    print(f"  2) 完全随机 (S≈0 矩阵): L ≈ {loss_r:.6f}")
-    # 理论上随机时 loss ≈ -log(1/batch_size)
+    print(f"  2) 均匀预测 (S=0 矩阵): L ≈ {loss_r:.6f}")
+    # logits 全相等时 loss = log(batch_size)，不是上限
     print(f"     理论值 = -log(1/N) = -log(1/{batch_size}) = {(-np.log(1.0/batch_size)):.4f}")
     print(f"     → 对比学习通过增大 batch size 提供更多负样本，提高学习难度")
 
@@ -805,8 +832,8 @@ def main():
     print("=" * 70)
     print("  ✓ 理解了 CLIP 的双编码器架构（图像 + 文本）")
     print("  ✓ 理解了 InfoNCE 对比损失的工作原理")
-    print("  ✓ 体验了零样本图像分类 — 无需标注数据的奇迹")
-    print("  ✓ 感受了共享嵌入空间中「语义相似 = 向量相近」")
+    print("  · 有效模型和真实图片可用时，可体验零样本图像分类")
+    print("  · 图文嵌入空间演示是否执行，请以上面的运行或跳过提示为准")
     print()
     print("  CLIP 是多模态 AI 的基石：")
     print("  - 它证明了自然语言可以作为图像的监督信号")

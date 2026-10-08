@@ -10,6 +10,9 @@ title: "wm03 Dreamer — demo.py"
 
 <a href="/notebook/code/world-models/abstract/dreamer/demo.py" target="_blank" download>Download demo.py</a>
 
+> [!WARNING]
+> 静态审查后的图片状态：Actor 价值梯度已修正，`dreamer_pendulum.png`、`dreamer_pendulum_rollout.png` 尚未重新生成；完整脚本的走廊附录图片也应一并刷新。 本次未执行脚本或验证新输出。
+
 ## 运行方式
 
 ```bash
@@ -32,7 +35,7 @@ import torch.optim as optim
 
 和 RSSM 章相同：`nn` 搭网络，`F` 提供 `mse_loss` / `one_hot` / `softplus` / `binary_cross_entropy_with_logits`，`optim.Adam` 更新。倒立摆 Actor 是连续力矩，走廊 Actor 是离散左右，两套头。
 
-`set_seed(42)` 同时钉 NumPy 和 PyTorch。走廊附录里会再 `set_seed(42)` 一次，让 REINFORCE 基线和环境从同一随机源开始，比较才公平。
+`set_seed(42)` 同时钉 NumPy 和 PyTorch。走廊附录里会再 `set_seed(42)` 一次，用于复现随机抽样；相同种子本身不保证交互预算和评估协议公平。
 
 ---
 
@@ -53,7 +56,7 @@ def _wrap_pi(angle):
     return float((angle + np.pi) % (2.0 * np.pi) - np.pi)
 ```
 
-**语法 `%`**：浮点取模。把角折回 $(-\pi,\pi]$。积分 $\theta\leftarrow\theta+\Delta t\cdot\omega$ 会无限增大，不折回来奖励里的 $\theta^2$ 会炸。
+**语法 `%`**：浮点取模。把角折回 $[-\pi,\pi)$。积分 $\theta\leftarrow\theta+\Delta t\cdot\omega$ 会无限增大，不折回来奖励里的 $\theta^2$ 会炸。
 
 ```python
 u = float(np.clip(action, -1.0, 1.0)) * self.max_torque
@@ -141,7 +144,7 @@ loss = F.mse_loss(z_pred, z_tgt) + F.mse_loss(r_pred, rew_t[idx])
 ```
 
 - **目标 $z'$ 用 encoder(next_obs)**，不是让动力学去拟合原始 $o'$。潜空间一致，想象时滚的是 $z$。
-- **`.detach()`**：不要让「目标编码器」的梯度穿过 $z_{\text{tgt}}$ 去和预测抢。否则 encoder 可以同时改目标和预测，loss 假降。真 Dreamer 还有 stop-gradient / EMA；这里 detach 是最小实现。
+- **`.detach()`**：不要让「目标编码器」的梯度穿过 $z_{\text{tgt}}$ 去和预测抢。否则 encoder 可以同时改目标和预测，loss 假降。这是本 demo 的教学性目标停梯度；不能据此把原始 Dreamer 的世界模型训练等同于 EMA 目标编码器。
 - 两项 MSE：动力学 + 奖励。没有 KL（因为没有先验后验）。
 
 `np.random.choice(n, size=min(64, n), replace=False)`：转移少于 64 就全用。`min` 防止 $n<64$ 时报错。
@@ -178,7 +181,7 @@ Actor（第二段再想象一遍）：
 actor_loss = -v_lam.mean()
 ```
 
-**直通梯度**：最大化想象回报的均值。`PendulumWorld` 的参数**不在** `actor_opt` 里，所以 `backward` 不会改动力学（即使没有 `no_grad`，Adam 也碰不到它们）。走廊版则显式 `with torch.no_grad(): imagine_step`，两种写法一个意思：策略更新不准把世界模型当「作弊通道」去改奖励头。
+**直通梯度**：最大化想象回报的均值。`PendulumWorld` 的参数**不在** `actor_opt` 里，所以 `backward` 不会改动力学（即使没有 `no_grad`，Adam 也碰不到它们）。Actor 更新时，Critic 的价值输出和终点 bootstrap **不能 detach**，否则会丢掉价值经潜状态回到动作的梯度；只有 Critic 回归用的目标需要 detach。走廊版使用离散 REINFORCE，因此可以 `with torch.no_grad(): imagine_step`；连续版依赖穿过动力学的梯度，不能照搬这段 `no_grad`。两者都不更新世界模型参数，但梯度路径不同。
 
 `torch.clamp(v_lam, -15, 15)`：想象初期模型很瞎，$V_\lambda$ 可能极大，夹一下防一步把 Actor 打飞。
 
@@ -247,7 +250,7 @@ with torch.no_grad():
     z_next, r_pred, d_logit = world.imagine_step(z.detach(), act_oh)
 ```
 
-世界模型完全冻住，`z.detach()` 切断「策略 → $z$」的梯度（本实现动力学不可导回 Actor，和摆的直通不同）。回报用 Monte Carlo：
+世界模型完全冻住，`z.detach()` 切断「策略 → $z$」的梯度（本实现动力学不可导回 Actor，和摆的直通不同）。回报用有限时域的多步 bootstrap：
 
 ```python
 G = critic(z).detach()
@@ -263,7 +266,7 @@ for t in reversed(range(horizon)):
 
 ### 第12步：REINFORCE 基线在比什么
 
-`train_reinforce_baseline`：**没有**世界模型。每条真实 episode 算折扣回报，归一化后 $-log\pi\cdot G$。样本效率应当差：每次更新都要真走环境。图 `dreamer_vs_reinforce.png` 把 REINFORCE 的横轴线性缩放到 Dreamer 的 iter 数，只是视觉对齐，不是「同样交互次数」的严格横轴。看趋势：想象多练能否用更少真实步数把回报拉起来。
+`train_reinforce_baseline`：**没有**世界模型。每条真实 episode 算折扣回报，归一化后 $-log\pi\cdot G$。每次更新使用真实交互；是否更低效需要统一预算实测。图 `dreamer_vs_reinforce.png` 把 REINFORCE 的横轴线性缩放到 Dreamer 的 iter 数，只是视觉对齐，不是「同样交互次数」的严格横轴。因此这张图只能展示各自训练趋势，不能据此宣称更高样本效率。
 
 评估走廊策略时 `logits.argmax`：贪婪，不采样。
 
@@ -290,12 +293,53 @@ for t in reversed(range(horizon)):
 |------|----------------|
 | 真交互只教模型 | `collect_*` + `train_*_world` |
 | 想象里更新策略 | `imagine_train_pendulum_ac` / `imagine_and_train_actor_critic` |
-| 冻住世界模型 | 不进 `actor_opt`，或 `no_grad` + `detach` |
-| $V_\lambda$ | `_pendulum_v_lambda`，摆用；走廊用 MC return |
+| 冻住世界模型 | 连续版不更新参数但保留输入梯度；走廊版可用 `no_grad` |
+| $V_\lambda$ | `_pendulum_v_lambda`，摆用；走廊用多步 bootstrap |
 | `one_hot` / `Categorical` | 离散动作 |
 | `tanh`+`softplus` | 连续力矩均值与方差 |
 | `.squeeze(-1)` / `[..., :1]` | 对齐形状，避免 `cat` 失败 |
 | `.item()` | 张量变 Python 标量再交给 `env.step` |
+
+## 推导补充：冻结参数不等于切断价值梯度
+
+固定世界模型参数 $\theta$ 和价值网络参数 $\psi$，可重参数化动作与想象状态为
+$
+a_t=f_\phi(z_t,\epsilon_t),\qquad z_{t+1}=F_\theta(z_t,a_t).
+$
+这里讨论连续动作 demo。代码使用裁剪高斯；原始 Dreamer 使用 tanh 变换高斯，二者是不同分布，不应混称。
+
+约定 $r_t$ 是 $z_t\to z_{t+1}$ 的奖励，$V_t=V_\psi(z_t)$。有限时域 $\lambda$ 回报满足
+$
+G_H=V_H,\qquad G_t=r_t+\gamma[(1-\lambda)V_{t+1}+\lambda G_{t+1}].
+$
+$\lambda=0$ 是一步 bootstrap；$\lambda=1$ 是累加至 $H$ 后由 $V_H$ 补尾，仍不是完整终止轨迹上的纯 Monte Carlo 回报。
+
+代码用优势递推实现：
+$
+\delta_t=r_t+\gamma V_{t+1}-V_t,\quad A_H=0,\quad
+A_t=\delta_t+\gamma\lambda A_{t+1},\quad G_t=A_t+V_t.
+$
+代入 $A_{t+1}=G_{t+1}-V_{t+1}$，即可还原上一式。
+
+Actor 最小化 $L_\pi=-\operatorname{mean}_tG_t$，其中价值梯度包括
+$
+\frac{\partial V_\psi(z_{t+1})}{\partial\phi}
+=\frac{\partial V_\psi}{\partial z_{t+1}}
+\frac{\partial z_{t+1}}{\partial\phi}.
+$
+固定 $\psi$ 只是不更新其权重，不是把价值输出变成常数。对价值输出或终点 bootstrap 使用 detach 会切断这条路径；用 no_grad 包住动力学也会切断动作对未来状态的影响。
+
+反例：$H=1,r_0=0,a_0=\phi,z_1=a_0,V(z)=z$。正确目标为 $G_0=\gamma\phi$，Actor 损失梯度是 $-\gamma$；若 detach 终点价值，则梯度为零，策略无法利用时域以外的价值。
+
+Critic 的目标不同：
+$
+L_V=\operatorname{mean}_t[V_\psi(z_t)-\operatorname{sg}(G_t)]^2.
+$
+对回归目标停梯度，才能让 Critic 拟合固定目标，而非推动目标迁就自身。更新 Critic 可把想象状态当固定数据；更新 Actor 必须保留价值对输入状态的导数。将 world/critic 参数排除在 actor_opt 外不会更新它们，但仍可能计算无用的参数梯度；冻结参数梯度能节约计算，不能改成切断整个前向图。
+
+回报裁剪到 $[-15,15]$ 是额外近似：饱和区梯度为零，会改变未裁剪目标。它不保证收敛，也不能替代统一交互预算、相同评估策略、多随机种子的实验。
+
+依据：[Dreamer 论文第 3 节](https://arxiv.org/html/1912.01603v3#S3)。递推展开与单步反例是对本 demo 的逐项分析。
 
 ## 源码位置
 

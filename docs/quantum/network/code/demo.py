@@ -77,9 +77,9 @@ def apply_3(op, state, wires):
 
 def teleport_once(psi):
     """把 psi 从比特 0 传到比特 2，返回 Bob 的约化态（纯态矢量）。"""
-    # |ψ⟩ ⊗ |Φ+⟩_{12}
+    # 小端基序 |q2 q1 q0⟩：|Φ+⟩_{21} ⊗ |ψ⟩_0
     bell = CNOT @ np.kron(H, I2) @ np.kron(ket0(), ket0())
-    state = np.kron(psi, bell)
+    state = np.kron(bell, psi)
     # Alice: CNOT(0->1), H(0)
     state = apply_3(CNOT, state, (0, 1))
     state = apply_3(H, state, (0,))
@@ -95,7 +95,7 @@ def teleport_once(psi):
             bob[(i >> 2) & 1] += amp
     nrm = np.linalg.norm(bob)
     if nrm < 1e-12:
-        return psi
+        raise RuntimeError('采样到了零概率测量分支，请检查态初始化与投影。')
     bob = bob / nrm
     if m1:
         bob = X @ bob

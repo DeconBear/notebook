@@ -61,7 +61,7 @@ def kmp_search(text, pattern):
     """
     n, m = len(text), len(pattern)
     if m == 0:
-        return [0]  # 空模式串匹配任意位置
+        return list(range(n + 1))  # 空模式串匹配每个字符边界
 
     next_arr = compute_next(pattern)
     matches = []
@@ -323,7 +323,7 @@ def rabin_karp(text, pattern):
     """
     n, m = len(text), len(pattern)
     if m == 0:
-        return [0]
+        return list(range(n + 1))
     if m > n:
         return []
 

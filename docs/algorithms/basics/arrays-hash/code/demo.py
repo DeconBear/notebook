@@ -262,6 +262,8 @@ class HashTable:
     """哈希表：除法哈希 + 链地址法"""
 
     def __init__(self, initial_capacity=8, load_factor_threshold=0.75):
+        if initial_capacity <= 0 or load_factor_threshold <= 0:
+            raise ValueError("哈希表容量和负载阈值必须为正")
         self._capacity = initial_capacity
         self._size = 0
         self._buckets = [[] for _ in range(initial_capacity)]
@@ -325,7 +327,7 @@ class HashTable:
                 self.put(key, value)  # 重新插入（不会再次触发扩容）
 
     def __contains__(self, key):
-        return self.get(key) is not None
+        return any(k == key for k, _ in self._buckets[self._hash(key)])
 
     def __len__(self):
         return self._size
@@ -350,6 +352,8 @@ class LRUCache:
     """
 
     def __init__(self, capacity):
+        if capacity < 0:
+            raise ValueError("缓存容量不能为负")
         self.capacity = capacity
         self.cache = {}  # key → DoublyNode
         self.dll = DoublyLinkedList()  # 双链表维护访问顺序
@@ -368,6 +372,8 @@ class LRUCache:
 
     def put(self, key, value):
         """插入或更新键值对"""
+        if self.capacity == 0:
+            return  # 零容量缓存不保存任何条目
         if key in self.cache:
             # key 已存在：更新值，移到头部
             node = self.cache[key]

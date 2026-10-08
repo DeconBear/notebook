@@ -160,7 +160,7 @@ def evaluate_contact_precision(pred_coupling, true_contact):
 真实的 Structure Module 用 Invariant Point Attention 端到端直接回归坐标。这里用一个
 更朴素但足够展示核心几何直觉的方法：把耦合分数转换为目标距离约束，再用（带动量的）
 梯度下降求解坐标，使实际距离尽量匹配目标距离——这本质上是经典的
-**距离几何 / 应力多维标度（Stress Majorization / MDS）** 方法。
+**距离几何 / 应力多维标度（stress MDS）** 目标。这里的求解器是带动量梯度下降，不是通过逐轮最小化上界的 stress majorization 算法。
 
 $$
 \mathcal{L}(X) = \sum_{i<j} w_{ij}\left(\|x_i - x_j\| - d_{ij}^{\text{target}}\right)^2
@@ -186,13 +186,15 @@ for restart in range(n_restarts):                  # 多次随机初始化，取
 ```
 
 **目标距离的构造规则**：
-- 序列相邻残基（$|i-j|=1$）：固定目标距离 3.8Å（共价键长），权重最高
+- 序列相邻残基（$|i-j|=1$）：固定目标距离 3.8Å（相邻 Cα 的典型间距，不是直接的 Cα–Cα 共价键长），权重最高
 - 序列近邻（$|i-j|=2$）：目标距离 5.5Å（典型二级结构间距），弱权重
 - 其他残基对：耦合分数越高，目标距离越接近 6~7Å（代表更可能接触），权重也随耦合分数增大
 
 **多次随机重启的意义**：梯度下降容易陷入局部最优（比如把链"缠绕"成一个错误的拓扑），
 多次从不同随机初始化开始、保留损失最低的一次，能在一定程度上缓解这个问题——这与真实
 结构预测流程中"生成多个候选结构、按置信度/能量挑选最佳"的思路是一致的。
+
+**最终候选必须重新评分。** 循环里的 `err` 来自更新前的 $X_t$，但最后保存的是 $X_{t+1}=X_t+v_{t+1}$。因此随机重启结束后重新计算 $d_{ij}(X_{\mathrm{final}})$ 和 $\mathcal L(X_{\mathrm{final}})$，再比较候选；否则选用的坐标与排名损失来自不同迭代。比较使用同一套目标距离和权重，只能表示对这个玩具目标的拟合程度，不能解释为真实蛋白结构的置信度。
 
 ### 第7步：Kabsch 对齐与 RMSD
 
@@ -219,6 +221,9 @@ def kabsch_align(mobile, target):
 2. **MSA 与接触图对比**（`contact_map_prediction.png`）：合成 MSA、真实接触图、预测耦合矩阵三者并排展示
 3. **精度柱状图**（`precision_at_l.png`）：precision@L / L/2 / L/5 三个 CASP 式指标
 4. **结构重建对比**（`structure_reconstruction.png`）：重建结构与真实骨架的 3D 对比（含 RMSD）
+
+> [!WARNING]
+> 2026-10-08：已修复重启候选的最终损失计算。本次未重新生成 `structure_reconstruction.png`，现有图中的候选结构及 RMSD 尚未与修复后的输出核对。
 
 ### 关键概念速查表
 

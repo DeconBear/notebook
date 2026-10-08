@@ -19,10 +19,29 @@ python demo.py
 
 ## 代码逐段详解
 
+> **输入形状修复**：三个核函数及 KRR/GP 的训练、预测入口统一采用下面的样本轴约定。本次只做静态核查，尚未运行样例或重新生成输出图片。
+
+### 先检查样本轴与特征轴
+
+- $(n,)$ 表示 $n$ 个一维样本，必须转换为 $(n,1)$。
+- $(n,d)$ 表示 $n$ 个 $d$ 维样本；一个 $d$ 维样本应显式写成 $(1,d)$。
+- 不能直接对一维样本序列调用 np.atleast_2d：它会得到 $(1,n)$，把所有样本误当成一个高维样本。
+
+源码中的 _as_samples 先转成浮点数组，再把一维输入 reshape(-1, 1)，二维输入保留原形状。两个核输入必须有相同特征数。例：$X_1=[0,1]$、$X_2=[0,2,3]$ 应得到 $(2,3)$ 的核矩阵；原写法却得到 $(1,2)$ 与 $(1,3)$，矩阵乘法无法对齐。若两边长度恰好相同，原写法更隐蔽地返回 $(1,1)$，可能被后续正则矩阵广播掩盖。
+
+修复后每个矩阵的形状可逐项核对：
+$K(X,X)\in\mathbb R^{N\times N}$，
+$K(X_*,X)\in\mathbb R^{N_*\times N}$，
+单目标 $y\in\mathbb R^N$ 时预测均值与方差都为 $(N_*,)$。
+
+
 ### 第1步：RBF 核函数的向量化实现
 
 ```python
 def rbf_kernel(X1, X2, lengthscale=1.0, variance=1.0):
+    X1, X2 = _as_samples(X1), _as_samples(X2)
+    if X1.shape[1] != X2.shape[1]:
+        raise ValueError('两个输入的特征维度必须相同。')
     sq_norm1 = np.sum(X1**2, axis=1).reshape(-1, 1)  # (n1, 1)
     sq_norm2 = np.sum(X2**2, axis=1).reshape(1, -1)  # (1, n2)
     sq_dist = sq_norm1 + sq_norm2 - 2 * X1 @ X2.T    # (n1, n2)
@@ -92,10 +111,10 @@ f_sample = L @ np.random.randn(len(X))
 
 ### 第5步：核岭回归 vs GP 对比
 
-两者的预测均值完全一致（数学上等价），但 GP 额外提供了：
+只有训练数据、核函数及其参数相同，且 KRR 的 $\lambda$ 等于 GP 的噪声方差 $\sigma_n^2$ 时，两者的预测均值才相同。当前演示分别使用 `alpha=0.01` 和 `noise_var=0.04`，所以两条均值曲线不必重合。GP 额外提供了：
 - **蓝色的置信带**：展示模型在不同位置的不确定性
 - **置信带的行为**：数据点附近窄（高置信），远离数据点时宽（模型承认"我不知道"）
-- **真实函数的包裹**：$\sin(x)$ 真值应在置信带内（约 95% 概率）
+- **区间含义**：图中 $\pm2\sigma$ 是模型下潜在函数 $f(x)$ 的逐点后验可信区间，约含 95% 的单点后验质量；不保证固定真函数整条都在带内。若预测新观测 $y_*$，还应加上观测噪声方差
 
 这是 GP 相对于"黑箱预测"模型的根本优势——它不仅告诉你预测值，还告诉你这个预测的可靠程度。
 
@@ -117,3 +136,8 @@ f_sample = L @ np.random.randn(len(X))
 clone 后打开（相对仓库根目录）：
 
 `docs/ml/advanced/kernel-gp/code/demo.py`
+
+## 输入与模型参考
+
+- [NumPy `atleast_2d`](https://numpy.org/doc/stable/reference/generated/numpy.atleast_2d.html)：一维输入变为行向量。
+- [GPML，第 2 章](https://gaussianprocess.org/gpml/chapters/RW2.pdf)：高斯过程回归的条件均值与方差。
