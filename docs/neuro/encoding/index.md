@@ -66,7 +66,7 @@ $$
 r(\theta)=5+40\cdot\max\bigl(0,\ \cos(\theta-\theta_{\mathrm{pref}})\bigr)\quad(\mathrm{Hz}).
 $$
 
-刺激 $\theta=40^\circ$。每个细胞在 $100\,\mathrm{ms}$ 窗口内抽 $\mathrm{Poisson}(r\times 0.1)$ 个尖峰。群体向量是尖峰数加权的单位方向和，估计角用 $\operatorname{atan2}$。稀疏对比：再另抽 $200$ 个细胞的速率（Gamma 形状 $2$、尺度 $8$，再截断到非负），短窗发放概率 $r\times 0.02$。
+刺激 $\theta=40^\circ$。每个细胞在 $100\,\mathrm{ms}$ 窗口内抽 $\mathrm{Poisson}(r\times 0.1)$ 个尖峰。群体向量是尖峰数加权的单位方向和，估计角用 $\operatorname{atan2}$。稀疏对比：再另抽 $200$ 个细胞的速率（Gamma 形状 $2$、尺度 $8$，再截断到非负），$20\,\mathrm{ms}$ 窗口内至少发放一次的概率为 $1-e^{-r\times0.02}$。这里只记录是否发放，不记录多次尖峰；$r\Delta t$ 仅在很小的窗口中是近似概率。
 
 ![余弦调谐与群体解码](./images/encoding_tuning_population.png)
 
