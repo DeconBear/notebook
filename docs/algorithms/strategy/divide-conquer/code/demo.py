@@ -32,7 +32,9 @@ def merge_sort(arr, left=0, right=None):
     """
     if right is None:
         right = len(arr) - 1
-    if left >= right:
+    if left > right:
+        return []  # 空区间是归并的单位元
+    if left == right:
         return [arr[left]]
 
     mid = (left + right) // 2
