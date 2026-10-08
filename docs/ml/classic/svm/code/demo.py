@@ -56,12 +56,14 @@ class LinearSVM:
       - 若 y_i*(w^T x_i + b) >= 1: 梯度不含此项 (在间隔外，不产生损失)
 
     参数:
-        C: float, 惩罚参数（越大越像硬间隔，等价于 lambda = 1/(2C)）
+        C: float, 正的惩罚参数；与 SVC 的求和损失约定一致，lambda = 1/(2Cn)
         learning_rate: float, 学习率
         n_epochs: int, 训练轮数
     """
 
     def __init__(self, C=1.0, learning_rate=0.01, n_epochs=200):
+        if not np.isfinite(C) or C <= 0:
+            raise ValueError('C 必须是有限正数。')
         self.C = C
         self.lr = learning_rate
         self.n_epochs = n_epochs
@@ -79,8 +81,9 @@ class LinearSVM:
         self.w = np.zeros(n_features)
         self.b = 0.0
 
-        # lambda = 1 / (2 * C)，使得 C 越大正则化越弱
-        lambda_ = 1.0 / (2.0 * self.C) if self.C > 1e-10 else 0.0
+        # 将 SVC 的 0.5||w||² + C*sum(hinge) 除以 C*n。
+        # 单样本 SGD 对应平均 hinge，因此 lambda 必须包含样本数 n。
+        lambda_ = 1.0 / (2.0 * self.C * n_samples)
 
         for epoch in range(self.n_epochs):
             # 随机打乱数据（SGD 的标准做法）
@@ -122,12 +125,12 @@ class LinearSVM:
 
     def get_support_vector_mask(self, X, y):
         """
-        识别支持向量: margin <= 1 + epsilon 且 margin >= 0.99
-        即位于决策边界的样本。
+        近似标出软间隔支持向量候选：包括间隔内及误分类点。
+        未求解对偶变量，margin <= 1 + 容差不是精确的 alpha > 0 判定。
         """
         y_svm = np.where(y <= 0, -1, 1)
         margins = y_svm * self.decision_function(X)
-        sv_mask = (margins >= 0.99) & (margins <= 1.01)
+        sv_mask = margins <= 1.01
         return sv_mask
 
 
@@ -287,10 +290,14 @@ def plot_kernel_comparison():
     fig, axes = plt.subplots(2, 3, figsize=(18, 11))
 
     for row, (name, (X, y)) in enumerate(datasets.items()):
-        X = StandardScaler().fit_transform(X)
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.3, random_state=42
         )
+        # 测试集不能参与均值、方差的拟合；绘图也使用同一个训练集变换。
+        scaler = StandardScaler().fit(X_train)
+        X_train = scaler.transform(X_train)
+        X_test = scaler.transform(X_test)
+        X = scaler.transform(X)
 
         for col, kernel in enumerate(kernels):
             ax = axes[row, col]
