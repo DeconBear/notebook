@@ -88,17 +88,32 @@ def so3_exp(w):
 
 ```python
 def so3_log(R):
+    """主值轴角；输入须为 SO(3)，分别处理小角和接近 π 的退化。"""
     c = np.clip((np.trace(R) - 1.0) * 0.5, -1.0, 1.0)
-    th = np.arccos(c)
-    if th < 1e-10:
-        return np.zeros(3)
-    n = np.array([R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]]) / (2 * np.sin(th))
-    return th * n
-```
+    vee = np.array([R[2, 1] - R[1, 2], R[0, 2] - R[2, 0],
+                    R[1, 0] - R[0, 1]])
+    sin_th = 0.5 * np.linalg.norm(vee)
+    th = np.arctan2(sin_th, c)
+    if th < 1e-7:
+        # θ/(2 sinθ) → 1/2；保留微小旋转，不能直接返回零。
+        return 0.5 * vee
+    if np.pi - th < 1e-6:
+        # 对称部分沿转轴的特征值为 1，另两个为 cosθ。
+        # 这避免了在 π 附近除以几乎为零的 sinθ。
+        _, axes = np.linalg.eigh(0.5 * (R + R.T))
+        axis = axes[:, -1]
+        if sin_th > 1e-12:
+            if np.dot(axis, vee) < 0.0:
+                axis = -axis
+        elif axis[np.argmax(np.abs(axis))] < 0.0:
+            axis = -axis  # 精确 π 时 ±轴等价，固定一种符号。
+        return th * axis
+    return (th / (2.0 * sin_th)) * vee```
 
 - **$\cos\theta=(\mathrm{tr}R-1)/2$**：$\mathrm{SO}(3)$ 的标准提取。`clip` 防止 `tr` 的浮点噪声让 `arccos` 吃到 $1.0000002$。
 - **轴 $n$ 来自反对称部分**：$(R-R^\top)$ 的独立三元除以 $2\sin\theta$。下标 `R[2,1]-R[1,2]` 对应 $x$ 分量。
-- **$\theta\approx 0$ 返回 0**：不尝试除 $\sin\theta$。$\theta\to\pi$ 时 $\sin\theta$ 也小，轴提取变噪——本 demo 的 $\omega$ 模约 $0.86\,\mathrm{rad}$，远离 $\pi$。
+- **小角度**：用 `0.5 * vee` 保留一阶旋转量，避免迹舍入为 3 时丢掉微小旋转。转角用 `atan2(sin_th, c)`，比仅用 `arccos` 更稳。
+- **接近 $\pi$**：从对称部分的最大特征值对应特征向量恢复转轴，不再除以趋零的 $\sin\theta$。精确 $\pi$ 时 $\pm n$ 等价；应检查 `exp(log(R)) ≈ R`，不要强求轴的符号唯一。
 
 主程序核验：
 
