@@ -214,7 +214,7 @@ class ModelConfig:
         为了保持报告和代码口径一致，这里采用一个简洁、可解释的估算方式：
 
         - 第一层 Ry 算 1 层
-        - 如果有线性 CNOT 链，则近似算 2 层
+        - 如果有顺序 CNOT 链，则算 NUM_QUBITS - 1 层（相邻门共享比特）
         - 如果有 Rz，再算 1 层
         """
 
@@ -223,7 +223,7 @@ class ModelConfig:
         depth = 1
 
         if self.use_encoding_entangle_chain:
-            depth += 2
+            depth += NUM_QUBITS - 1
 
         if self.use_two_axis_encoding:
             depth += 1
