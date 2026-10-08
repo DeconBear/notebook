@@ -42,6 +42,12 @@ $$
 P(N=k)=e^{-rT}\frac{(rT)^k}{k!}.
 $$
 
+对任意有限窗口，“至少一个”与“恰好一个”要分清：
+$
+P(N\ge1)=1-P(N=0)=1-e^{-rT},\qquad P(N=1)=rTe^{-rT}.
+$
+例如 $r=50\,\mathrm{Hz}$、$T=0.02\,\mathrm{s}$，期望计数为 $1$，但至少发放一次的概率约为 $0.632$，并不是 $1$。源码用 `-np.expm1(-r*T)` 计算这个概率，在 $rT$ 很小时也避免 `1-exp(...)` 的相消误差。
+
 取 $T=\Delta t$ 很小，且 $r\Delta t\ll 1$，则 $P(N\ge 2)$ 是 $(\Delta t)^2$ 量级，可忽略；$P(N=1)\approx r\Delta t$。这就是「每个小格独立掷一次硬币，正面概率 $r\Delta t$」的伯努利近似，也是仿真里按时间步进抽样尖峰的办法。
 
 非齐次：把 $r$ 换成 $r(t)$，窗口期望变成 $\int r(t)\,\mathrm{d}t$。PSTH 就是对很多次试验、把尖峰扫进时间箱再平均，用来估 $r(t)$。
@@ -71,6 +77,9 @@ $$
 ![余弦调谐与群体解码](./images/encoding_tuning_population.png)
 
 > 运行 `code/demo.py` 生成。左：若干偏好方向的调谐曲线；右：一次刺激下的群体向量估计。种子 `42`，终端打印估计误差（度）。
+
+> [!WARNING]
+> 2026-10-08：短窗采样已改用精确概率 $1-e^{-r\Delta t}$；下面的 `encoding_sparsity.png` 尚未重新生成，柱高不能当作修复后程序的验证结果。
 
 ![速率码 vs 尖峰稀疏](./images/encoding_sparsity.png)
 
