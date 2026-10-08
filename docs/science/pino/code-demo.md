@@ -28,7 +28,7 @@ f(x)   = sin(pi * x)
 # 求 -(k u')' = f, u(0)=u(1)=0
 ```
 
-`solve_variable_coeff_poisson(a)` 用二阶有限体积格式组装三对角矩阵并 `np.linalg.solve`，得到数值精确解。后面 PINO 的可微残差**使用同一套离散**，避免「训练残差」和「评估真值」说的不是同一种物理。
+`solve_variable_coeff_poisson(a)` 用二阶有限体积格式组装三对角矩阵并 `np.linalg.solve`，得到该离散方程的数值解（仍有空间离散误差，不是连续 PDE 的精确解）。后面 PINO 的可微残差**使用同一套离散**，避免「训练残差」和「评估真值」说的不是同一种物理。
 
 ### 第2步：PINN 基线（逐实例）
 
@@ -40,7 +40,14 @@ $$
 
 已知的 $k$ 与 $k'$ 从 `x_interior.detach()` 计算，作为固定系数复用；$u'$、$u''$ 仍每轮从可求导的 `x_interior` 重新构图。这样不会在第二轮反传时访问已释放的系数计算图。
 
-并惩罚边界。每个测试 $a$ 都从 `SEED=42` 重新初始化——公平，但慢。
+**为什么这里可以 detach？** 先用乘积法则展开
+$
+-\partial_x(k_a\partial_xu_\theta)-f
+=-k_a'(x)\partial_xu_\theta-k_a(x)\partial_{xx}u_\theta-f(x).
+$
+本例优化的是网络参数 $\theta$，$a$ 与配点 $x_i$ 固定，所以求 $\partial_\theta L$ 时 $k_a(x_i)$、$k_a'(x_i)$ 都是常数。detach 只断开系数计算的图，不断开网络的高阶导数图。如果改成直接对 $k_a(x)u_\theta'(x)$ 再求 $x$ 导数，或把 $a$ 当成逆问题的待优化参数，就不能照搬这个 detach。
+
+边界损失单独约束 $u(0)=u(1)=0$。每个测试 $a$ 都从 `SEED=42` 重新初始化；这控制了初始化差异，不保证不同范式的算力成本或最终精度相同。
 
 ### 第3步：共享的 FNO-lite 算子
 
@@ -70,6 +77,9 @@ loss = loss_data + (0.1 * loss_pde + 1.0 * loss_bc if use_physics else 0.0)
 | `pino_comparison.png` | 预测曲线 |
 | `pino_error_and_cost.png` | 误差 + 上线耗时 |
 | `pino_training_loss.png` | 算子训练损失 |
+
+> [!WARNING]
+> 2026-10-08：已修复 PINN 基线的跨轮计算图复用。本次为静态审查，尚未重跑训练或刷新上述结果图；现有图中的误差与耗时不能视为修复后代码的验证结果。
 
 ## 关键概念速查表
 
