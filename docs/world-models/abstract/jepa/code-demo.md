@@ -10,6 +10,9 @@ title: "wm05 JEPA — demo.py"
 
 <a href="/notebook/code/world-models/abstract/jepa/demo.py" target="_blank" download>Download demo.py</a>
 
+> [!WARNING]
+> 静态审查后的图片状态：评估已改为独立测试图，`jepa_prediction_error_map.png` 尚未重新生成；新增测试抽样也影响后续随机序列，应一并刷新 `jepa_pendulum_frames.png`。 本次未执行脚本或验证新输出。
+
 ## 运行方式
 
 ```bash
