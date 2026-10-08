@@ -78,8 +78,8 @@ def stone_merge(stones):
     dp[i][j] = min_{i<=k<j} (dp[i][k] + dp[k+1][j]) + sum(stones[i:j+1])
     """
     n = len(stones)
-    if n == 1:
-        return 0
+    if n <= 1:
+        return 0, [[0] * n for _ in range(n)]
 
     # 前缀和，用于 O(1) 计算区间总和
     prefix = [0] * (n + 1)
