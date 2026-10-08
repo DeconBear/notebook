@@ -132,7 +132,7 @@ n=\frac{1}{2\sin\theta}\begin{pmatrix}R_{32}-R_{23}\\ R_{13}-R_{31}\\ R_{21}-R_{
 \quad \omega=\theta n.
 $$
 
-$\mathrm{tr}(R)=1+2\cos\theta$。$\theta\approx 0$ 时 `log` 返回 $0$。$\theta=\pi$ 时轴的符号有两点歧义（转 $180^\circ$ 与转 $-180^\circ$ 同一姿态），数值上要小心——demo 用的 $\omega$ 模长约 $0.86<\pi$，无此问题。
+$\mathrm{tr}(R)=1+2\cos\theta$。上式的除法只适用于 $0<\theta<\pi$。实现中，小角度用 $\tfrac12(R-R^\top)^\vee$ 保留一阶旋转量；接近 $\pi$ 时，从 $\tfrac12(R+R^\top)$ 的最大特征值对应特征向量恢复转轴。精确 $\theta=\pi$ 时轴的正负号等价，应验证 $\exp(\log R)\approx R$，而非要求旋转向量唯一。
 
 **四元数**（不展开实现）：单位四元数也表示 $\mathrm{SO}(3)$，插值（slerp）比欧拉干净，与 $\exp$ 是同一轴角的另一套坐标。IMU 滤波常用。
 
