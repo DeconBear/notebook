@@ -19,6 +19,8 @@ python demo.py
 
 ## 代码逐段详解
 
+> **复现提示**：已修正观测词表索引，旧 `ml11-04-pos-trellis.png` 的最后一个词可能错标为 `the`，正确应为 `mat`。图片尚未重新运行生成。
+
 ### 第1步：HMM 类与前向算法
 
 ```python
@@ -42,16 +44,19 @@ def forward(self, observations):
     for i in range(self.N):
         alphas[0, i] = self.pi[i] * self.B[i, observations[0]]
     c[0] = alphas[0].sum()
-    alphas[0] /= c[0]  # 缩放防止下溢
+    if c[0] > 0:
+        alphas[0] /= c[0]  # 缩放防止下溢
 
     # 递推: α_t(j) = [Σ_i α_{t-1}(i) · A[i, j]] · B[j, x_t]
     for t in range(1, T):
         for j in range(self.N):
             alphas[t, j] = np.dot(alphas[t-1, :], self.A[:, j]) * self.B[j, observations[t]]
         c[t] = alphas[t].sum()
-        alphas[t] /= c[t]
+        if c[t] > 0:
+            alphas[t] /= c[t]
 
-    log_prob = np.sum(np.log(c + 1e-300))
+    with np.errstate(divide='ignore'):
+        log_prob = np.sum(np.log(c))  # 零概率对应 -inf
 ```
 
 **为什么需要缩放（Scaling）？** 当序列长度 $T$ 较大时，$\alpha_t(i)$ 的值会急剧变小（每个因子 $\le 1$，连乘 $T$ 次）。不加缩放的 $\alpha_T$ 可能下溢到 0。缩放的技巧是每步除以 $c_t = \sum_i \alpha_t(i)$，使得每步的 $\tilde{\alpha}_t$ 之和为 1。观测概率的对数可以通过缩放因子恢复：$\log P(X | \lambda) = \sum_{t=1}^T \log c_t$。
@@ -62,14 +67,16 @@ def forward(self, observations):
 
 ```python
 def viterbi(self, observations):
-    # 使用对数空间防止下溢
-    deltas[0, i] = np.log(self.pi[i] + eps) + np.log(self.B[i, o1] + eps)
+    # 零概率保留为 -inf，不给不可能的路径添加伪概率
+    with np.errstate(divide='ignore'):
+        log_pi, log_A, log_B = np.log(self.pi), np.log(self.A), np.log(self.B)
+    deltas[0, i] = log_pi[i] + log_B[i, o1]
 
     for t in range(1, T):
         for j in range(self.N):
-            candidates = deltas[t-1, :] + np.log(self.A[:, j] + eps)
+            candidates = deltas[t-1, :] + log_A[:, j]
             best_i = np.argmax(candidates)
-            deltas[t, j] = candidates[best_i] + np.log(self.B[j, ot] + eps)
+            deltas[t, j] = candidates[best_i] + log_B[j, ot]
             psi[t, j] = best_i  # 回溯指针
 ```
 
@@ -88,7 +95,7 @@ for t in range(T-2, -1, -1):
 ### 第3步：POS 标注格子图可视化
 
 格子的 x 轴是时间（观测序列），y 轴是隐藏状态。两个热度图对比了：
-- **左图（Forward $\alpha$）**：展示了在每个时刻处于每个状态的概率（边际化所有路径后）
+- **左图（缩放后的 Forward $\alpha$）**：展示 $P(Z_t\mid X_{1:t})$，即给定截至当前观测的过滤概率；它不是利用完整序列的平滑后验
 - **右图（Viterbi $\delta$ + 路径）**：展示了最优路径的构建过程——蓝色箭头连接最优序列
 
 ### 第4步：马尔可夫链转移图
@@ -99,9 +106,9 @@ for t in range(T-2, -1, -1):
 
 对比两种极端的转移矩阵：
 - **平滑转移**：高自转移概率（0.7），状态倾向保持稳定
-- **尖峰转移**：强制循环结构（S1→S2→S3→S1），状态快速切换
+- **尖峰转移**：偏好循环结构（S1→S2→S3→S1），其他转移仍有非零概率
 
-Viterbi 解码出的路径反映了转移矩阵的结构——HMM 不可能解码出不遵守转移规律的路径。
+Viterbi 路径同时受转移概率与发射概率影响；低概率转移仍可能被选中，只有概率严格为零的路径不可能被选中。若整个观测序列概率为零，演示代码明确报错，不返回虚假的“最佳路径”。
 
 ## 关键概念速查表
 
