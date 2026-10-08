@@ -72,7 +72,7 @@ w = np.linalg.solve(a, xb.T @ yb)
 - **岭回归** $X^\top X+\lambda I$：$\lambda=10^{-2}$ 防止 $X^\top X$ 接近奇异时 `solve` 炸掉。`np.linalg.solve` 比先求逆再乘更稳。
 - **`resid.var`**：各维残差方差，当 **aleatoric** 噪声，`predict_step` 里再采样。`maximum(..., 1e-4)` 防止方差估成 0。
 
-**语法 `list[t[0] for t in transitions]`**：列表推导。`np.stack` 把 list of arrays 叠成二维。
+**语法 `[t[0] for t in transitions]`**：列表推导。`np.stack` 把 list of arrays 叠成二维。
 
 ---
 
@@ -106,7 +106,7 @@ std = 0.7 * elite.std(axis=0) + 0.3 * std + 0.05
 
 **语法 `np.argsort(scores)[-N_ELITE:]`**：升序索引的末尾 = 最大。`seqs[那些行]` 高级索引。
 
-`cem_plan` 里 `seqs = mu + std * noise`，`noise` 形状 `(N_SAMPLE, HORIZON)`：**广播**后每条候选是一整段未来加速度。
+`cem_plan` 里 `seqs = np.clip(mu + std * noise, -4.0, 4.0)`，`noise` 形状 `(N_SAMPLE, HORIZON)`：**广播**后每条候选是一整段未来加速度。评分前限制到执行器同样的 $[-4,4]$，避免计划依赖执行时会被裁掉的动作。
 
 MPC 只执行 `mu[0]`（第一拍），下一步重新规划。这就是「开环计划、闭环执行」：模型错了，下一步还能改。
 
