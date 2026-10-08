@@ -134,6 +134,28 @@ $$
 
 $\mathrm{tr}(R)=1+2\cos\theta$。上式的除法只适用于 $0<\theta<\pi$。实现中，小角度用 $\tfrac12(R-R^\top)^\vee$ 保留一阶旋转量；接近 $\pi$ 时，从 $\tfrac12(R+R^\top)$ 的最大特征值对应特征向量恢复转轴。精确 $\theta=\pi$ 时轴的正负号等价，应验证 $\exp(\log R)\approx R$，而非要求旋转向量唯一。
 
+
+::: details 数值分支从哪里来：小角度与半周旋转
+
+设单位转轴为 $n$，$K=\widehat n$。Rodrigues 给出
+$
+R-R^\top=2\sin\theta\,K,\qquad
+S=\frac{R+R^\top}{2}
+=\cos\theta\,I+(1-\cos\theta)nn^\top.
+$
+第一式说明代码的 `vee` 是 $2\sin\theta\,n$，所以 $\theta\to0$ 时 $\omega\approx\mathrm{vee}/2$；返回零会丢掉真实的小转角。第二式说明 $Sn=n$，而垂直于 $n$ 的方向具有特征值 $\cos\theta$。在 $\theta\approx\pi$ 时，取 $S$ 的最大特征值对应特征向量就能稳定恢复轴，避免除以几乎为零的 $\sin\theta$。
+
+主值角在 $[0,\pi]$ 内，因此可用
+$
+\theta=\operatorname{atan2}\!\left(\frac{\|\mathrm{vee}\|}{2},
+\frac{\operatorname{tr}R-1}{2}\right).
+$
+接近但未到 $\pi$ 时，用反对称部分确定轴号；精确 $\pi$ 时两个轴号表示同一姿态。可用 $R=I$、微小单轴旋转及 $R=\operatorname{diag}(1,-1,-1)$ 检查不同分支，最后一例应还原绕 $x$ 轴半周的矩阵，而不是单位阵。
+
+**适用前提**：输入已是合法旋转矩阵。这段实现没有把任意噪声矩阵投影到 $\mathrm{SO}(3)$；`clip` 也不等价于修复非正交输入。以上是代数与源码检查，本轮未执行数值回归测试。
+
+:::
+
 **四元数**（不展开实现）：单位四元数也表示 $\mathrm{SO}(3)$，插值（slerp）比欧拉干净，与 $\exp$ 是同一轴角的另一套坐标。IMU 滤波常用。
 
 ---
