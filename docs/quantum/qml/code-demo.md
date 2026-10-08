@@ -80,7 +80,7 @@ except ImportError:
     return False
 ```
 
-装上之后才 `from qml_core import QuantumImageClassifier, get_default_spec, load_test_dataset`，取 8 个测试样本 `QTensor(x_test[:8])` 做一次 `model(xb)`，打印 `shape`。**没有** `loss.backward()`。`os.chdir(_SCRIPT_DIR)` 是为了让 `qml_core` 找到相对数据路径。
+装上之后才 `from qml_core import QuantumImageClassifier, get_default_spec, load_test_dataset`，取 8 个测试样本 `QTensor(x_test[:8])` 做一次 `model(xb)`，打印 `shape`。**没有** `loss.backward()`。`load_test_dataset(Path(_SCRIPT_DIR))` 显式传入脚本目录的 `Path`，供加载器用 `/` 拼接数据路径；无需改变进程工作目录。
 
 不要把冒烟当成训练曲线。
 

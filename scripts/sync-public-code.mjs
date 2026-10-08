@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { DOCS_DIR, REPO_ROOT, walkDocs } from './lib/docs-tree.mjs'
+import { DOCS_DIR, REPO_ROOT, walkDocs, loadGone } from './lib/docs-tree.mjs'
 
 function copyFile(src, dest) {
   fs.mkdirSync(path.dirname(dest), { recursive: true })
@@ -57,6 +57,23 @@ for (const f of files) {
     copyFile(f.abs, path.join(publicCode, slug, name))
     copied++
   }
+}
+
+// GitHub Pages 无法通过 .py.html 重定向原始 .py 下载请求。
+// 为已迁移且不再属于 legacyPaths 的下载 URL 复制当前源文件。
+const sourceByDownload = new Map(files.map((f) => [`/code/${f.relPath}`, f.abs]))
+for (const { from, to } of loadGone(DOCS_DIR)) {
+  if (typeof from !== 'string' || typeof to !== 'string') continue
+  if (!from.startsWith('/code/') || !to.startsWith('/code/')) continue
+  const src = sourceByDownload.get(to)
+  if (!src) throw new Error(`下载别名目标没有对应源文件: ${from} -> ${to}`)
+  const dest = path.resolve(publicCode, from.slice('/code/'.length))
+  const relative = path.relative(publicCode, dest)
+  if (relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) {
+    throw new Error(`下载别名超出 public/code: ${from}`)
+  }
+  copyFile(src, dest)
+  copied++
 }
 
 console.log(`sync-public-code: wrote ${copied} files under public/code/`)

@@ -9,6 +9,7 @@ VQNet 核心与数据结构收编自独立示例工程 qml-mnist-classify（MIT�
 """
 import os
 import sys
+from pathlib import Path
 import numpy as np
 import matplotlib
 matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'DejaVu Sans']
@@ -96,13 +97,12 @@ def try_vqnet_smoke():
         print('-' * 60)
         return False
     sys.path.insert(0, _SCRIPT_DIR)
-    os.chdir(_SCRIPT_DIR)
     from qml_core import QuantumImageClassifier, get_default_spec, load_test_dataset
     from pyvqnet import QTensor
 
     spec = get_default_spec()
     model = QuantumImageClassifier(spec.model)
-    x_test, y_test = load_test_dataset(_SCRIPT_DIR)
+    x_test, y_test = load_test_dataset(Path(_SCRIPT_DIR))
     xb = QTensor(x_test[:8])
     logits = model(xb)
     print('[VQNet] 冒烟通过：8 个测试样本前向输出形状', getattr(logits, 'shape', type(logits)))

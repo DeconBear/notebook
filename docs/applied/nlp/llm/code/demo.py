@@ -295,7 +295,8 @@ def dpo_loss(
         pi_logps_rejected: log π_θ(y_l | x), 策略模型下较差回答的对数概率
         ref_logps_chosen: log π_ref(y_w | x), 参考模型下偏好回答的对数概率
         ref_logps_rejected: log π_ref(y_l | x), 参考模型下较差回答的对数概率
-        beta: KL 惩罚系数，越大越鼓励模型偏离参考模型（但也越容易过拟合）
+        beta: 对应原始 KL 正则化目标的系数；越大通常越约束偏离参考策略。
+              它同时缩放 DPO 分类 logits，不能把固定参数下的损失变化直接当成策略偏离量。
     返回：
         loss: DPO 损失值
     """

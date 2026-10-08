@@ -45,18 +45,20 @@ Alice 手里的 $|\psi\rangle$ 在测量后被毁掉——不可克隆在这里�
 
 ![传态保真度](./images/teleport_fidelity.png)
 
+> **结果图待更新**：本次修正了 `code/demo.py` 中未知态与 Bell 对的张量积顺序；此处保留的图片尚未用修正后的代码重新生成，不能作为修复后的数值验证。请重新运行脚本，并检查各输入态与测量分支的保真度。
+
 demo：Haar 随机单比特纯态 $40$ 次，种子 `42`。无噪声模拟下平均保真度应贴着 $1$（终端打印 `平均传态保真度`）。纵轴从 $0.7$ 起，是为了让偶发数值抖动看得见，不是说理论只有 $0.7$。
 
 ::: details 逐步推导：Bell 测量之后，Bob 用 $X$/$Z$ 怎样收回未知态（点击展开）
 
-三比特：第 $0$ 位是未知 $|\psi\rangle=\alpha|0\rangle+\beta|1\rangle$，第 $1$、$2$ 位是 $|\Phi^+\rangle$。初态
+下面公式按 $|q_0q_1q_2\rangle$ 写张量因子；代码数组则按小端 $|q_2q_1q_0\rangle$ 排列，两者需区分。三比特：第 $0$ 位是未知 $|\psi\rangle=\alpha|0\rangle+\beta|1\rangle$，第 $1$、$2$ 位是 $|\Phi^+\rangle$。初态
 
 $$
 |\psi\rangle\otimes|\Phi^+\rangle
 =\frac{1}{\sqrt{2}}\bigl(\alpha|0\rangle(|00\rangle+|11\rangle)+\beta|1\rangle(|00\rangle+|11\rangle)\bigr).
 $$
 
-Alice 对 $(0,1)$ 做 CNOT 再对 $0$ 做 $H$，再测计算基得到 $m_0,m_1$（demo 的小端约定：outcome 的 bit0、bit1）。四个结果各概率 $1/4$，Bob 的条件态分别是 $|\psi\rangle$、$X|\psi\rangle$、$Z|\psi\rangle$、$ZX|\psi\rangle$（相差一个全局相位）。因此修正规则：
+Alice 对 $(0,1)$ 做 CNOT 再对 $0$ 做 $H$，再测计算基得到 $m_0,m_1$（demo 的小端约定：outcome 的 bit0、bit1）。按 $(m_0,m_1)=00,01,10,11$ 排列，四个结果各概率 $1/4$，Bob 的条件态分别是 $|\psi\rangle$、$X|\psi\rangle$、$Z|\psi\rangle$、$ZX|\psi\rangle$（相差一个全局相位）。因此修正规则：
 
 - $m_1=1$ 则乘 $X$；
 - $m_0=1$ 则乘 $Z$。
@@ -110,7 +112,7 @@ $$
 \mathrm{QBER}\approx \tfrac12\cdot 0+\tfrac12\cdot\tfrac12=\tfrac14.
 $$
 
-demo 里两段 50% 翻转（Eve vs Alice，Bob vs Eve）就是在模拟这两层。真实光纤还有暗计数和校准误差，无 Eve 时 QBER 也不是精确 $0$，安全证明要给一个阈值（常见教学数是 $11\%$ 量级的 BB84 渐近限）——超过就怀疑有人听。不可克隆保证 Eve 没有「两全」策略：她不能既完美测未知偏振又把原件无损转给 Bob。
+demo 里两段 50% 翻转（Eve vs Alice，Bob vs Eve）就是在模拟这两层。真实光纤还有暗计数和校准误差，无 Eve 时 QBER 也不是精确 $0$，安全证明要给一个阈值（常见教学数是 $11\%$ 量级的 BB84 渐近限）；超过适用阈值应中止密钥生成，不能仅凭误码率断言存在窃听，器件噪声同样会升高误码。不可克隆保证 Eve 没有「两全」策略：她不能既完美测未知偏振又把原件无损转给 Bob。
 
 :::
 

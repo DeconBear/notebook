@@ -142,30 +142,30 @@ def topological_sort_kahn(graph):
 
 
 def topological_sort_dfs(graph):
-    """DFS 版拓扑排序 —— 按完成时间逆序
+    """DFS 版拓扑排序；遇到有向环时和 Kahn 版本一样返回 None。
 
-    后序遍历的逆序即为拓扑序
+    灰色表示当前递归路径。指向灰色节点的边构成环；
+    仅用 visited 无法区分回边与指向已完成节点的合法边。
     """
-    visited = set()
+    color = [0] * graph.V  # 0=未访问，1=灰色，2=已完成
     result = []
 
     def _dfs(v):
-        visited.add(v)
+        color[v] = 1
         for neighbor in graph.adj_list[v]:
-            if neighbor not in visited:
-                _dfs(neighbor)
-        result.append(v)  # 后序：所有邻居处理完后才加入
+            if color[neighbor] == 1:
+                return False
+            if color[neighbor] == 0 and not _dfs(neighbor):
+                return False
+        color[v] = 2
+        result.append(v)
+        return True
 
     for v in range(graph.V):
-        if v not in visited:
-            _dfs(v)
+        if color[v] == 0 and not _dfs(v):
+            return None
+    return result[::-1]
 
-    return result[::-1]  # 逆序 = 拓扑序
-
-
-# ============================================================================
-# 第四部分：环检测
-# ============================================================================
 
 def has_cycle_undirected(graph):
     """无向图环检测 —— DFS 检测回边

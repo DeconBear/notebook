@@ -270,21 +270,22 @@ class AVLTree:
         # 2. 更新高度
         self._update_height(node)
 
-        # 3. 检查平衡并旋转
+        # 3. 用子树平衡因子分类；重复键也必须触发旋转。
+        # 旋转保持中序非降序，不保证相等键始终只在右侧。
         balance = self._balance_factor(node)
 
         # LL 情况
-        if balance > 1 and val < node.left.val:
+        if balance > 1 and self._balance_factor(node.left) >= 0:
             return self._rotate_right(node)
         # RR 情况
-        if balance < -1 and val > node.right.val:
+        if balance < -1 and self._balance_factor(node.right) <= 0:
             return self._rotate_left(node)
         # LR 情况
-        if balance > 1 and val > node.left.val:
+        if balance > 1 and self._balance_factor(node.left) < 0:
             node.left = self._rotate_left(node.left)
             return self._rotate_right(node)
         # RL 情况
-        if balance < -1 and val < node.right.val:
+        if balance < -1 and self._balance_factor(node.right) > 0:
             node.right = self._rotate_right(node.right)
             return self._rotate_left(node)
 
@@ -327,7 +328,7 @@ def build_huffman_tree(freq_dict):
         merged.right = right
         heapq.heappush(heap, merged)
 
-    return heap[0]
+    return heap[0] if heap else None
 
 
 def generate_huffman_codes(root):
@@ -338,7 +339,7 @@ def generate_huffman_codes(root):
         if not node:
             return
         if node.char is not None:
-            codes[node.char] = code
+            codes[node.char] = code or "0"  # 单字符也占一位，保留重复次数
             return
         dfs(node.left, code + '0')
         dfs(node.right, code + '1')

@@ -21,8 +21,7 @@ python demo.py
 ### 生成图表
 
 #### 图表 1: CLIP 嵌入空间 PCA 投影
-![embedding_space_pca](./images/embedding_space_pca.png)
-**说明了什么：** 将 CLIP 的 512 维图像和文本嵌入向量通过 PCA 降至 2D 后可视化，不同颜色区分图像点和文本类别点。语义上相近的图文在共享空间中距离更近，展示了 CLIP 通过对比学习实现的跨模态对齐能力。
+> **结果勘误**：现存 `embedding_space_pca.png` 中四类图像点完全重叠，不能证明图文语义对齐。仓库四张样本图实际上是同一纯灰占位图，与这一异常一致；该旧图暂不展示。请先提供并核验真实样本，再重新运行。PCA 投影也不保证保留所有高维距离关系。
 
 #### 图片资源: 概念图解
 - `22-01-clip-architecture.png` -- CLIP 双编码器架构（图像编码器 ViT + 文本编码器 Transformer）与对比学习训练过程
@@ -31,7 +30,7 @@ python demo.py
 - `22-04-multimodal-embedding-space.png` -- 多模态嵌入空间概念图：图文在统一语义空间中对齐的示意
 
 #### 测试图像
-`images/samples/` 目录包含 4 张用于零样本分类测试的示例图片：golden_retriever.jpg, orange_cat.jpg, pizza.jpg, red_car.jpg
+`images/samples/` 下的 golden_retriever.jpg、orange_cat.jpg、pizza.jpg、red_car.jpg 当前均为同一张 224×224 纯灰占位图，并非文件名所描述的真实物体。代码会保留并跳过这些文件，不能将其分类或检索结果作为演示结论。替换样本时还应核对物体类别、颜色、来源与复用许可。
 
 ## 代码结构
 - `check_environment()` -- 检测 PyTorch/transformers 可用性及设备类型（CUDA/MPS/CPU）

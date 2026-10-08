@@ -50,7 +50,8 @@ def main():
     print('保存', out)
 
     r = np.clip(np.random.gamma(2.0, 8.0, size=200), 0, None)
-    spike_win = (np.random.rand(200) < r * 0.02).astype(float)
+    p_spike = -np.expm1(-r * 0.02)  # 泊松窗口内至少一次：1-exp(-r Δt)
+    spike_win = (np.random.rand(200) < p_spike).astype(float)
     fig2, ax = plt.subplots(figsize=(7, 3.4))
     ax.bar([0, 1], [np.mean(r < 0.05), 1.0 - np.mean(spike_win > 0)],
            color=['#5dade2', '#1a5276'], width=0.5)

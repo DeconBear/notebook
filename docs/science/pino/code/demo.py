@@ -179,12 +179,15 @@ def train_pinn_for_a(a: float, n_epochs: int = 1200, lr: float = 1e-2):
     x_bc = torch.tensor([[0.0], [1.0]], dtype=torch.float32)
     f_interior = torch.tensor(F_FIXED[1:-1], dtype=torch.float32).view(-1, 1)
 
-    k_val = 1.0 + a * torch.sin(np.pi * x_interior)            # k_a(x)
-    k_prime = a * np.pi * torch.cos(np.pi * x_interior)        # k_a'(x)
+    # k 与 k' 已知且固定；残差已显式展开，不能跨 epoch 复用它们的 autograd 图。
+    x_fixed = x_interior.detach()
+    k_val = 1.0 + a * torch.sin(np.pi * x_fixed)               # k_a(x)
+    k_prime = a * np.pi * torch.cos(np.pi * x_fixed)           # k_a'(x)
 
     t0 = time.time()
     for epoch in range(n_epochs):
         optimizer.zero_grad()
+        x_interior.grad = None  # 配点不是待优化参数，不累计它的梯度。
 
         u = model(x_interior)
         # 自动微分求一阶、二阶导数：u' 和 u''

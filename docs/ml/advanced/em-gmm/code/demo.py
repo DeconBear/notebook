@@ -55,7 +55,7 @@ class GMM:
         self.n_iter_ = 0
 
     def _initialize(self, X):
-        """用 K-Means++ 思想初始化参数"""
+        """随机选择数据点初始化均值（不是 K-Means++ 的距离加权抽样）。"""
         rng = np.random.RandomState(self.random_state)
         n, d = X.shape
 
@@ -64,7 +64,7 @@ class GMM:
         self.means_ = X[indices].copy()  # (K, d)
 
         # 协方差初始化为数据协方差
-        data_cov = np.cov(X.T)  # (d, d)
+        data_cov = np.atleast_2d(np.cov(X.T)) + self.reg_covar * np.eye(d)  # (d, d)，初始协方差也需正则化
         if self.covariance_type == 'full':
             self.covariances_ = np.array([data_cov.copy() for _ in range(self.n_components)])
         elif self.covariance_type == 'diag':
@@ -123,7 +123,10 @@ class GMM:
     def _logsumexp(self, x, axis=1):
         """数值稳定的 log-sum-exp 计算"""
         x_max = np.max(x, axis=axis, keepdims=True)
-        return np.squeeze(x_max + np.log(np.sum(np.exp(x - x_max), axis=axis)))
+        return np.squeeze(
+            x_max + np.log(np.sum(np.exp(x - x_max), axis=axis, keepdims=True)),
+            axis=axis,
+        )
 
     def _m_step(self, X, resp):
         """
@@ -140,7 +143,7 @@ class GMM:
         # 防止除零
 
         # 更新权重（混合系数）
-        self.weights_ = Nk / n  # (K,)
+        self.weights_ = Nk / Nk.sum()  # (K,)，补入稳定项后仍保持权重和为 1
 
         # 更新均值
         self.means_ = (resp.T @ X) / Nk[:, np.newaxis]  # (K, d)
@@ -164,6 +167,7 @@ class GMM:
     def fit(self, X):
         """执行 EM 算法"""
         self._initialize(X)
+        self.converged_ = False
         prev_log_likelihood = -np.inf
 
         for iteration in range(self.max_iter):
@@ -182,7 +186,7 @@ class GMM:
             self._m_step(X, resp)
 
         self.n_iter_ = iteration + 1
-        self.responsibilities_ = resp  # 保存最终的责任值
+        _, self.responsibilities_, _ = self._e_step(X)  # 与最终参数对应的责任值
         return self
 
     def predict_proba(self, X):
@@ -301,7 +305,7 @@ def plot_aic_bic(X, K_range=range(1, 8)):
         (axes[0], aic_scores, 'AIC', 'steelblue'),
         (axes[1], bic_scores, 'BIC', 'darkorange')
     ]:
-        ax.plot(list(K_range), scores, f'{color[0]}-', marker='o',
+        ax.plot(list(K_range), scores, linestyle='-', marker='o',
                 markersize=8, linewidth=2, color=color)
         best_k = K_range[np.argmin(scores)]
         ax.axvline(x=best_k, color='red', linestyle='--', linewidth=1.5, alpha=0.7)
@@ -330,10 +334,9 @@ def plot_em_convergence(X, n_components=3):
     log_likelihoods = []
 
     for iteration in range(30):
-        _, _, log_l = gmm._e_step(X)
+        _, resp, log_l = gmm._e_step(X)
         log_likelihoods.append(log_l)
-        gmm._m_step(X, gmm.responsibilities_ if hasattr(gmm, 'responsibilities_')
-                     else np.ones((X.shape[0], n_components)) / n_components)
+        gmm._m_step(X, resp)  # 必须使用本轮 E 步得到的责任值
 
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(range(len(log_likelihoods)), log_likelihoods, 'b-o', markersize=5, linewidth=2)

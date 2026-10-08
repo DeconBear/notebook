@@ -2,6 +2,10 @@
 title: "混合专家 MoE — demo.py"
 ---
 
+> [!WARNING]
+> 2026-10-08 静态审查：已修复路由器与辅助损失的 Softmax 雅可比、归一化及偏置梯度。已有图片和数值尚未按修复代码重新生成或运行验证，不能作为修复后结果。
+
+
 
 > [!WARNING]
 > 🧪 Beta公测版本提示：教程主体已完成，正在优化细节，欢迎大家提Issue反馈问题或建议。
@@ -53,7 +57,7 @@ for i, c in enumerate(centers):
     ys.append(np.full(n_per, i % 2))
 ```
 
-- **`i % 2`**：簇 0、2 → 类 0，簇 1、3 → 类 1。对角同类，单靠一个线性分类器吃力；MoE 可以让两个专家各管一块。
+- **`i % 2`**：簇 0、2 → 类 0，簇 1、3 → 类 1。这里是左右两侧分别同类，整体大致线性可分；本例用于观察门控与负载，不证明 MoE 优于线性分类器。
 - **`np.full(n_per, i % 2)`**：长度 `n_per`、值全相同的标签数组。
 - **`np.random.permutation(len(X))`**：打乱下标再切片。`astype(float)` 让标签能进 BCE 的 `(1-y)*log(1-p)`。
 
@@ -78,10 +82,11 @@ return e / e.sum(axis=axis, keepdims=True)
 - **`axis=-1`**：默认沿最后一维；对 `(B, n_experts)` 就是对专家维做。
 
 ```python
-return 1.0 / (1.0 + np.exp(-np.clip(x, -40, 40)))
+z = np.exp(-np.abs(x))
+return np.where(x >= 0, 1.0 / (1.0 + z), z / (1.0 + z))
 ```
 
-专家加权和是标量 logit，分类概率 $p=\sigma(\hat y)$。**`clip` 到 $\pm 40$**：挡住 `exp` 溢出，和 Softmax 减 max 是同一类数值卫生。
+专家加权和是标量 logit，分类概率 $p=\sigma(\hat y)$。指数只计算非正数，避免溢出，同时不用裁剪输入改变函数。
 
 ---
 
@@ -112,15 +117,14 @@ logits = X @ self.W_r + self.b_r
 probs = softmax(logits, axis=1)
 top_idx = np.argsort(probs, axis=1)[:, -TOP_K:]
 rows = np.arange(len(X))[:, None]
-top_p = probs[rows, top_idx]
-top_p = top_p / (top_p.sum(axis=1, keepdims=True) + 1e-9)
+top_p = softmax(logits[rows, top_idx], axis=1)
 ```
 
 - **`X @ W_r`**：`(B,2)@(2,4)→(B,4)`。`@` 是矩阵乘；`*` 才是逐元素，这里不能混。
 - **`np.argsort(..., axis=1)`**：每行从小到大的**下标**。`[:, -2:]` 取最后两列 = 概率最大的两个专家。`:` 是「这一维全要」，`-2:` 是「从倒数第二个到末尾」。
 - **`np.arange(B)[:, None]`**：`(B,)` 加成 `(B,1)`，才能和 `top_idx` 的 `(B,2)` 一起做高级索引。
 - **`probs[rows, top_idx]`**：第 $b$ 行取出那两个专家的 $g$，得到 `(B,k)`。
-- **再除以和**：丢掉的专家不参与加权。`+1e-9` 防止除零。
+- **对入选 logits 做 Softmax**：等价于只取入选概率后除以它们的和。分母严格为正，不需要额外 epsilon；权重和保持为 1。
 
 未选中的专家本步不进 $\hat y$。实现上 `expert_out` 仍一次算出全部 4 列再切片——batch 很小，不是生产级稀疏内核。
 
@@ -168,53 +172,51 @@ return float(self.n * np.sum(f * P))
 
 ---
 
-### 第8步：`train_step` — BCE、专家梯度、路由器直通
+### 第8步：精确反传与 Top-k 的适用边界
+
+分类损失采用数值稳定的 BCE-with-logits：
+$$
+\ell(s,y)=\log(1+e^s)-ys,\qquad
+\frac{\partial L}{\partial s_b}=\frac{\sigma(s_b)-y_b}{B}.
+$$
 
 ```python
-p = sigmoid(y_hat)
-loss = float(-np.mean(y * np.log(p + eps) + (1 - y) * np.log(1 - p + eps)))
-aux = self.load_balance_loss(probs, top_idx) if use_aux else 0.0
-total = loss + (AUX_COEF * aux if use_aux else 0.0)
-dlogit = (p - y) / len(y)
+loss = float(np.mean(np.logaddexp(0.0, y_hat) - y * y_hat))
+dlogit = (sigmoid(y_hat) - y) / len(y)
 ```
 
-二元交叉熵。$p=\sigma(\hat y)$ 时 $\partial\ell/\partial\hat y=p-y$（再除 $B$ 做平均）。**`eps=1e-9`**：挡住 `log(0)`。`use_aux=False` 时 `aux` 记 0，分类梯度照常，只是不加压均衡。
-
-**专家：只更新被选中的行。**
+设某个样本入选专家集合为 $S$。在集合不变化的局部区域内，
+$$
+q_i=\frac{e^{z_i}}{\sum_{j\in S}e^{z_j}},\qquad
+s=\sum_{i\in S}q_iE_i.
+$$
+由 Softmax 雅可比 $\partial q_i/\partial z_j=q_i(\mathbf1_{i=j}-q_j)$ 可得
+$$
+\frac{\partial s}{\partial z_j}=q_j(E_j-s)\quad(j\in S).
+$$
+未入选专家的分类梯度为零。专家参数的梯度则是 $d_s q_j x$ 和 $d_s q_j$。这不是对排序做直通近似，而是对固定入选集合精确求导；第 k 与第 k+1 名交换的边界处不可导，不能跨越边界做普通有限差分验证。
 
 ```python
-e = top_idx[b, j]
-w = top_p[b, j]
-dW_e[e] += dlogit[b] * w * X[b]
-db_e[e] += dlogit[b] * w
+d_logits[b, e] = dlogit[b] * top_p[b, j] * (eo[b, e] - y_hat[b])
 ```
 
-$\hat y$ 对 $E_e$ 乘了门控 $w$，链式法则把 $d\hat y$ 乘 $w$ 再乘 $x$。没被选的 `e`，`dW_e[e]` 保持 0。
-
-**路由器：Top-k 离散、不可导。** 代码用直通近似——把「这个专家的输出 × 误差」当作对 $g_e$ 的信号：
-
-```python
-d_probs[b, e] += dlogit[b] * eo[b, e]
-d_logits = d_probs - (d_probs * probs).sum(axis=1, keepdims=True) * probs
-```
-
-若 $E_e$ 和误差同号，就希望提高 $g_e$。第二行是 Softmax 雅可比的**粗糙近似**（源码注释写明了）：精确式是 $g\odot(v-\mathbf{1}^\top(g\odot v))$，这里略去最外层乘 $g$，够推动路由，不当精确反传教材。
-
-有辅助损失时再推 $P$：
+辅助损失使用全量概率 $p=\mathrm{softmax}(z)$。令 $u_i=\alpha Nf_i/B$，离散频率 $f_i$ 在本次反传中视为常数，链式法则给出
+$$
+\frac{\partial(\alpha L_{\mathrm{aux}})}{\partial z_{bi}}
+=p_{bi}\left(u_i-\sum_jp_{bj}u_j\right).
+$$
+因此不能把 $u_i$ 直接加到 logits 的梯度上，也不能省去最外层的 $p_{bi}$。
 
 ```python
 dP = AUX_COEF * self.n * f / len(X)
-d_logits += dP
-```
-
-$\partial\mathcal{L}_{\mathrm{aux}}/\partial P_i\propto N f_i$，广播到每个样本的 logits。这是轻推均匀，不是把分类梯度关掉。
-
-```python
-self.W_e -= LR * dW_e
+d_logits += probs * (dP - (probs * dP).sum(axis=1, keepdims=True))
 self.W_r -= LR * (X.T @ d_logits)
+self.b_r -= LR * d_logits.sum(axis=0)
 ```
 
-手写 SGD。`X.T @ d_logits` 是 `(2,B)@(B,4)→(2,4)`。`b_r` 用 `d_logits.mean(axis=0)`：偏置对 batch 平均。
+偏置梯度对样本求和，因为 $d\_logits$ 已包含 $1/B$，再取均值会多除一次 B。
+
+**手算检查。** 两位专家的门控为 $(0.25,0.75)$，输出为 $(2,0)$，则 $s=0.5$，对两个 logits 的导数为 $(0.375,-0.375)$，和为零。这对应 Softmax 对共同平移不变的性质。辅助损失的每行梯度之和也应为零。以上是解析检查例，不是已运行的测试结果。
 
 ---
 
@@ -240,7 +242,7 @@ self.W_r -= LR * (X.T @ d_logits)
 | 辅助损失 | $N\sum f_i P_i$，防塌缩 | `load_balance_loss` |
 | BCE | $-[y\log p+(1-y)\log(1-p)]$ | `train_step` 的 `loss` |
 | 专家梯度 | 只回传到被选 $e$ | `dW_e[e] += dlogit * w * x` |
-| Softmax 反传 | 粗糙：$dz\approx dg-(\cdot)g$ | `d_logits = d_probs - ...` |
+| Softmax 反传 | $dz=p\odot(u-\sum p u)$ | 分类项对入选集合，辅助项对全量概率 |
 | `keepdims` / `[:, None]` | 广播对齐 | `softmax`、高级索引 |
 
 ## 源码位置

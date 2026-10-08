@@ -97,7 +97,7 @@ def importance_sampling_demo():
     重要性采样：从 N(5,1) 采样，用权重 p(x)/q(x) 修正。
     """
     N = 10000
-    true_prob = 1.0 - norm.cdf(5)  # 真实尾部概率 ≈ 2.87e-7
+    true_prob = norm.sf(5)  # 真实尾部概率 ≈ 2.87e-7
 
     # ---- 方法 1: 普通 MC ----
     samples_mc = np.random.randn(N)
@@ -149,11 +149,12 @@ def importance_sampling_demo():
     print(f'\n  真实尾部概率: {true_prob:.2e}')
     print(f'  普通 MC (N={N}): 命中 {sum(samples_mc > 5)} 次, 估计值={mc_estimates[-1]:.2e}')
     print(f'  重要性采样 (N={N}): 估计值={is_estimates[-1]:.2e}')
-    # 计算方差
-    mc_var = np.var(samples_mc > 5) / N
-    is_var = np.var(weights * (samples_is > 5)) / N
-    print(f'  MC 方差: {mc_var:.2e}')
-    print(f'  IS 方差: {is_var:.2e} (方差缩减比: {mc_var/is_var:.1f}x)')
+    # 普通 MC 是伯努利均值；零命中时经验方差为零，不代表没有误差。
+    # 本例已知真值，因此用解析方差作为比较基准。
+    mc_var = true_prob * (1.0 - true_prob) / N
+    is_var = np.var(weights * (samples_is > 5), ddof=1) / N
+    print(f'  MC 均值的理论方差: {mc_var:.2e}')
+    print(f'  IS 均值的估计方差: {is_var:.2e} (方差缩减比估计: {mc_var/is_var:.1f}x)')
 
     plt.tight_layout()
     path = os.path.join(_IMAGES_DIR, 'ml10-05-importance-sampling-comparison.png')
@@ -217,7 +218,7 @@ def metropolis_hastings(n_iter=5000, proposal_std=1.0, random_state=42):
 
         # 步骤 2：计算接受率（对称提议 q(x'|x)=q(x|x')，所以只比 p(x')/p(x)）
         log_alpha = log_p_proposal - log_p_current
-        alpha = min(1.0, np.exp(log_alpha))
+        alpha = np.exp(min(0.0, log_alpha))  # 先截断对数，避免 exp 上溢
 
         # 步骤 3：接受/拒绝
         if rng.rand() < alpha:
@@ -292,8 +293,8 @@ def plot_mh_results(samples, accepted, n_burnin=1000):
     plt.close()
     print(f'[保存] {path}')
 
-    print(f'  MH 接受率: {accepted.mean():.4f} (理想范围: 0.2-0.5)')
-    print(f'  有效样本数 (post-burn-in): {len(post_samples)}')
+    print(f'  MH 接受率: {accepted.mean():.4f} (不能单独用于判断收敛)')
+    print(f'  保留样本数 (post-burn-in，非 ESS): {len(post_samples)}')
 
 
 # ============================================================================
@@ -352,7 +353,7 @@ def plot_gibbs_results(samples, rho, n_burnin=500):
 
     # 右上：x1 的 trace plot（前 500 步）
     ax2 = axes[0, 1]
-    ax2.plot(range(min(500, n_iter)), samples[:500, 0], 'b-', linewidth=0.8)
+    ax2.plot(range(min(500, len(samples))), samples[:500, 0], 'b-', linewidth=0.8)
     ax2.axhline(y=0, color='gray', linestyle='--', linewidth=1)
     ax2.axvline(x=n_burnin, color='red', linestyle='--', linewidth=1.5, label=f'Burn-in={n_burnin}')
     ax2.set_xlabel('Iteration')
@@ -409,7 +410,8 @@ def plot_gibbs_results(samples, rho, n_burnin=500):
         corr = np.corrcoef(post[:-lag, 0], post[lag:, 0])[0, 1]
         acf_sum += corr
     ESS = n / (1 + 2 * acf_sum) if (1 + 2 * acf_sum) > 0 else n
-    print(f'  Gibbs: 估计 ESS(有效样本量) ≈ {ESS:.0f} / {n} (ρ={rho})')
+    print(f'  Gibbs: 单链截断 ACF 的粗略 ESS ≈ {ESS:.0f} / {n} (ρ={rho})')
+    print('  此 ESS 仅作教学演示；正式诊断需多链、稳健的 ACF 截断和 R-hat。')
 
 
 # ============================================================================
@@ -420,6 +422,8 @@ def main():
     print('=' * 60)
     print('ml10 蒙特卡洛方法 — 演示代码')
     print('=' * 60)
+
+    np.random.seed(42)  # 固定 π 与重要性采样的随机数，便于复现
 
     # 1. 蒙特卡洛估计 π
     print('\n[1/4] 蒙特卡洛估计 π...')

@@ -2,7 +2,7 @@
 """
 === LeWM 演示：两项损失 + 潜空间 CEM ===
 1) 二维质点：MSE + 高斯代理正则，CEM 追目标嵌入。
-2) 倒立摆火柴杆像素：随机投影 SIGReg + 潜空间 CEM 对准直立嵌入。
+2) 倒立摆：恒等状态编码 + CEM；随机投影矩统计仅作诊断，火柴杆仅作可视化。
 运行: python demo.py
 """
 import os
@@ -80,25 +80,28 @@ class LinearLeWM:
         pred_loss = float(np.mean(err ** 2))
         reg = sigreg_proxy(np.concatenate([z, nz_tgt], axis=0))
 
-        # pred 梯度
+        # 对实际报告的 mean(err**2) 求导；先算完全部梯度，再更新参数。
         x = np.concatenate([z, a], axis=-1)
-        self.Wp -= lr * (x.T @ err) / len(o)
-        self.bp -= lr * err.mean(axis=0)
+        dhat = 2.0 * err / err.size
+        gz = dhat @ self.Wp[:Z_DIM].T
 
-        # enc 梯度：通过 pred 反传到 z，再加上把 z/nz 拉向标准正态
-        # dL/dz ≈ err @ Wp_z.T ；正则对 z 的梯度 ≈ 2*mu/B 与对 std 的弱推
-        Wp_z = self.Wp[:Z_DIM]
-        gz = (err @ Wp_z.T) / len(o)
-        mu = z.mean(axis=0)
-        gz = gz + LAMBDA_REG * (2.0 * mu) / len(o)
-        self.We -= lr * (o.T @ gz)
-        self.be -= lr * gz.mean(axis=0)
+        # 均值/标准差代理正则作用于当前和目标嵌入两侧。
+        z_all = np.concatenate([z, nz_tgt], axis=0)
+        mu = z_all.mean(axis=0)
+        raw_std = z_all.std(axis=0)
+        std = raw_std + 1e-6
+        gstd = np.divide(z_all - mu, raw_std,
+                         out=np.zeros_like(z_all), where=raw_std > 0)
+        greg = 2.0 * (mu + (std - 1.0) * gstd) / z_all.size
+        gz = gz + LAMBDA_REG * greg[:len(o)]
+        gnz = LAMBDA_REG * greg[len(o):]
+        gWe = o.T @ gz + no.T @ gnz
+        gbe = gz.sum(axis=0) + gnz.sum(axis=0)
 
-        # 目标侧嵌入同样拉向零均值，避免编码器塌成常数
-        mu2 = nz_tgt.mean(axis=0)
-        gnz = np.broadcast_to(LAMBDA_REG * (2.0 * mu2) / len(o), nz_tgt.shape)
-        self.We -= lr * (no.T @ gnz)
-        self.be -= lr * gnz.mean(axis=0)
+        self.Wp -= lr * (x.T @ dhat)
+        self.bp -= lr * dhat.sum(axis=0)
+        self.We -= lr * gWe
+        self.be -= lr * gbe
 
         return pred_loss + LAMBDA_REG * reg, pred_loss, reg
 
@@ -122,7 +125,7 @@ def cem_plan(model, z0, zg):
     std = np.ones((HORIZON, 2)) * 1.5
     hist = []
     for _ in range(CEM_ITERS):
-        seqs = mu + std * np.random.randn(N_SAMPLE, HORIZON, 2)
+        seqs = np.clip(mu + std * np.random.randn(N_SAMPLE, HORIZON, 2), -3.0, 3.0)
         scores = []
         for s in seqs:
             z = z0.copy()
@@ -285,14 +288,26 @@ class CompactLeWM:
     def train_step(self, o, a, no, lr=0.08):
         z = self.encode(o)
         nz = self.encode(no)
-        hat = self.predict(z, a)
+        x = np.concatenate([z, a.reshape(-1, 1)], axis=-1)
+        raw = z + x @ self.Wp + self.bp
+        radius = np.linalg.norm(raw[:, :2], axis=1, keepdims=True)
+        denom = radius + 1e-8
+        hat = raw.copy()
+        hat[:, :2] /= denom
         err = hat - nz
         pred_loss = float(np.mean(err ** 2))
         z_all = np.concatenate([z, nz], axis=0)
-        reg = sigreg_projections(z_all)
-        x = np.concatenate([z, a.reshape(-1, 1)], axis=-1)
-        self.Wp -= lr * (x.T @ err) / len(o)
-        self.bp -= lr * err.mean(axis=0)
+        reg = sigreg_projections(z_all)  # 恒等编码无参数：此项仅监测数据矩
+        dhat = 2.0 * err / err.size
+        # 单位圆投影的链式法则，不能把归一化当成恒等映射。
+        unit = np.divide(raw[:, :2], radius,
+                         out=np.zeros_like(raw[:, :2]), where=radius > 0)
+        draw = dhat.copy()
+        draw[:, :2] = (dhat[:, :2] / denom
+                       - unit * np.sum(dhat[:, :2] * raw[:, :2], axis=1,
+                                       keepdims=True) / denom ** 2)
+        self.Wp -= lr * (x.T @ draw)
+        self.bp -= lr * draw.sum(axis=0)
         return pred_loss + LAMBDA_REG * reg, pred_loss, reg
 
 

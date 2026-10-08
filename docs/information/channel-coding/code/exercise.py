@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 === 信道编码练习 ===
-实现 syndrome_pos(s0,s1,s2)：三个校验合成 1-index 错误位置，全 0 表示无错。
+实现 syndrome_pos(s0,s1,s2)：在至多一位翻转的假设下，三个校验合成 1-index 错误位置，全 0 表示无错。
 运行: python exercise.py
 """
 

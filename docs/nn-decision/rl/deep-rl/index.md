@@ -5,6 +5,10 @@ legacyPaths:
   - /rl/deep-rl/
   - /s20_deep_rl/
 ---
+
+> [!WARNING]
+> 2026-10-08 静态审查：已修复 Gymnasium DQN 对时间上限截断的自举处理。已有图片和数值尚未按修复代码重新生成或运行验证，不能作为修复后结果。
+
 # s20 深度强化学习：DQN 与 Policy Gradient
 
 > [!WARNING]

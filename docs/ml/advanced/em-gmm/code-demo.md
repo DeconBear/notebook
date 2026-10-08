@@ -19,6 +19,8 @@ python demo.py
 
 ## 代码逐段详解
 
+> **复现提示**：已修正 log-sum-exp 的广播维度与 EM 收敛演示的责任值传递。已有 GMM、AIC/BIC 和收敛曲线图片尚未重新生成，不应作为修复后代码的运行结果。
+
 ### 第1步：GMM 的 E 步——责任计算
 
 ```python
@@ -49,14 +51,14 @@ $$
 \log\sum_k e^{a_k} = \max a + \log\sum_k e^{a_k - \max a}
 $$
 
-减去最大值后，指数的参数都 $\le 0$，结果 $\le 1$，不存在上溢风险。
+减去最大值后，指数的参数都 $\le 0$，结果 $\le 1$，不存在上溢风险。求和时也要使用 `keepdims=True`，使 `(n, 1)` 的最大值只与对应样本的和相加，最后用 `np.squeeze(..., axis=1)` 得到 `(n,)`；否则会广播成错误的 `(n, n)` 矩阵。
 
 ### 第2步：GMM 的 M 步——参数更新
 
 ```python
 def _m_step(self, X, resp):
     Nk = resp.sum(axis=0) + 1e-10                 # 每个成分的有效样本数
-    self.weights_ = Nk / n                         # π_k = N_k / N
+    self.weights_ = Nk / Nk.sum()                  # 稳定项加入后重新归一化
     self.means_ = (resp.T @ X) / Nk[:, np.newaxis]  # μ_k = 加权均值
     for k in range(K):
         diff = X - self.means_[k]
@@ -71,7 +73,7 @@ M 步的三个更新公式有着优雅的统计解释：
 - **均值** $\mu_k = \sum_i \gamma_{ik} x_i / N_k$：用责任作为权重的加权均值
 - **协方差** $\Sigma_k = \sum_i \gamma_{ik} (x_i - \mu_k)(x_i - \mu_k)^T / N_k$：用责任作为权重的加权协方差
 
-对比 K-Means：如果把责任替换为 0/1 硬分配，M 步公式就退化为简单的样本均值/协方差——这正是 K-Means 的更新规则。
+对比 K-Means：把责任替换为 0/1 硬分配后，均值更新就是簇内样本均值。K-Means 不学习各簇协方差；与 GMM 的严格联系还需要共享、各向同性的小方差等条件。
 
 ### 第3步：EM 收敛性
 
@@ -81,7 +83,7 @@ if iteration > 0 and abs(change) < self.tol:
     break
 ```
 
-EM 的一个精妙性质：**对数似然在每次迭代后单调不降**。这是数学保证的，不需要学习率调参。收敛曲线（`plot_em_convergence`）清晰展示了这一单调递增行为——前几步快速提升，随后进入缓慢的精细化调整期。
+标准 EM 在精确执行 E 步、M 步时保证观测对数似然单调不降。这里还加入了协方差正则项和浮点计算，不能把无正则 EM 的严格保证直接当成每次数值运行的验收结果。`plot_em_convergence` 每一轮都把当前 E 步返回的 `resp` 交给 M 步，随后重新计算似然。
 
 ### 第4步：GMM vs K-Means 对比
 

@@ -236,7 +236,10 @@ def gradient_inverse_design(model, u_target_t, a_init=2.0, n_steps=60, lr=0.15):
         loss.backward()
         optimizer.step()
         err_history.append(loss.item())
-    return a.item(), err_history[-1], n_steps, err_history
+    # 最后一次 optimizer.step() 后参数已改变，返回与最终 a 对应的误差。
+    with torch.no_grad():
+        final_err = torch.mean((model(a)[0] - u_target_t) ** 2).item()
+    return a.item(), final_err, n_steps, err_history
 
 
 # ============================================================================

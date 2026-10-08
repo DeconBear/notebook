@@ -51,9 +51,8 @@ def sigmoid(z: np.ndarray) -> np.ndarray:
     返回:
         np.ndarray, Sigmoid 输出，形状与 z 相同
     """
-    # np.clip 防止数值溢出：当 z 很大时 e^(-z) ≈ 0，z 很小时 e^(-z) ≈ inf
-    z_clipped = np.clip(z, -500, 500)  # 将 z 限制在 [-500, 500] 内
-    return 1.0 / (1.0 + np.exp(-z_clipped))  # 计算 Sigmoid 函数
+    # logaddexp 稳定计算 log(1 + exp(-z))，无需裁剪输入。
+    return np.exp(-np.logaddexp(0.0, -np.asarray(z, dtype=float)))
 
 
 def softmax(z: np.ndarray) -> np.ndarray:
@@ -152,7 +151,7 @@ class LogisticRegression:
 
         J = -(1/n) Σ [y_i log(ŷ_i) + (1 - y_i) log(1 - ŷ_i)]
 
-        为了防止 log(0)，对 ŷ 加一个极小值 eps。
+        直接在 logit 空间计算 softplus，避免概率舍入和裁剪造成损失饱和。
 
         参数:
             X: np.ndarray, 特征矩阵
@@ -161,16 +160,9 @@ class LogisticRegression:
         返回:
             float, 交叉熵损失
         """
-        y_pred = self._predict_proba(X)  # 预测概率
-        n = len(y)  # 样本数
-        eps = 1e-15  # 小常数，防止 log(0)
-        # 限制概率在 [eps, 1-eps] 之间以保证 log 的数值稳定
-        y_pred = np.clip(y_pred, eps, 1 - eps)
-        # 交叉熵公式
-        loss = -(1.0 / n) * np.sum(
-            y * np.log(y_pred) + (1 - y) * np.log(1 - y_pred)
-        )
-        return loss
+        z = X @ self.w + self.b
+        # y=0: softplus(z)；y=1: softplus(-z)。保持极端错误预测的真实损失。
+        return np.mean(np.logaddexp(0.0, (1.0 - 2.0 * y) * z))
 
     def _compute_gradients(self, X: np.ndarray, y: np.ndarray):
         """
@@ -323,15 +315,11 @@ class SoftmaxRegression:
         返回:
             float, 交叉熵损失
         """
-        proba = self._predict_proba(X)  # 预测概率矩阵
-        n = len(y)  # 样本数
-        eps = 1e-15  # 防止 log(0)
-        proba = np.clip(proba, eps, 1 - eps)  # 数值稳定
-
-        # 交叉熵：只取真实类别位置的对数概率
-        # proba[np.arange(n), y] 取出每个样本正确类别的预测概率
-        loss = -(1.0 / n) * np.sum(np.log(proba[np.arange(n), y]))
-        return loss
+        z = X @ self.W + self.b
+        z_stable = z - np.max(z, axis=1, keepdims=True)
+        log_normalizer = np.log(np.sum(np.exp(z_stable), axis=1))
+        # 先求 log-softmax 再取真类，避免先 softmax 下溢到 0 后被 clip 截平。
+        return np.mean(log_normalizer - z_stable[np.arange(len(y)), y])
 
     def _compute_gradients(self, X: np.ndarray, y: np.ndarray):
         """
@@ -467,7 +455,7 @@ def plot_decision_boundary(model, X, y, title='Logistic Regression Decision Boun
     fig, ax = plt.subplots(figsize=(9, 7))
 
     # 绘制概率热力图（蓝色=低概率，红色=高概率）
-    contour = ax.contourf(xx, yy, Z, levels=20, cmap='RdBu', alpha=0.6)
+    contour = ax.contourf(xx, yy, Z, levels=20, cmap='RdBu_r', alpha=0.6)
 
     # 绘制决策边界线（σ = 0.5 的等高线）
     ax.contour(xx, yy, Z, levels=[0.5], colors='green', linewidths=2.5,
