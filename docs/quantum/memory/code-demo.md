@@ -17,7 +17,7 @@ cd docs/quantum/memory/code
 python demo.py
 ```
 
-CPU、NumPy。两张图：`t1_t2_decay.png`（$T_1$ 布居 vs $T_2$ 相干）和 `write_store_read.png`（等待越久读出保真度越低）。玩具参数 `T1=1.0`、`T2=0.4`（任意时间单位），不是某实验室拟合。$T_2<T_1$：相位通常比能量掉得更快。
+CPU、NumPy。两张图：`t1_t2_decay.png`（$T_1$ 布居 vs $T_2$ 相干）和 `write_store_read.png`（等待越久读出保真度越低）。玩具参数 `T1=1.0`、`T2=0.4`（任意时间单位），不是某实验室拟合。本例 $T_2<T_1$；一般约束是 $T_2\le 2T_1$，并非总有 $T_2<T_1$。纯退相位时间 `TPHI=0.5`，满足 $1/T_2=1/(2T_1)+1/T_\varphi$。
 
 ## 代码逐段详解
 
@@ -41,28 +41,28 @@ def amp_damping(rho, t, t1=T1):
 
 - **$p=1-e^{-t/T_1}$**：$t=0$ 时 $p=0$，信道是恒等；$t\to\infty$ 时 $p\to 1$，所有布居落到 $|0\rangle$。
 - **`e0 @ rho @ e0.conj().T`**：每一支 Kraus 都是 $E\rho E^\dagger$。两支相加保证 CPTP（迹保持）。
-- 对 $\rho=|1\rangle\langle1|$，对角元 $\rho_{11}$ 应按 $e^{-t/T_1}$ 掉。这就是能量弛豫。振幅阻尼也会顺带削弱非对角（相干寿命不会长过 $2T_1$），但本图的 $T_2$ 曲线用的是下面的纯退相位，好对比两条钟。
+- 对 $\rho=|1\rangle\langle1|$，对角元 $\rho_{11}$ 应按 $e^{-t/T_1}$ 掉。这就是能量弛豫。振幅阻尼也会顺带削弱非对角（相干寿命不会长过 $2T_1$），本图的 $T_2$ 曲线是振幅阻尼与下面的纯退相位共同作用的结果。
 
 ---
 
-### 第2步：`dephase` — 只打非对角（$T_2$）
+### 第2步：`dephase` — 纯退相位（$T_\varphi$）
 
 $$
-\rho_{01}(t)=\rho_{01}(0)\,e^{-t/T_2},\quad
+\rho_{01}(t)=\rho_{01}(0)\,e^{-t/T_\varphi},\quad
 \rho_{10}=\rho_{01}^*
 $$
 
 ```python
-def dephase(rho, t, t2=T2):
+def dephase(rho, t, t_phi=TPHI):
     out = rho.copy()
-    out[0, 1] *= np.exp(-t / t2)
-    out[1, 0] *= np.exp(-t / t2)
+    out[0, 1] *= np.exp(-t / t_phi)
+    out[1, 0] *= np.exp(-t / t_phi)
     return out
 ```
 
 - **`.copy()`**：不要改调用者手里的 $\rho$。后面写-存-读会反复从 `rho0` 出发。
 - **语法 `out[0, 1]`**：第 0 行第 1 列，即 $\rho_{01}$。`*=` 乘衰减因子。对角不动：纯退相位不改变布居，只丢相对相位。
-- 对赤道态 $|+\rangle$，$|\rho_{01}|$ 从 $1/2$ 指数掉到 0。这比 $T_1$ 更快（`T2=0.4 < T1=1`）。
+- 对赤道态 $|+\rangle$，$|\rho_{01}|$ 从 $1/2$ 指数掉到 0。单独的纯退相位因子是 $e^{-t/T_\varphi}$；再乘振幅阻尼贡献的 $e^{-t/(2T_1)}$，才得到总相干衰减 $e^{-t/T_2}$。
 
 ---
 
@@ -93,7 +93,7 @@ rho1 = np.array([[0, 0], [0, 1]], dtype=complex)
 plus = np.array([1, 1], dtype=complex) / np.sqrt(2)
 rho_plus = np.outer(plus, plus.conj())
 pop1 = [np.real(amp_damping(rho1, t)[1, 1]) for t in times]
-coh = [np.abs(dephase(rho_plus, t)[0, 1]) for t in times]
+coh = [np.abs(dephase(amp_damping(rho_plus, t), t)[0, 1]) for t in times]
 ```
 
 - **`[[0,0],[0,1]]`**：$\rho=|1\rangle\langle1|$。`[1,1]` 是 $\langle 1|\rho|1\rangle$。
@@ -121,7 +121,7 @@ Kraus 完备性：$E_0^\dagger E_0+E_1^\dagger E_1=I$（对任意 $p\in[0,1]$）
 
 写-存-读里对每个 $t$ 都从**同一份** `rho0` 出发，而不是把上一步的 $\rho$ 再送进信道。后者会把时间积分错成「再阻尼一次」，曲线不是 $e^{-t/T}$。`rho0 = np.outer(psi, psi.conj())` 与 overview 章构造 $|+\rangle\langle+|$ 的方式相同。
 
-`T2=0.4 < T1=1` 写在模块级常数。若把 `T2` 改成大于 $2T_1$，物理上不自洽（振幅阻尼已经限制相干），但 `dephase` 是独立玩具信道，代码不会报错——这是教学拆分，不是完整 Lindblad。
+模块级常数用 `TPHI = 1.0 / (1.0 / T2 - 1.0 / (2.0 * T1))` 避免重复计入弛豫。当前示例要求 $0<T_2<2T_1$；$T_2=2T_1$ 是无纯退相位极限（应取 $T_\varphi=\infty$），不能直接代入该除法；$T_2>2T_1$ 则不符合这个信道模型。
 
 ---
 
@@ -131,7 +131,7 @@ Kraus 完备性：$E_0^\dagger E_0+E_1^\dagger E_1=I$（对任意 $p\in[0,1]$）
 |------|-------------|------|
 | $T_1$ | 布居 $e^{-t/T_1}$ | `amp_damping`，Kraus $E_0,E_1$ |
 | $p=1-e^{-t/T_1}$ | 掉下来的概率 | `amp_damping` 开头 |
-| $T_2$ | 非对角 $e^{-t/T_2}$ | `dephase` |
+| $T_\varphi$ / $T_2$ | 纯退相位 / 总相干时间 | `dephase` / 两信道组合 |
 | `.copy()` | 不改原 $\rho$ | `dephase` |
 | 保真度 | $\langle\psi\|\rho\|\psi\rangle$ | `fidelity_pure` |
 | `outer` | 纯态 $\rho$ | `rho_plus` / `rho0` |
