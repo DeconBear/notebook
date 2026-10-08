@@ -33,6 +33,8 @@ class FenwickTree:
 
     def __init__(self, n):
         """初始化大小为 n 的 BIT（索引从 1 开始）。"""
+        if n < 0:
+            raise ValueError("BIT 大小不能为负")
         self.n = n
         self.tree = [0] * (n + 1)
 
@@ -41,6 +43,8 @@ class FenwickTree:
         点更新：在位置 i 加上 delta。
         i += i & -i 沿着"lowbit"路径向上更新所有受影响的区间。
         """
+        if not 1 <= i <= self.n:
+            raise IndexError("BIT 更新索引必须在 [1, n] 内")
         while i <= self.n:
             self.tree[i] += delta
             i += i & -i  # lowbit: 跳到下一个受影响的节点
@@ -50,6 +54,8 @@ class FenwickTree:
         前缀查询：查询 [1, i] 的和。
         i -= i & -i 沿着"lowbit"路径向下收集。
         """
+        if not 0 <= i <= self.n:
+            raise IndexError("BIT 前缀索引必须在 [0, n] 内")
         total = 0
         while i > 0:
             total += self.tree[i]
@@ -136,6 +142,8 @@ class SegmentTree:
 
     def update_range(self, ql, qr, val):
         """区间更新：将 [ql, qr] 内所有元素 + val。"""
+        if not 0 <= ql <= qr < self.n:
+            raise IndexError("更新区间必须满足 0 <= ql <= qr < n")
         self._update_range(1, 0, self.n - 1, ql, qr, val)
 
     def _update_range(self, p, l, r, ql, qr, val):
@@ -160,6 +168,8 @@ class SegmentTree:
 
     def query_range(self, ql, qr):
         """区间查询：查询 [ql, qr] 的和。"""
+        if self.n == 0:
+            return 0
         return self._query_range(1, 0, self.n - 1, ql, qr)
 
     def _query_range(self, p, l, r, ql, qr):
@@ -181,6 +191,8 @@ class SegmentTree:
 
     def point_update(self, idx, val):
         """单点更新：设置 arr[idx] = val。"""
+        if not 0 <= idx < self.n:
+            raise IndexError("更新索引必须在 [0, n) 内")
         self._point_update(1, 0, self.n - 1, idx, val)
 
     def _point_update(self, p, l, r, idx, val):
@@ -216,7 +228,7 @@ class PersistentSegTree:
     def __init__(self, arr):
         self.roots = []  # 存储每个版本的根节点
         self.n = len(arr)
-        root = self._build(0, self.n - 1, arr)
+        root = self._build(0, self.n - 1, arr) if self.n else None
         self.roots.append(root)
 
     def _build(self, l, r, arr):
@@ -230,6 +242,8 @@ class PersistentSegTree:
 
     def update(self, idx, val):
         """创建一个新版本，将 arr[idx] 改为 val。"""
+        if not 0 <= idx < self.n:
+            raise IndexError("更新索引必须在 [0, n) 内")
         old_root = self.roots[-1]
         new_root = self._update(old_root, 0, self.n - 1, idx, val)
         self.roots.append(new_root)
@@ -295,6 +309,8 @@ class OrderStatistics:
         查询第 k 小（1-based）的元素。
         使用 BIT 上的二分查找：在值域上二分，用 BIT.query(mid) 判断。
         """
+        if k < 1 or k > self.bit.query(self.max_val):
+            return -1
         lo, hi = 1, self.max_val
         while lo < hi:
             mid = (lo + hi) // 2
