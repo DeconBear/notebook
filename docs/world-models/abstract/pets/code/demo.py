@@ -2,7 +2,7 @@
 """
 === PETS 演示：CEM-MPC + 倒立摆 ===
 1) 一维质点：看清 CEM 分布收缩、MPC 只执行第一拍。
-2) 倒立摆：观测 [cosθ, sinθ, ω]，概率 MLP 集成 + TS∞ + CEM，
+2) 倒立摆：观测 [cosθ, sinθ, ω]，岭回归概率集成 + TS∞ + CEM，
    把摆稳定在竖直向上（课上同一套物理，不依赖 Gymnasium）。
 运行: python demo.py
 """
@@ -89,7 +89,7 @@ def cem_plan(models, pos, vel, target):
     history = []
     for _ in range(CEM_ITERS):
         noise = np.random.randn(N_SAMPLE, HORIZON)
-        seqs = mu + std * noise
+        seqs = np.clip(mu + std * noise, -4.0, 4.0)
         scores = np.array([rollout_return(models, pos, vel, s, target) for s in seqs])
         elite = seqs[np.argsort(scores)[-N_ELITE:]]
         mu = 0.7 * elite.mean(axis=0) + 0.3 * mu
