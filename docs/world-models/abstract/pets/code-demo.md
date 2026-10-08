@@ -10,6 +10,9 @@ title: "PETS — demo.py"
 
 <a href="/notebook/code/world-models/abstract/pets/demo.py" target="_blank" download>Download demo.py</a>
 
+> [!WARNING]
+> 静态审查后的图片状态：CEM 候选动作边界已修正，`pets_cem_mpc.png` 尚未重新生成；完整脚本运行时应同时刷新 `pets_pendulum.png`。 本次未执行脚本或验证新输出。
+
 ## 运行方式
 
 ```bash
