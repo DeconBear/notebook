@@ -78,7 +78,7 @@ V_\lambda &= (1-\lambda)\sum_{n=1}^{H-1}\lambda^{n-1} V_N^n + \lambda^{H-1} V_N^
 \end{aligned}
 $$
 
-$V_\lambda$ 就是大家熟悉的 TD($\lambda$) 在想象轨迹上的版本：短 $n$ 偏差小、方差大；长 $n$ 能看远但更吃模型误差。$\lambda$ 做偏差-方差折中。
+$V_\lambda$ 就是大家熟悉的 TD($\lambda$) 在想象轨迹上的版本：通常短 $n$ 更依赖价值函数自举，偏差较大、方差较小；长 $n$ 减少自举依赖，但回报方差往往更大，在想象轨迹中还会累积模型误差。$\lambda$ 做偏差-方差折中。
 
 ![不同想象视野](./images/dreamerv1-fig4.png)
 
@@ -199,7 +199,7 @@ $$
 - $\mathcal{L}_{\mathrm{rep}}$：表示变得更好预测（梯度在后验，权重更小，如 $0.1$）；
 - **Free bits**：KL 低于约 1 nat 时裁掉，避免过度正则把细节挤没。
 
-这是 V2 KL balancing 的「工业版」：两个 KL 方向、两个停梯度、再加地板。
+这是 V2 KL balancing 的扩展：两项都计算后验到先验的 $\mathrm{KL}(q\|p)$，但停梯度位置不同，分别更新先验动力学和后验表示，再各加 free-bits 下限。
 
 ### 4.2 symlog 与 twohot：驯服未知量级
 
