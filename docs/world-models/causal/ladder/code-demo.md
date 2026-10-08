@@ -10,6 +10,9 @@ title: "因果世界模型 — demo.py"
 
 <a href="/notebook/code/world-models/causal/ladder/demo.py" target="_blank" download>Download demo.py</a>
 
+> [!WARNING]
+> 静态审查后的图片状态：源码已把 Z 的标签从混淆改为上游变量，`causal_obs_vs_do.png` 尚未重新生成。完整因果图、干预分布与 MSE 推导见[正文](./index)。 本次未执行脚本或验证新输出。
+
 ## 运行方式
 
 ```bash
