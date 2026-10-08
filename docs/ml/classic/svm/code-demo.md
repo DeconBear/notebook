@@ -19,16 +19,19 @@ python demo.py
 
 ## 代码逐段详解
 
+> **复现提示**：已修正 `C` 的样本数缩放、软间隔支持向量候选集和测试集标准化泄漏。`soft_margin_C_effect.png`、`kernel_comparison.png` 尚未重跑生成，旧图不能作为本次修改后的结果。核对比先划分训练/测试集，再仅用训练集拟合 `StandardScaler`。
+
 ### 第1步：LinearSVM 类 — Hinge Loss + SGD
 
 ```python
 class LinearSVM:
     def fit(self, X, y):
-        lambda_ = 1.0 / (2.0 * self.C)
+        lambda_ = 1.0 / (2.0 * self.C * len(X))
         for epoch in range(self.n_epochs):
             for each sample (x_i, y_i):
                 margin = y_i * (w^T x_i + b)
                 dw = 2 * lambda_ * w
+                db = 0.0
                 if margin < 1:
                     dw -= y_i * x_i
                     db -= y_i
@@ -42,9 +45,9 @@ $$
 J(\mathbf{w}, b) = \frac{1}{n} \sum_{i=1}^{n} \max(0, 1 - y_i(\mathbf{w}^T \mathbf{x}_i + b)) + \lambda \|\mathbf{w}\|^2
 $$
 
-**$\lambda = 1/(2C)$ 的关系**：sklearn 用 $C$（惩罚参数，越大越像硬间隔），而数学公式中通常用 $\lambda$（正则化系数）。它们的转换关系为 $\lambda = \frac{1}{2C}$。因此 $C \to \infty$ 时 $\lambda \to 0$（无正则化，硬间隔）。
+**先确定求和还是平均。** `SVC` 使用 $\tfrac12\|w\|^2+C\sum_i\ell_i$。除以正数 $Cn$ 不改变最优解，得到 $\frac1n\sum_i\ell_i+\frac1{2Cn}\|w\|^2$。因此本例单样本 SGD 的对应系数是 $\lambda=1/(2Cn)$，不能漏掉 $n$。`C` 必须是有限正数；特别小的 `C` 也不能被当成关闭正则化。只有数据可分等条件成立时，大 $C$ 才趋近硬间隔解；不可分数据仍需要松弛。
 
-**为什么每次迭代要打乱数据？** 这是 SGD 的标准做法：如果不打乱，数据的顺序会影响梯度更新的路径，可能导致收敛到局部最优或震荡。`np.random.permutation` 在每轮开始前打乱索引。
+**为什么每次迭代要打乱数据？** 这是 SGD 的标准做法：如果不打乱，数据的顺序会影响梯度更新的路径，可能带来顺序偏差或震荡；这个目标是凸的，不存在较差的局部极小点。`np.random.permutation` 在每轮开始前打乱索引。
 
 ### 第2步：Hinge Loss 的子梯度
 
@@ -77,11 +80,11 @@ $$
 def get_support_vector_mask(self, X, y):
     y_svm = np.where(y <= 0, -1, 1)
     margins = y_svm * self.decision_function(X)
-    sv_mask = (margins >= 0.99) & (margins <= 1.01)
+    sv_mask = margins <= 1.01
     return sv_mask
 ```
 
-在 SGD 方法中，支持向量通过间隔值来近似识别：落在 $y_i (\mathbf{w}^T \mathbf{x}_i + b) \approx 1$ 附近的点（容差 $\pm 0.01$），即位于间隔边界上的点。这些点是在训练过程中"被推动到边界上"的——它们一直不满足 $yf > 1$，因此持续贡献梯度直到被推到边界处。
+令 $m_i=y_if(x_i)$。软间隔最优解的 KKT 条件给出：$m_i<1$ 的间隔违例点满足 $\alpha_i=C$，也属于支持向量；$0<\alpha_i<C$ 的点满足 $m_i=1$。因此只圈 $m_i\approx1$ 会漏掉误分类与间隔内部的支持向量。源码使用 $m_i\le1.01$ 作为可视化候选集；因 SGD 未求出对偶变量且可能未完全收敛，它不是精确的 $\alpha_i>0$ 判定。
 
 ### 第4步：RBF 核函数
 
@@ -128,9 +131,9 @@ $\gamma$ 的支持向量数量也反映了过拟合程度——$\gamma$ 越大�
 | 间隔 | $y_i(\mathbf{w}^T\mathbf{x}_i+b)/\|\mathbf{w}\|$ | `margin` | 样本到超平面的距离 |
 | Hinge Loss | $\max(0, 1-y f(\mathbf{x}))$ | `fit()` 中 | 仅在违反间隔时产生梯度 |
 | L2 正则化 | $\lambda\|\mathbf{w}\|^2$ | `dw = 2*lambda_*w` | 权重衰减 |
-| $\lambda$ 与 $C$ | $\lambda = 1/(2C)$ | `lambda_ = 1/(2*C)` | $C$ 大 = 弱正则化 |
+| $\lambda$ 与 $C$ | $\lambda = 1/(2Cn)$ | `lambda_ = 1/(2*C*n)` | $C$ 大 = 弱正则化 |
 | 子梯度 | $-y\mathbf{x}$ 若 $yf<1$ | `dw -= y_i*x_i` | 不可导点用子梯度 |
-| 支持向量 | margin $\approx 1$ | `get_support_vector_mask()` | $\alpha_i > 0$ 的样本 |
+| 支持向量候选 | margin $\le 1+0.01$ | `get_support_vector_mask()` | 含间隔违例点；精确定义为 $\alpha_i>0$ |
 | RBF 核 | $\exp(-\gamma\|\mathbf{x}-\mathbf{y}\|^2)$ | `rbf_kernel()` | 无限维映射 |
 | $\gamma$ 参数 | 影响半径 | `gamma` | 小 $\to$ 平滑, 大 $\to$ 复杂 |
 
@@ -140,3 +143,8 @@ $\gamma$ 的支持向量数量也反映了过拟合程度——$\gamma$ 越大�
 clone 后打开（相对仓库根目录）：
 
 `docs/ml/classic/svm/code/demo.py`
+
+## 实现参考
+
+- [scikit-learn 的 SVC 数学定义](https://scikit-learn.org/stable/modules/svm.html#svm-mathematical-formulation)
+- [scikit-learn：避免数据泄漏](https://scikit-learn.org/stable/common_pitfalls.html#data-leakage)
