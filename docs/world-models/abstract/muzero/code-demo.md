@@ -24,11 +24,11 @@ python demo.py
 ### 第1步：三头框图 `draw_muzero`
 
 ```python
-boxes = [(0.5, 'h: obs→latent'), (3.5, 'g: latent,action→next'), (6.5, 'f: policy,value,reward')]
+boxes = [(0.5, 'h: obs→latent'), (3.5, 'g: state,action→state,reward'), (6.5, 'f: policy,value')]
 ax.add_patch(FancyBboxPatch((x, 1.3), 2.5, 1.5, boxstyle='round,pad=0.04', ...))
 ```
 
-MuZero 相对「有模拟器的 AlphaZero」：搜索树里的边**不调用**环境，只调用学到的 $g$（隐状态转移）和 $f$（策略、价值、即时奖励）。$h$ 只在根节点把观测压成隐状态。本函数用 Matplotlib 补丁画三个盒子，箭头表示数据流。`axis('off')` 去掉坐标轴。`FancyBboxPatch` 的 `(x,y)` 是左下角，宽 2.5、高 1.5。
+MuZero 相对「有模拟器的 AlphaZero」：搜索树里的边**不调用**环境，只调用学到的 $g$（隐状态转移与即时奖励）和 $f$（策略、价值）。$h$ 只在根节点把观测压成隐状态。本函数用 Matplotlib 补丁画三个盒子，箭头表示数据流。`axis('off')` 去掉坐标轴。`FancyBboxPatch` 的 `(x,y)` 是左下角，宽 2.5、高 1.5。
 
 ---
 
@@ -64,7 +64,7 @@ else:
 
 贪心：没到就 +1。搜索式：在合法后继里选 **$|c-\mathrm{goal}|$ 最小**的格子，动作 = 新位置减旧位置。
 
-在这条线上，贪心每步 +1，和「减小距离」**一样**。柱状图两者应接近——这是故意的玩具：让你看见「搜索 = 在候选后继上最大化某个价值」，而不是吹嘘搜索碾压。真 MuZero 的价值来自 $f$ 的 $v$，候选来自 $g$ 展开的树，深度远大于 1。
+在这条线上，贪心每步 +1，和「减小距离」**一样**。两者均在第 6 步到达终点，回报都是 $1-5\times0.05=0.75$；柱状图两者应相同——这是故意的玩具：让你看见「搜索 = 在候选后继上最大化某个价值」，而不是吹嘘搜索碾压。真 MuZero 的价值来自 $f$ 的 $v$，候选来自 $g$ 展开的树，深度远大于 1。
 
 **语法 `max(cand, key=lambda c: -abs(c - goal))`**：`key` 指定比较依据；负距离 = 距离越小越大。`[c for c in cand if ...]` 过滤非法格。
 
