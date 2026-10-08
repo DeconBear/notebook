@@ -112,6 +112,8 @@ def fibonacci_mat(n, mod=10**9+7):
 
 def sieve_eratosthenes(n):
     """埃拉托色尼筛法：O(n log log n)。"""
+    if n < 2:
+        return []
     is_prime = [True] * (n + 1)
     is_prime[0] = is_prime[1] = False
     for i in range(2, int(n ** 0.5) + 1):
@@ -172,7 +174,13 @@ def crt(remainders, moduli):
 # ============================================================================
 
 def precompute_factorials(n, mod):
-    """预处理阶乘和逆阶乘，用于 O(1) 组合数查询。mod 需为质数。"""
+    """预处理阶乘与逆阶乘；前提是 mod 为质数且 0 <= n < mod。
+
+    n >= mod 时 n! 含有因子 mod，模意义下为 0，不存在逆元。
+    更大 n 的组合数需换用其他方法（如 Lucas 定理），不能沿用本表。
+    """
+    if not 0 <= n < mod:
+        raise ValueError("阶乘逆元表要求 0 <= n < mod，且 mod 必须为质数")
     fact = [1] * (n + 1)
     inv_fact = [1] * (n + 1)
     for i in range(1, n + 1):
