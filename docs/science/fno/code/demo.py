@@ -220,15 +220,16 @@ def train_fno(n_train=800, n_test=200, grid_size=64, n_modes_data=16,
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
 
-    n_batches = n_train // batch_size
+    if n_train <= 0 or batch_size <= 0:
+        raise ValueError('n_train 和 batch_size 必须为正整数')
     history = {'train_loss': [], 'test_loss': []}
 
     for epoch in range(n_epochs):
         model.train()
         perm = torch.randperm(n_train)
         epoch_loss = 0.0
-        for b in range(n_batches):
-            idx = perm[b * batch_size:(b + 1) * batch_size]
+        for start in range(0, n_train, batch_size):
+            idx = perm[start:start + batch_size]
             a_batch = A_train_t[idx]
             u_batch = U_train_t[idx]
             grid_batch = x_grid_t.unsqueeze(0).expand(a_batch.shape[0], -1)
@@ -238,7 +239,7 @@ def train_fno(n_train=800, n_test=200, grid_size=64, n_modes_data=16,
             loss = F.mse_loss(u_pred, u_batch)
             loss.backward()
             optimizer.step()
-            epoch_loss += loss.item()
+            epoch_loss += loss.item() * len(idx)
         scheduler.step()
 
         model.eval()
@@ -247,7 +248,7 @@ def train_fno(n_train=800, n_test=200, grid_size=64, n_modes_data=16,
             u_test_pred = model(A_test_t, grid_test)
             test_loss = F.mse_loss(u_test_pred, U_test_t).item()
 
-        history['train_loss'].append(epoch_loss / n_batches)
+        history['train_loss'].append(epoch_loss / n_train)
         history['test_loss'].append(test_loss)
 
         if (epoch + 1) % 20 == 0 or epoch == 0:
