@@ -108,9 +108,10 @@ def so3_log(R):
         elif axis[np.argmax(np.abs(axis))] < 0.0:
             axis = -axis  # 精确 π 时 ±轴等价，固定一种符号。
         return th * axis
-    return (th / (2.0 * sin_th)) * vee```
+    return (th / (2.0 * sin_th)) * vee
+```
 
-- **$\cos\theta=(\mathrm{tr}R-1)/2$**：$\mathrm{SO}(3)$ 的标准提取。`clip` 防止 `tr` 的浮点噪声让 `arccos` 吃到 $1.0000002$。
+- **$\cos\theta=(\mathrm{tr}R-1)/2$**：$\mathrm{SO}(3)$ 的标准提取。`clip` 把迹的浮点误差限制在合法余弦范围。实现用 `atan2(sin_th, c)` 同时利用正弦与余弦恢复主值角。
 - **轴 $n$ 来自反对称部分**：$(R-R^\top)$ 的独立三元除以 $2\sin\theta$。下标 `R[2,1]-R[1,2]` 对应 $x$ 分量。
 - **小角度**：用 `0.5 * vee` 保留一阶旋转量，避免迹舍入为 3 时丢掉微小旋转。转角用 `atan2(sin_th, c)`，比仅用 `arccos` 更稳。
 - **接近 $\pi$**：从对称部分的最大特征值对应特征向量恢复转轴，不再除以趋零的 $\sin\theta$。精确 $\pi$ 时 $\pm n$ 等价；应检查 `exp(log(R)) ≈ R`，不要强求轴的符号唯一。
