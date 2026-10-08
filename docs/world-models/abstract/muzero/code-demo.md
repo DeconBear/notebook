@@ -10,6 +10,9 @@ title: "wm04 MuZero — demo.py"
 
 <a href="/notebook/code/world-models/abstract/muzero/demo.py" target="_blank" download>Download demo.py</a>
 
+> [!WARNING]
+> 静态审查后的图片状态：绘图源码已将奖励归入动力学 g，并修正两种玩具策略打平的标题；`wm04-01-muzero.png`、`muzero_search_compare.png` 尚未重新生成，旧图文字不应作为理论依据。 本次未执行脚本或验证新输出。
+
 ## 运行方式
 
 ```bash
