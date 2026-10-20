@@ -44,7 +44,7 @@ class HMM:
         self.B = np.array(B)    # (N, M)
         self.pi = np.array(pi)  # (N,)
         self.N = len(pi)
-        self.M = B.shape[1]
+        self.M = self.B.shape[1]
 
     def forward(self, observations):
         """
@@ -69,6 +69,8 @@ class HMM:
             c: 每步的缩放因子 (T,)
         """
         T = len(observations)
+        if T == 0:
+            raise ValueError('观测序列不能为空。')
         alphas = np.zeros((T, self.N))  # (T, N)
         c = np.zeros(T)                  # 缩放因子
 
@@ -90,7 +92,9 @@ class HMM:
             if c[t] > 0:
                 alphas[t] /= c[t]
 
-        log_prob = np.sum(np.log(c + 1e-300))  # 防止 log(0)
+        # 零概率观测的 log P 必须为 -inf，不能用伪计数改变模型。
+        with np.errstate(divide='ignore'):
+            log_prob = np.sum(np.log(c))
         return log_prob, alphas, c
 
     def viterbi(self, observations):
@@ -114,27 +118,37 @@ class HMM:
             deltas: log δ 矩阵 (T, N)
         """
         T = len(observations)
+        if T == 0:
+            raise ValueError('观测序列不能为空。')
         deltas = np.zeros((T, self.N))  # log δ_t(i)
         psi = np.zeros((T, self.N), dtype=int)  # 回溯指针 ψ_t(i)
+
+        # 对数空间保留零概率为 -inf，使不可能的路径仍不可能。
+        with np.errstate(divide='ignore'):
+            log_pi = np.log(self.pi)
+            log_A = np.log(self.A)
+            log_B = np.log(self.B)
 
         # 初始化 t=1
         o1 = observations[0]
         for i in range(self.N):
-            deltas[0, i] = np.log(self.pi[i] + 1e-300) + np.log(self.B[i, o1] + 1e-300)
+            deltas[0, i] = log_pi[i] + log_B[i, o1]
 
         # 递推 t = 2, ..., T
         for t in range(1, T):
             ot = observations[t]
             for j in range(self.N):
                 # log δ_t(j) = max_i [log δ_{t-1}(i) + log A[i, j]] + log B[j, ot]
-                candidates = deltas[t-1, :] + np.log(self.A[:, j] + 1e-300)
+                candidates = deltas[t-1, :] + log_A[:, j]
                 best_i = np.argmax(candidates)
-                deltas[t, j] = candidates[best_i] + np.log(self.B[j, ot] + 1e-300)
+                deltas[t, j] = candidates[best_i] + log_B[j, ot]
                 psi[t, j] = best_i
 
         # 终止：找到最优路径的终点
         best_final_state = np.argmax(deltas[T-1, :])
         log_prob = deltas[T-1, best_final_state]
+        if np.isneginf(log_prob):
+            raise ValueError('观测序列概率为零，不存在可解码的状态路径。')
 
         # 回溯
         best_path = np.zeros(T, dtype=int)
@@ -192,7 +206,7 @@ def pos_tagging_demo():
     # Viterbi 解码
     log_prob_v, best_path, deltas = hmm.viterbi(observations)
     state_names = ['DET', 'NOUN', 'VERB']
-    obs_names = ['the', 'cat', 'sat', 'the', 'mat']
+    obs_names = ['the', 'cat', 'sat', 'mat']  # 按观测符号索引排列的词表
     print(f'  Viterbi 最优路径: {" ".join(state_names[s] for s in best_path)}')
     print(f'  log P*(X, Z) = {log_prob_v:.4f}')
 
@@ -386,7 +400,7 @@ def compare_hmm_behaviors():
 
     for idx, (ax, path, A, title) in enumerate([
         (axes[0], path1, A_smooth, 'Smooth Transitions\n(high self-transition)'),
-        (axes[1], path2, A_peaky, 'Peaky Transitions\n(forced cycle S1→S2→S3→S1)'),
+        (axes[1], path2, A_peaky, 'Peaky Transitions\n(preferred cycle S1→S2→S3→S1)'),
     ]):
         # 画转移矩阵热力图
         im = ax.imshow(A, cmap='YlOrRd', vmin=0, vmax=1)

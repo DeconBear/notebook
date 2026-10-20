@@ -24,6 +24,16 @@ os.makedirs(_IMAGES_DIR, exist_ok=True)
 # 第一部分：核函数库
 # ============================================================================
 
+def _as_samples(X):
+    """输入约定：(n,) 表示 n 个一维样本；(n,d) 表示 n 个 d 维样本。"""
+    X = np.asarray(X, dtype=float)
+    if X.ndim == 1:
+        return X.reshape(-1, 1)
+    if X.ndim != 2:
+        raise ValueError('X 必须是一维样本序列或二维样本矩阵。')
+    return X
+
+
 def rbf_kernel(X1, X2, lengthscale=1.0, variance=1.0):
     """
     RBF (Radial Basis Function / Squared Exponential) 核。
@@ -39,8 +49,10 @@ def rbf_kernel(X1, X2, lengthscale=1.0, variance=1.0):
     返回:
         K: 核矩阵 (n1, n2)，K[i,j] = k(X1[i], X2[j])
     """
-    X1 = np.atleast_2d(X1)
-    X2 = np.atleast_2d(X2)
+    X1 = _as_samples(X1)
+    X2 = _as_samples(X2)
+    if X1.shape[1] != X2.shape[1]:
+        raise ValueError('两个输入的特征维度必须相同。')
     # 计算平方欧氏距离矩阵: dist²[i,j] = ||X1[i] - X2[j]||²
     # 展开: ||x-y||² = ||x||² + ||y||² - 2<x,y>
     sq_norm1 = np.sum(X1**2, axis=1).reshape(-1, 1)  # (n1, 1)
@@ -58,8 +70,10 @@ def matern32_kernel(X1, X2, lengthscale=1.0, variance=1.0):
     k(r) = σ² · (1 + √3 r/ℓ) · exp(-√3 r/ℓ)
     其中 r = ||x - x'||
     """
-    X1 = np.atleast_2d(X1)
-    X2 = np.atleast_2d(X2)
+    X1 = _as_samples(X1)
+    X2 = _as_samples(X2)
+    if X1.shape[1] != X2.shape[1]:
+        raise ValueError('两个输入的特征维度必须相同。')
     sq_norm1 = np.sum(X1**2, axis=1).reshape(-1, 1)
     sq_norm2 = np.sum(X2**2, axis=1).reshape(1, -1)
     sq_dist = sq_norm1 + sq_norm2 - 2 * X1 @ X2.T
@@ -75,8 +89,10 @@ def periodic_kernel(X1, X2, period=1.0, lengthscale=1.0, variance=1.0):
 
     k(x, x') = σ² · exp(-2 sin²(π|x-x'|/p) / ℓ²)
     """
-    X1 = np.atleast_2d(X1)
-    X2 = np.atleast_2d(X2)
+    X1 = _as_samples(X1)
+    X2 = _as_samples(X2)
+    if X1.shape[1] != X2.shape[1]:
+        raise ValueError('两个输入的特征维度必须相同。')
     diff = X1[:, np.newaxis, :] - X2[np.newaxis, :, :]  # (n1, n2, d)
     sin_sq = np.sin(np.pi * diff / period) ** 2
     sin_sq_sum = sin_sq.sum(axis=2)  # (n1, n2)
@@ -108,6 +124,7 @@ class KernelRidgeRegression:
         """
         训练：计算 α = (K + λI)^{-1} y
         """
+        X = _as_samples(X)
         self.X_train_ = X.copy()
         K = self.kernel(X, X, **self.kernel_params)  # (N, N)
         K_reg = K + self.alpha * np.eye(len(X))       # K + λI
@@ -122,6 +139,7 @@ class KernelRidgeRegression:
         """
         预测：f(x*) = k_*^T α
         """
+        X = _as_samples(X)
         K_test = self.kernel(X, self.X_train_, **self.kernel_params)  # (n_test, N)
         return K_test @ self.alpha_coef_
 
@@ -157,6 +175,7 @@ class GaussianProcessRegressor:
 
     def fit(self, X, y):
         """训练：计算 Cholesky 分解和预测所需向量"""
+        X = _as_samples(X)
         self.X_train_ = X.copy()
         self.y_train_ = y.copy()
         N = len(X)
@@ -178,6 +197,7 @@ class GaussianProcessRegressor:
         均值: f* = k_*^T (K + σ_n²I)^{-1} y
         方差: var = k(x*,x*) - k_*^T (K + σ_n²I)^{-1} k_*
         """
+        X_test = _as_samples(X_test)
         K_test = self.kernel(X_test, self.X_train_, **self.kernel_params)  # (n_test, N)
         mean = K_test @ self.K_inv_y_
 

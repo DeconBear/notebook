@@ -2,7 +2,7 @@
 """
 === PETS 演示：CEM-MPC + 倒立摆 ===
 1) 一维质点：看清 CEM 分布收缩、MPC 只执行第一拍。
-2) 倒立摆：观测 [cosθ, sinθ, ω]，概率 MLP 集成 + TS∞ + CEM，
+2) 倒立摆：观测 [cosθ, sinθ, ω]，岭回归概率集成 + TS∞ + CEM，
    把摆稳定在竖直向上（课上同一套物理，不依赖 Gymnasium）。
 运行: python demo.py
 """
@@ -89,7 +89,7 @@ def cem_plan(models, pos, vel, target):
     history = []
     for _ in range(CEM_ITERS):
         noise = np.random.randn(N_SAMPLE, HORIZON)
-        seqs = mu + std * noise
+        seqs = np.clip(mu + std * noise, -4.0, 4.0)
         scores = np.array([rollout_return(models, pos, vel, s, target) for s in seqs])
         elite = seqs[np.argsort(scores)[-N_ELITE:]]
         mu = 0.7 * elite.mean(axis=0) + 0.3 * mu
@@ -141,18 +141,17 @@ class Pendulum:
         omega = np.clip(omega + self.dt * theta_acc, -self.max_speed, self.max_speed)
         theta = _wrap_pi(theta + self.dt * omega)
         self.theta, self.omega = theta, omega
-        reward = float(
-            np.exp(-8.0 * theta ** 2) * np.exp(-0.05 * omega ** 2)
-            - 0.01 * (u / self.max_torque) ** 2
-        )
+        reward = float(pendulum_reward(self.obs()[None, :], np.array([action]))[0])
         done = False  # 本 demo 只做直立附近，不把倒下当成提前终止
         return self.obs(), reward, done
 
 
-def pendulum_reward(states):
-    """CEM 打分：只能从观测算。cosθ=1 表示直立。"""
-    cos_t, omega = states[:, 0], states[:, 2]
-    return cos_t * np.exp(-0.05 * omega ** 2) - 0.05 * (1.0 - cos_t)
+def pendulum_reward(states, actions):
+    """环境与 CEM 共用 r(s_next, a)：从观测恢复主值角，动作是归一化控制量。"""
+    theta = np.arctan2(states[:, 1], states[:, 0])
+    omega = states[:, 2]
+    actions = np.clip(np.asarray(actions, dtype=float).reshape(-1), -1.0, 1.0)
+    return np.exp(-8.0 * theta ** 2) * np.exp(-0.05 * omega ** 2) - 0.01 * actions ** 2
 
 
 class ProbMLP:
@@ -254,7 +253,7 @@ def cem_plan_pendulum(ens, state, horizon=10, n_samples=24, n_elites=8,
             flat_b = boot.reshape(N * P)
             ns = ens.sample_next(flat_s, flat_a, flat_b)
             particles = ns.reshape(N, P, -1)
-            returns += pendulum_reward(ns).reshape(N, P).mean(axis=1)
+            returns += pendulum_reward(ns, flat_a).reshape(N, P).mean(axis=1)
         elite = acts[np.argsort(returns)[-n_elites:]]
         mean, std = elite.mean(0), elite.std(0) + 1e-3
     return float(np.clip(mean[0], -1.0, 1.0))

@@ -19,6 +19,14 @@ python demo.py
 
 **注意**：首次运行会自动下载 CLIP ViT-B/32 模型（约 600MB）。如果网络较慢，demo 4（InfoNCE 对比损失演示）不依赖模型下载，会优先运行。
 
+## 样本与结果的验证状态
+
+仓库 `images/samples/` 的四个 JPG 当前仍是同一张纯灰占位图，并非真实的狗、猫、汽车或披萨照片。脚本会拒绝将这些文件当作分类输入，并尝试从配置的来源重新下载；缺失、损坏和纯色样本均可在下次运行时重试。
+
+下载先写入同目录临时文件，完成解码和非纯色校验后才原子替换目标文件。下载或校验失败时清理临时文件，保留旧文件但不返回为可用样本。底层网络空闲超时为 10 秒，读取块之间检查 30 秒软预算，每张图片最多 10 MiB。这不是严格墙钟限时：持续涓流数据可能让一次块读取长时间不返回；需要强制限时的生产系统应使用可取消的独立下载进程。有效缓存不会重复下载。
+
+这些检查只能确认文件可用，不能确认物体类别、颜色或复用许可。配置的外部图片地址也可能失效；请人工核对真实内容与来源授权后再解读或发布结果。本次修复仅用内存生成图片和 mock 网络完成离线测试，没有下载 CLIP 权重，也没有重新生成真实样本分类、检索或 PCA 结果。旧 `embedding_space_pca.png` 基于异常样本，不能作为语义对齐的实测证据。
+
 ## 代码逐段详解
 
 ### 第1步：导入库 — 每个库做什么
@@ -42,7 +50,7 @@ from sklearn.decomposition import PCA
 - **视觉编码器**（Vision Transformer ViT-B/32）：~86M 参数，将图像编码为 512 维向量 $\mathbf{I} \in \mathbb{R}^{512}$
 - **文本编码器**（Transformer Decoder）：~63M 参数，将文本编码为 512 维向量 $\mathbf{T} \in \mathbb{R}^{512}$
 
-两个编码器输出的向量**在同一空间中**，且都已做 L2 归一化（$\|\mathbf{I}\| = \|\mathbf{T}\| = 1$），因此余弦相似度退化为向量内积：
+`CLIPModel.forward()` 返回的 `image_embeds` 和 `text_embeds` **在同一空间中**，且都已做 L2 归一化（$\|\mathbf{I}\| = \|\mathbf{T}\| = 1$），因此余弦相似度退化为向量内积：
 
 $$
 \cos(\mathbf{I}, \mathbf{T}) = \frac{\mathbf{I} \cdot \mathbf{T}}{\|\mathbf{I}\| \cdot \|\mathbf{T}\|} = \mathbf{I} \cdot \mathbf{T}
@@ -91,11 +99,11 @@ def zero_shot_classification(model, processor, tokenizer, image_path, class_name
     return results
 ```
 
-**`outputs.logits_per_image` 是什么**：CLIP 模型的 `forward` 方法内部会自动计算图像嵌入和文本嵌入的余弦相似度，乘以可学习的逆温度 $\exp(\text{logit\_scale})=1/\tau$（初始化为 $1/0.07\approx14.3$），然后作为 logits 返回。用 softmax 将其转为概率。
+**`outputs.logits_per_image` 是什么**：CLIP 模型的 `forward` 方法内部会自动计算图像嵌入和文本嵌入的余弦相似度，乘以可学习的逆温度 $\exp(\text{logit\_scale})=1/\tau$（初始化为 $1/0.07\approx14.3$），然后作为 logits 返回。用 softmax 将其转为当前候选集合上的归一化分数；它不是经过校准的“图片确实属于该类”的概率，改变候选类别也会改变分数。
 
 **零样本的含义**：无需用目标分类数据集的标注样本微调模型，而是直接比较图像与类别文本提示。预训练数据可能已包含金毛犬、狗及相应描述；零样本不等于“从未见过该类别”。
 
-**提示模板的重要性**：CLIP 对提示格式很敏感。`"a photo of a dog"` 的准确率远高于 `"dog"`，因为训练数据中的文本通常是以自然语言段落的形式出现的。
+**提示模板的重要性**：提示格式会影响 CLIP 的结果。`"a photo of a dog"` 是常见模板，但是否优于 `"dog"` 取决于数据和任务，需要实际评估，不能预先保证准确率提升。
 
 ### 第4步：图文相似度计算 — 跨模态语义搜索
 
@@ -118,7 +126,7 @@ def compute_image_text_similarity(model, processor, tokenizer, image_path, capti
 - **文本到图像**：给定查询文本，在图库中找最佳匹配（如以文搜图）
 - **跨模态检索**：用一段文字找图片，或用一张图片找相关文字
 
-**为什么能工作**：CLIP 在 4 亿图文对上用对比学习训练，使得共享嵌入空间中 $\text{encode}_{\text{image}}(\text{dog}) \approx \text{encode}_{\text{text}}(\text{"a dog"})$。即使具体的描述组合从未在训练中出现，只要分别学过"golden retriever"和"playing in grass"，就能判断其相关性。
+**为什么能工作**：CLIP 在 4 亿图文对上用对比学习训练，使得共享嵌入空间中 $\text{encode}_{\text{image}}(\text{dog}) \approx \text{encode}_{\text{text}}(\text{"a dog"})$。这有助于跨模态检索，但不能保证模型正确理解未见过的描述组合，仍需要真实样本验证。
 
 ### 第5步：嵌入空间探索 — PCA 可视化
 
@@ -137,10 +145,12 @@ embeddings_2d = pca.fit_transform(embeddings_matrix)  # (N, 2)
 - **虚线连接**= 同一类别的图文对 —— 展示"跨模态对齐"
 - **不同颜色**= 不同语义类别（狗=红, 猫=橙, 车=蓝, 食物=绿）
 
-**预期观察**：
+**可探索的现象（并非本次实测结论）**：
 - 同一类别的图文嵌入**聚在一起**（如"狗"的图片靠近"a dog"的文本）
 - 不同类别的嵌入**彼此分离**（"狗"和"车"的向量相距较远）
 - 相关类别在更高层次上靠近（"狗"和"猫"都是动物，比"汽车"更靠近）
+
+PCA 仅保留部分方差，不保证保留原始 512 维空间的邻近关系；不要仅凭二维点的位置判断模型是否正确对齐。
 
 **嵌入距离分析**：代码还打印了余弦相似度矩阵的部分预览，用 L2（高相似度 >0.8）、L1（中等 0.4-0.8）、L0（低 <0.4）三级标注。
 
@@ -212,12 +222,12 @@ loss_clip = 0.5 * (loss_image + loss_text)
 | 概念 | 一句话解释 | 代码位置 |
 |------|-----------|---------|
 | 双编码器架构 | 图像编码器(ViT) + 文本编码器(Transformer)，输出同维向量 | `load_clip_model()` |
-| L2 归一化 | $\|\mathbf{I}\| = \|\mathbf{T}\| = 1$，使内积=余弦相似度 | 模型内部自动完成 |
+| L2 归一化 | $\|\mathbf{I}\| = \|\mathbf{T}\| = 1$，使内积=余弦相似度 | `forward()` 自动完成；独立提取特征时手动归一化 |
 | 零样本分类 | 比较图像与各类别文本描述的余弦相似度 | `zero_shot_classification()` |
 | InfoNCE 损失 | 对称对比学习：图→文 + 文→图 | `demo_contrastive_loss()` |
 | 温度参数 $\tau$ | 控制 softmax 锐度，$\tau=0.07$ 使匹配对优势明显 | `tau = 0.07` |
 | 共享嵌入空间 | $\text{encode}_{\text{image}}(\text{dog}) \approx \text{encode}_{\text{text}}(\text{"a dog"})$ | PCA 可视化 |
-| 提示模板 | `"a photo of a {class}"` 比 `"{class}"` 效果好得多 | `prompt_template` |
+| 提示模板 | 模板会影响结果，需在具体任务上验证 | `prompt_template` |
 
 
 ## 源码位置

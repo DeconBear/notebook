@@ -42,7 +42,7 @@ def activity_selection(activities):
     indexed.sort(key=lambda x: x[1])  # 按结束时间升序
 
     selected = []       # 存储被选中的活动（原始索引）
-    last_end = -1       # 上一个选中活动的结束时间（初始为负无穷）
+    last_end = float("-inf")  # 上一个选中活动的结束时间（初始为负无穷）
 
     # 步骤2: 遍历排序后的活动，贪心选择
     for start, end, idx in indexed:
@@ -133,7 +133,7 @@ def build_huffman_tree(freq_dict):
         merged = HuffmanNode(None, left.freq + right.freq, left, right)
         heapq.heappush(heap, merged)  # 将合并后的节点放回堆中
 
-    return heapq.heappop(heap)  # 返回根节点
+    return heapq.heappop(heap) if heap else None  # 空字典对应空树
 
 
 def generate_huffman_codes(root):
@@ -154,7 +154,7 @@ def generate_huffman_codes(root):
             return
         # 叶子节点：记录该字符的编码
         if node.char is not None:
-            codes[node.char] = code
+            codes[node.char] = code or "0"  # 单字符编码保留文本长度
             return
         # 非叶子节点：继续向下递归
         dfs(node.left, code + '0')   # 左分支 → 编码追加 0
@@ -170,7 +170,17 @@ def huffman_encode(text, codes):
 
 
 def huffman_decode(encoded, root):
-    """使用 Huffman 树解码二进制串"""
+    """使用 Huffman 树解码二进制串；单字符树约定编码为 0。"""
+    if any(bit not in "01" for bit in encoded):
+        raise ValueError("编码只能包含 0 和 1")
+    if root is None:
+        if encoded:
+            raise ValueError("空树不能解码非空输入")
+        return ""
+    if root.char is not None:
+        if any(bit != "0" for bit in encoded):
+            raise ValueError("单字符树只接受编码 0")
+        return root.char * len(encoded)
     decoded = []
     node = root
     for bit in encoded:
@@ -179,6 +189,8 @@ def huffman_decode(encoded, root):
         if node.char is not None:  # 到达叶子节点 → 输出字符
             decoded.append(node.char)
             node = root             # 回到根节点，准备解码下一个字符
+    if node is not root:
+        raise ValueError("编码在一个字符中途结束")
     return ''.join(decoded)
 
 

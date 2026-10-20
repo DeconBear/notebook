@@ -134,18 +134,24 @@ def is_usable_sample(image_path: str) -> bool:
             return min(image.size) > 1 and any(
                 low != high for low, high in image.getextrema()
             )
-    except (OSError, ValueError):
+    except (OSError, ValueError, Image.DecompressionBombError):
         return False
 
 
 def download_sample_images() -> List[str]:
     """
-    下载用于演示的样本图片，仅返回可读取的非纯色图片。现有无效文件保留并跳过。
+    下载样本，仅返回可解码的非纯色图片；无效缓存允许重试。
+
+    下载先写同目录临时文件，校验成功后原子替换，失败不覆盖原文件。
+    此校验不能确认图片内容、类别或复用许可，使用者仍须人工核对。
 
     返回:
         图片文件路径的列表
     """
     import urllib.request
+    import tempfile
+    import time
+    from http.client import HTTPException
 
     # 创建图片存储目录
     os.makedirs(os.path.join(_IMAGES, "samples"), exist_ok=True)
@@ -161,26 +167,53 @@ def download_sample_images() -> List[str]:
 
     for name, url in sample_sources:
         save_path = os.path.join(_IMAGES, "samples", f"{name}.jpg")
-        # 保留现有无效文件，明确跳过，避免产生虚假的图文匹配结果。
-        if os.path.exists(save_path):
-            if is_usable_sample(save_path):
-                print(f"  图片已存在: {save_path}")
-                image_paths.append(save_path)
-            else:
-                print(f"  [跳过] 图片损坏或为纯色占位图，请替换为真实样本: {save_path}")
-            continue
-
-        try:
-            print(f"  下载图片: {name}...")
-            urllib.request.urlretrieve(url, save_path)
-        except Exception as e:
-            print(f"  [跳过] 下载失败 ({name}): {e}")
-            continue
-
         if is_usable_sample(save_path):
+            print(f"  图片已存在: {save_path}")
             image_paths.append(save_path)
-        else:
-            print(f"  [跳过] 下载结果不是有效的非纯色图片: {save_path}")
+            continue
+
+        # 同目录临时文件确保 os.replace 在同一文件系统中执行。
+        temp_path = None
+        try:
+            print(f"  下载或修复图片: {name}...")
+            request = urllib.request.Request(
+                url, headers={"User-Agent": "learn-ai-tutorial/1.0"}
+            )
+            deadline = time.monotonic() + 30
+            with urllib.request.urlopen(request, timeout=10) as response:
+                with tempfile.NamedTemporaryFile(
+                    dir=os.path.dirname(save_path), prefix=f".{name}-",
+                    suffix=".tmp", delete=False
+                ) as temporary:
+                    temp_path = temporary.name
+                    total_bytes = 0
+                    while True:
+                        # 块间检查 30 秒软预算；socket 的 10 秒为空闲超时。
+                        # 持续涓流可能令 read 长时间不返回，并非严格墙钟上限。
+                        if time.monotonic() > deadline:
+                            raise TimeoutError("样本下载超过 30 秒预算")
+                        chunk = response.read(64 * 1024)
+                        if not chunk:
+                            break
+                        total_bytes += len(chunk)
+                        if total_bytes > 10 * 1024 * 1024:
+                            raise ValueError("样本超过 10 MiB 下载上限")
+                        temporary.write(chunk)
+
+            if not is_usable_sample(temp_path):
+                raise ValueError("下载结果损坏、为纯色或不是图片")
+            os.replace(temp_path, save_path)
+            image_paths.append(save_path)
+        except (OSError, ValueError, HTTPException) as error:
+            print(f"  [跳过] 样本下载或校验失败 ({name}): {error}")
+        finally:
+            if temp_path is not None:
+                try:
+                    os.unlink(temp_path)
+                except FileNotFoundError:
+                    pass  # 成功替换后临时路径已经不存在
+                except OSError as error:
+                    print(f"  [警告] 无法清理临时文件 {temp_path}: {error}")
 
     return image_paths
 
@@ -385,9 +418,9 @@ def demo_image_text_similarity(model, processor, tokenizer, device: str):
     if is_usable_sample(dog_img):
         # 构建候选描述 —— 有些正确，有些错误
         captions = [
-            "a golden retriever dog playing in the grass",  # 正确
+            "a golden retriever dog playing in the grass",  # 场景需人工核对
             "a dog",                                        # 正确但笼统
-            "a cute puppy with golden fur",                  # 正确
+            "a cute puppy with golden fur",                  # 年龄需人工核对
             "a cat sitting on a chair",                      # 错误
             "a red car parked on the street",                # 错误
             "a delicious pizza on a table",                  # 错误
@@ -406,10 +439,8 @@ def demo_image_text_similarity(model, processor, tokenizer, device: str):
         print(f"  {'排名':<6} {'分数':<10} {'描述'}")
         print(f"  {'─' * 60}")
         for rank, (caption, score) in enumerate(results, 1):
-            # 标记真实匹配的描述
-            is_correct = "dog" in caption.lower() or "puppy" in caption.lower() or "animal" in caption.lower()
-            marker = "[匹配 ✓]" if is_correct else "[不匹配 ✗]"
-            print(f"  {rank:<6} {score:<10.4f} {marker} {caption}")
+            # 排名是模型分数，不用关键词规则冒充人工标注真值。
+            print(f"  {rank:<6} {score:<10.4f} {caption}")
 
     else:
         print("  [跳过] 金毛犬样本缺失、损坏或为纯色占位图。")
@@ -763,7 +794,7 @@ def demo_contrastive_loss():
     loss_p = -np.log(np.exp(np.diag(logits_p)) / np.sum(np.exp(logits_p), axis=1)).mean()
     print(f"\n  极端场景分析:")
     print(f"  1) 完美对齐 (S=单位矩阵): L ≈ {loss_p:.6f}  (单位矩阵相似度的示例值，不是通用最小值)")
-    print(f"     对角线相似度=1，其余=0 → 分类器 100% 确定")
+    print(f"     对角线相似度=1，其余=0 → 正匹配概率接近 1，但不等于 100%")
 
     # 场景 2: 所有相似度相等的均匀预测基线
     S_random = np.full((batch_size, batch_size), 0.0)

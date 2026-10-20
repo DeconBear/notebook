@@ -63,7 +63,7 @@ bits2[t] = nl & 1
 
 1. 制备 Bell：$|\Phi^+\rangle_{12}=\mathrm{CNOT}(H\otimes I)|00\rangle$，按小端基序 $|q_2q_1q_0\rangle$，用 `np.kron(bell, psi)` 得到 $|\Phi^+\rangle_{21}\otimes|\psi\rangle_0$ 的 8 维向量。
 2. Alice：`apply_3(CNOT, state, (0, 1))` 然后 `apply_3(H, state, (0,))`。
-3. 按 Born 抽 8 个基之一：`outcome = choice(8, p=...)`。
+3. 只测 Alice 的两个比特：把态重排为 `state.reshape(2, 4)`，行是 Bob 的 $q_2$，列是 Alice 的 $m_1m_0$。先用 `np.sum(np.abs(...) ** 2, axis=0)` 对 Bob 求和，得到四个边缘概率，再 `choice(4, p=...)`。这不是测量 Bob；Bob 两个振幅之间的相干仍保留。
 4. **`m0 = outcome & 1`**，**`m1 = (outcome >> 1) & 1`**：最低位是比特 0，再下一位是比特 1。
 5. 固定 $m_0,m_1$，把比特 2 的振幅收进 `bob`：
 
@@ -72,7 +72,7 @@ if (i & 1) == m0 and ((i >> 1) & 1) == m1:
     bob[(i >> 2) & 1] += amp
 ```
 
-6. 归一化后 Pauli 修正：`if m1: bob = X @ bob`；`if m0: bob = Z @ bob`。代码的总修正矩阵是 $Z^{m_0}X^{m_1}$（先右后左）；反过来只差不可观测的全局相位。
+6. 归一化得到的是给定 Alice 结果的**条件纯态**，不是未读经典消息时 Bob 的平均态。Pauli 修正：`if m1: bob = X @ bob`；`if m0: bob = Z @ bob`。代码的总修正矩阵是 $Z^{m_0}X^{m_1}$（先右后左）；反过来只差不可观测的全局相位。
 
 `nrm < 1e-12` 时抛出 `RuntimeError`：零概率分支不应被抽到，不能用原 `psi` 掩盖初始化或投影错误。无噪声时保真度应极接近 1（抽样投影后修正是幺正的）。
 
@@ -116,7 +116,7 @@ return float(np.mean(received[sift] != alice_bits[sift]))
 - **`received = alice_bits.copy()`**：先拷一份再 xor，不改 Alice 的真值。
 - **`bitwise_xor`**：0/1 翻转。`flip` 是布尔，`.astype(int)` 才能 xor。
 - **布尔索引 `received[sift]`**：只留基一致的那些比特。QBER = 这些位置上与 Alice 不同的比例。
-- **`if not np.any(sift): return 0.0`**：避免对空切片 `mean` 得到 `nan`。
+- **`if not np.any(sift): return float("nan")`**：没有筛后样本时分母为零，误码率未定义，不能当作“零误码”。应增加发送量后重新采样；`n_bits` 本身必须为正整数。
 
 无窃听、只计 sift：误码应接近 0。拦截-重发会把筛后误码抬到约 25% 量级。`demo_bb84` 各跑 12 次 `boxplot`。这不是完整 BB84（没有隐私放大），只对照「偷听会在公开比对时露馅」。
 

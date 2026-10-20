@@ -8,7 +8,7 @@
 import os
 import numpy as np
 import matplotlib
-matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'DejaVu Sans']
+matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'Noto Sans CJK JP', 'DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
 import matplotlib.pyplot as plt
 
@@ -76,16 +76,20 @@ def apply_3(op, state, wires):
 
 
 def teleport_once(psi):
-    """把 psi 从比特 0 传到比特 2，返回 Bob 的约化态（纯态矢量）。"""
+    """把 psi 从比特 0 传到比特 2，返回给定测量结果并修正后的 Bob 条件纯态。"""
+    psi = np.asarray(psi, dtype=complex)
+    if psi.shape != (2,) or not np.all(np.isfinite(psi)) or not np.isclose(np.linalg.norm(psi), 1.0):
+        raise ValueError("psi 必须是归一化的单比特态向量。")
     # 小端基序 |q2 q1 q0⟩：|Φ+⟩_{21} ⊗ |ψ⟩_0
     bell = CNOT @ np.kron(H, I2) @ np.kron(ket0(), ket0())
     state = np.kron(bell, psi)
     # Alice: CNOT(0->1), H(0)
     state = apply_3(CNOT, state, (0, 1))
     state = apply_3(H, state, (0,))
-    # 测量比特 0、1（投影），对比特 2 做 X^m1 Z^m0
-    probs = np.real(np.abs(state) ** 2)
-    outcome = np.random.choice(8, p=probs / probs.sum())
+    # 只测 Alice 的比特 0、1：对 Bob 的下标求和，不能测量并坍缩 Bob。
+    # reshape 的行对应 q2，列对应 m1 m0。修正先 X 后 Z。
+    probs = np.sum(np.abs(state.reshape(2, 4)) ** 2, axis=0)
+    outcome = np.random.choice(4, p=probs / probs.sum())
     m0 = outcome & 1
     m1 = (outcome >> 1) & 1
     # 取出比特 2 的未归一化振幅：固定 m0,m1
@@ -128,6 +132,8 @@ def demo_teleport(n=40):
 
 def bb84_qber(n_bits=800, eve=False):
     """简化 BB84：匹配基保留；Eve 拦截-重发时在随机基测量再转发。"""
+    if isinstance(n_bits, (bool, np.bool_)) or not isinstance(n_bits, (int, np.integer)) or n_bits <= 0:
+        raise ValueError("n_bits 必须是正整数。")
     alice_bits = np.random.randint(0, 2, n_bits)
     alice_bases = np.random.randint(0, 2, n_bits)  # 0=Z, 1=X
     bob_bases = np.random.randint(0, 2, n_bits)
@@ -148,7 +154,7 @@ def bb84_qber(n_bits=800, eve=False):
         received = np.bitwise_xor(received, flip_b.astype(int))
     sift = alice_bases == bob_bases
     if not np.any(sift):
-        return 0.0
+        return float("nan")  # 没有筛后样本时误码率未定义，不能报告零误码。
     return float(np.mean(received[sift] != alice_bits[sift]))
 
 

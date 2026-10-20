@@ -136,8 +136,8 @@ class MLP:
         核心公式:
           δ[L] = ∇_A L ⊙ φ'(Z[L])                             (输出层)
           δ[l] = (W[l+1])^T @ δ[l+1] ⊙ φ'(Z[l])              (隐藏层递推)
-          dW[l] = (1/m) · δ[l] @ (A[l-1])^T                   (权重梯度)
-          db[l] = (1/m) · sum(δ[l], axis=1, keepdims=True)    (偏置梯度)
+          dW[l] = δ[l] @ (A[l-1])^T                   (权重梯度)
+          db[l] = sum(δ[l], axis=1, keepdims=True)    (偏置梯度)
 
         参数:
             Y: 标签，shape (n_output, m_samples)，与最后一层输出 shape 一致
@@ -203,7 +203,7 @@ class MLP:
             MSE 损失值（标量）
         """
         m = Y_true.shape[1]  # 样本数
-        return np.mean((Y_pred - Y_true) ** 2) / 2.0  # (1/2) * MSE
+        return np.sum((Y_pred - Y_true) ** 2) / (2.0 * m)  # 输出维求和，样本维平均
 
     def get_gradient_norms(self) -> Dict[str, float]:
         """

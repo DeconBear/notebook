@@ -240,7 +240,7 @@ class LogisticRegression:
                 print(f"Epoch {epoch + 1:4d}: loss={loss:.6f}")
 
         if verbose:
-            print(f"\n训练完成，共 {epoch + 1} 轮，最终损失: {self.loss_history[-1]:.6f}")
+            print(f"\n训练完成，共 {epoch + 1} 轮，最终损失: {self._compute_loss(X, y):.6f}")
 
 
 # ============================================================================
@@ -386,7 +386,7 @@ class SoftmaxRegression:
                 print(f"Epoch {epoch + 1:4d}: loss={loss:.6f}")
 
         if verbose:
-            print(f"\nSoftmax 训练完成，共 {epoch + 1} 轮，最终损失: {self.loss_history[-1]:.6f}")
+            print(f"\nSoftmax 训练完成，共 {epoch + 1} 轮，最终损失: {self._compute_loss(X, y):.6f}")
 
 
 # ============================================================================
@@ -509,6 +509,9 @@ def main():
     print("逻辑回归从零实现 — s03_logistic_regression")
     print("=" * 60)
 
+    # 固定演示的随机初始化，便于复现输出与回归检查。
+    np.random.seed(42)
+
     # ---- 1. Sigmoid 函数可视化 ----
     print("\n[步骤 1] 可视化 Sigmoid 函数...")
     plot_sigmoid_curve()
@@ -541,7 +544,8 @@ def main():
     )
 
     # 训练逻辑回归模型
-    model_binary = LogisticRegression(learning_rate=0.5, max_epochs=2000)
+    # 原始 Iris 特征未标准化；0.04 小于本例 Hessian 上界的倒数。
+    model_binary = LogisticRegression(learning_rate=0.04, max_epochs=2000)
     model_binary.fit(X_tr, y_tr)
 
     # 评估
@@ -575,7 +579,8 @@ def main():
     )
 
     # 训练 Softmax 回归
-    model_softmax = SoftmaxRegression(learning_rate=0.5, max_epochs=5000)
+    # 多分类 Hessian 上界约 22.324，0.04 < 1/22.324，避免大步长振荡。
+    model_softmax = SoftmaxRegression(learning_rate=0.04, max_epochs=5000)
     model_softmax.fit(X_tr_m, y_tr_m)
 
     # 评估

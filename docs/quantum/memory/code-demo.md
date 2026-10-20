@@ -33,7 +33,8 @@ $$
 
 ```python
 def amp_damping(rho, t, t1=T1):
-    p = 1.0 - np.exp(-t / t1)
+    _check_times(t, t1)
+    p = -np.expm1(-t / t1)
     e0 = np.array([[1, 0], [0, np.sqrt(1 - p)]], dtype=complex)
     e1 = np.array([[0, np.sqrt(p)], [0, 0]], dtype=complex)
     return e0 @ rho @ e0.conj().T + e1 @ rho @ e1.conj().T
@@ -54,13 +55,14 @@ $$
 
 ```python
 def dephase(rho, t, t_phi=TPHI):
-    out = rho.copy()
+    _check_times(t, t_phi)
+    out = np.array(rho, dtype=complex, copy=True)
     out[0, 1] *= np.exp(-t / t_phi)
     out[1, 0] *= np.exp(-t / t_phi)
     return out
 ```
 
-- **`.copy()`**：不要改调用者手里的 $\rho$。后面写-存-读会反复从 `rho0` 出发。
+- **`copy=True`**：不要改调用者手里的 $\rho$。后面写-存-读会反复从 `rho0` 出发。
 - **语法 `out[0, 1]`**：第 0 行第 1 列，即 $\rho_{01}$。`*=` 乘衰减因子。对角不动：纯退相位不改变布居，只丢相对相位。
 - 对赤道态 $|+\rangle$，$|\rho_{01}|$ 从 $1/2$ 指数掉到 0。单独的纯退相位因子是 $e^{-t/T_\varphi}$；再乘振幅阻尼贡献的 $e^{-t/(2T_1)}$，才得到总相干衰减 $e^{-t/T_2}$。
 
@@ -115,7 +117,7 @@ $t=0$ 时 $F=1$；$t$ 增大两条噪声都加重，$F$ 单调下降。这就是
 
 `times = np.linspace(0, 3.0, 80)`（T1/T2 图）和 `linspace(0, 2.5, 40)`（写-存-读）上限不同：前者要看到 $T_1=1$ 下布居掉到接近 0，后者保真度掉到「已经很糊」即可，不必同一横轴。列表推导里 `amp_damping(rho1, t)[1, 1]`：先得到 2×2，再取 $\rho_{11}$。`np.abs(...)` 取相干模长，因为退相位后 $\rho_{01}$ 仍可能带相位，模才是「还剩多少相干」。
 
-Kraus 完备性：$E_0^\dagger E_0+E_1^\dagger E_1=I$（对任意 $p\in[0,1]$）。代码没有断言这一点，但 `sqrt(1-p)` 与 `sqrt(p)` 就是为了满足它。$p$ 因 `exp` 不会超出 $[0,1)$，不必再 clip。
+Kraus 完备性：$E_0^\dagger E_0+E_1^\dagger E_1=I$（对任意 $p\in[0,1]$）。时间参数由 `_check_times` 检查为有限非负等待时间、正衰减时间（允许无穷大关闭该噪声），并且 `sqrt(1-p)` 与 `sqrt(p)` 就是为了满足它。$p=-\mathrm{expm1}(-t/T_1)$ 与 $1-e^{-t/T_1}$ 数学等价，小时间时数值更稳定。在合法参数下 $p\in[0,1]$（大时间可能因浮点舍入成为 1），不必再 clip。
 
 两张图都 `tight_layout` + `dpi=140`。入口连续调用 `demo_t1_t2()` 和 `demo_write_store_read()`，没有 `main` 函数。
 
@@ -132,7 +134,7 @@ Kraus 完备性：$E_0^\dagger E_0+E_1^\dagger E_1=I$（对任意 $p\in[0,1]$）
 | $T_1$ | 布居 $e^{-t/T_1}$ | `amp_damping`，Kraus $E_0,E_1$ |
 | $p=1-e^{-t/T_1}$ | 掉下来的概率 | `amp_damping` 开头 |
 | $T_\varphi$ / $T_2$ | 纯退相位 / 总相干时间 | `dephase` / 两信道组合 |
-| `.copy()` | 不改原 $\rho$ | `dephase` |
+| `copy=True` | 不改原 $\rho$ | `dephase` |
 | 保真度 | $\langle\psi\|\rho\|\psi\rangle$ | `fidelity_pure` |
 | `outer` | 纯态 $\rho$ | `rho_plus` / `rho0` |
 | 写-存-读 | 两信道串联 | `dephase(amp_damping(...), t)` |

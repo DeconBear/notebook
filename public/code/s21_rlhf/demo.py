@@ -220,10 +220,11 @@ class ToyLanguageModel(nn.Module):
         hidden = None                                              # LSTM 初始状态
 
         with torch.no_grad():
-            for _ in range(max_len):
-                # 取最后一个 token 作为输入
-                logits, hidden = self.forward(generated[:, -1:], hidden)  # (1, 1, vocab)
-                logits = logits.squeeze(1) / temperature          # 温度缩放: 控制采样随机性
+            for step in range(max_len):
+                # 首步编码完整 prompt；之后沿用缓存，只输入新生成的 token
+                model_input = generated if step == 0 else generated[:, -1:]
+                logits, hidden = self.forward(model_input, hidden)
+                logits = logits[:, -1, :] / temperature          # 温度缩放: 控制采样随机性
 
                 probs = F.softmax(logits, dim=-1)                  # softmax → 概率分布
                 dist = Categorical(probs)                          # 类别分布
@@ -531,7 +532,7 @@ class PPOAgent:
             advantages: GAE 优势估计 Â_t
             returns: 折扣累计回报（用于 Critic 的 TD 目标）
             states: 状态嵌入 (从序列编码得到)
-            actions: 实际选择的 token
+            actions: 完整 token 序列（包含 prompt 和生成回复）
             values: Critic 的旧估计值
             ref_log_probs: 参考模型的 log 概率
 
@@ -540,13 +541,19 @@ class PPOAgent:
         """
         # ---- 1. 计算概率比率 r_t(θ) ----
         # 使用 log 空间避免数值问题: r = exp(log π_new - log π_old)
-        new_log_probs = self.policy.get_log_probs(actions)        # 新策略的 log 概率
-        # 确保长度一致（可能因为自回归偏移差 1）
-        min_len = min(len(old_log_probs), len(new_log_probs.flatten()))
-        old_lp = old_log_probs[:min_len]
-        new_lp = new_log_probs.flatten()[:min_len]
-        ref_lp = ref_log_probs[:min_len]
-        adv = advantages[:min_len]
+        # actions 是完整序列（prompt + 回复）；只训练末尾生成的 token。
+        # 这样首个回复 token 的条件包含完整 prompt，且不丢失最后一步。
+        min_len = old_log_probs.numel()
+        if min_len == 0 or actions.shape[1] <= min_len:
+            raise ValueError("PPO 更新需要非空回复和至少一个 prompt token")
+        start = actions.shape[1] - min_len - 1
+        logits, _ = self.policy(actions)
+        response_logits = logits[:, start:-1, :]
+        log_probs_all = F.log_softmax(response_logits, dim=-1)
+        targets = actions[:, start + 1:]
+        new_lp = log_probs_all.gather(2, targets.unsqueeze(-1)).flatten()
+        old_lp = old_log_probs.flatten()
+        adv = advantages[:min_len].detach()
 
         log_ratio = new_lp - old_lp.detach()                      # log r_t(θ)
         ratio = torch.exp(log_ratio)                              # r_t(θ)
@@ -561,9 +568,15 @@ class PPOAgent:
         # 取 min: 当 advantage > 0 时防止 r 过大，当 advantage < 0 时防止 r 过小
         policy_loss = -torch.min(surr1, surr2).mean()             # 负号因为梯度下降
 
-        # ---- 3. KL 惩罚 (加到 reward 中) ----
-        kl_div = self.compute_kl_divergence(new_lp, ref_lp)       # KL(π_θ || π_ref)
-        policy_loss = policy_loss + self.kl_coef * kl_div          # 加入 KL 惩罚
+        # ---- 3. 同一历史条件下，对词表精确求 KL 与熵 ----
+        # 固定旧样本的 logπ 差不能直接作为可微 KL 惩罚。
+        with torch.no_grad():
+            ref_logits, _ = self.ref_model(actions)
+            ref_log_probs_all = F.log_softmax(ref_logits[:, start:-1, :], dim=-1)
+        probs_all = log_probs_all.exp()
+        kl_div = (probs_all * (log_probs_all - ref_log_probs_all)).sum(-1).mean()
+        entropy = -(probs_all * log_probs_all).sum(-1).mean()
+        policy_loss = policy_loss + self.kl_coef * kl_div - self.entropy_coef * entropy
 
         # ---- 4. 更新 Actor (策略网络) ----
         self.policy_optimizer.zero_grad()
@@ -578,12 +591,12 @@ class PPOAgent:
                                returns[:min_len])
 
         self.value_optimizer.zero_grad()
-        value_loss.backward()
+        (self.value_coef * value_loss).backward()
         torch.nn.utils.clip_grad_norm_(self.value_network.parameters(), 0.5)
         self.value_optimizer.step()
 
         # ---- 6. 计算策略熵 (衡量探索程度) ----
-        entropy = -new_lp.mean()                                   # -E[log π] = 熵
+        # entropy 已在 Actor 更新前按完整词表分布计算。
 
         metrics = {
             'policy_loss': policy_loss.item(),
@@ -631,7 +644,7 @@ class PPOAgent:
             embeds = self.policy.embedding(generated)              # (1, seq_len, embed)
             values = self.value_network(embeds).squeeze(0)        # (seq_len,)
             # 取生成部分对应的 values
-            values_gen = values[len(prompt[0]):]                  # (gen_len,)
+            values_gen = values[len(prompt[0]) - 1:-1]                  # (gen_len,)
 
         # ---- 构造每步的奖励 ----
         n_gen = len(gen_log_probs)                                 # 生成了多少步
@@ -649,7 +662,7 @@ class PPOAgent:
             'rewards': rewards_per_step,                           # 每步奖励
             'values': values_gen,                                  # 每步价值
             'rm_score': rm_score,                                  # RM 原始分数
-            'states_embedded': embeds[0, len(prompt[0]):],        # 生成部分嵌入
+            'states_embedded': embeds[0, len(prompt[0]) - 1:-1],        # 生成部分嵌入
         }
         return trajectory
 
@@ -961,7 +974,7 @@ def train_ppo(
             advantages=advantages,
             returns=returns,
             states=traj['states_embedded'][:n_steps],
-            actions=traj['generated'][:, len(prompt[0]):],
+            actions=traj['generated'],
             values=values_t[:n_steps],
             ref_log_probs=traj['ref_log_probs_gen'][:n_steps],
         )

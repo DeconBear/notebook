@@ -32,7 +32,7 @@ from sklearn.linear_model import LogisticRegression as SklearnLR
 ```
 
 - **`os`**：操作文件路径，创建 `images/` 目录
-- **`numpy`**：数值计算核心。关键用法：`np.exp()` 指数函数（Sigmoid 和 Softmax 的核心），`np.clip()` 裁剪数值范围防止溢出，`np.log()` 对数函数（交叉熵损失），`np.argmax()` 取最大值索引，`np.unique()` 统计类别数
+- **`numpy`**：数值计算核心。关键用法：`np.exp()` 指数函数（Sigmoid 和 Softmax 的核心），`np.logaddexp()` 稳定计算 log-sum-exp，`np.log()` 对数函数（交叉熵损失），`np.argmax()` 取最大值索引，`np.unique()` 统计类别数
 - **`matplotlib`**：绘图，包括函数曲线、散点图、决策边界热力图、等高线图
 - **`load_iris`**（sklearn）：加载经典的 Iris（鸢尾花）数据集——150 个样本，4 个特征，3 个类别
 - **`train_test_split`**（sklearn）：按比例（80/20）随机划分训练集和测试集
@@ -42,8 +42,7 @@ from sklearn.linear_model import LogisticRegression as SklearnLR
 
 ```python
 def sigmoid(z: np.ndarray) -> np.ndarray:
-    z_clipped = np.clip(z, -500, 500)
-    return 1.0 / (1.0 + np.exp(-z_clipped))
+    return np.exp(-np.logaddexp(0.0, -np.asarray(z, dtype=float)))
 ```
 
 Sigmoid 函数的数学形式：
@@ -58,7 +57,7 @@ $$
 - **导数**：$\sigma'(z) = \sigma(z)(1 - \sigma(z))$，可以用自身表达——这让反向传播计算异常简便
 - **中心点**：$\sigma(0) = 0.5$，对应决策边界 $w \cdot x + b = 0$
 
-**数值稳定技巧**：`np.clip(z, -500, 500)` 将 $z$ 限制在 $[-500, 500]$ 内。当 $z > 500$ 时 $e^{-z} \approx 0$（下溢出），当 $z < -500$ 时 $e^{-z} \approx \infty$（上溢出）。裁剪确保计算稳定，而 $[-500, 500]$ 已经足够覆盖所有实际应用场景（$\sigma(500) \approx 1$，$\sigma(-500) \approx 0$）。
+**数值稳定技巧**：令 $\operatorname{softplus}(u)=\log(1+e^u)$，则 $\sigma(z)=\exp[-\operatorname{softplus}(-z)]$。`np.logaddexp(0, -z)` 稳定计算 softplus，不需要先算可能溢出的 $e^{-z}$，也不需要裁剪 logit。数学上有限 $z$ 的输出严格在 $(0,1)$ 内；浮点数中极端输入仍可能舍入为 0 或 1，因此**计算损失不能再对概率直接取对数**。该实现针对有限实数输入；NaN、无穷值或矩阵乘法本身已溢出的输入不在保证范围内。
 
 ### 第3步：Softmax 函数 — 从得分到概率分布
 
@@ -118,7 +117,7 @@ def predict(self, X, threshold=0.5):
 
 为什么不继续用 MSE？两个致命问题：
 1. Sigmoid 的饱和特性导致梯度消失（当预测值接近 0 或 1 且标签相反时，MSE 的梯度极小）
-2. MSE + Sigmoid 在参数空间中是**非凸**的，存在多个局部最小值
+2. MSE + Sigmoid 关于参数一般**不保证凸性**，不能沿用凸优化的全局最优保证；非凸并不意味着每个数据集都必然存在多个局部最小值
 
 解决方案是**二元交叉熵（Binary Cross-Entropy）**：
 
@@ -132,27 +131,30 @@ $$
 
 ```python
 def _compute_loss(self, X, y):
-    y_pred = self._predict_proba(X)
-    n = len(y)
-    eps = 1e-15
-    y_pred = np.clip(y_pred, eps, 1 - eps)  # 防止 log(0)
-    loss = -(1.0 / n) * np.sum(
-        y * np.log(y_pred) + (1 - y) * np.log(1 - y_pred)
-    )
-    return loss
+    z = X @ self.w + self.b
+    return np.mean(np.logaddexp(0.0, (1.0 - 2.0 * y) * z))
 ```
 
-`np.clip(y_pred, eps, 1 - eps)` 将预测概率限制在 $[10^{-15}, 1 - 10^{-15}]$ 之间，防止 $\log(0) = -\infty$ 导致数值崩溃。$10^{-15}$ 已经足够小，对实际损失值几乎没有影响。
+这里要求二分类标签 $y\in\{0,1\}$。从 $\log\sigma(z)=-\operatorname{softplus}(-z)$ 和 $\log(1-\sigma(z))=-\operatorname{softplus}(z)$ 得到单样本损失：
+
+$$
+\ell(z,y)=y\operatorname{softplus}(-z)+(1-y)\operatorname{softplus}(z)
+=\operatorname{softplus}((1-2y)z).
+$$
+
+最后一个等号只适用于硬标签 0/1；软标签应使用前面的加权形式。按标签选择 softplus 的符号，也避免了 `softplus(z) - y*z` 在大正数且 $y=1$ 时相减丢失小损失。
+
+**为什么不用概率裁剪？** 对 $z=1000,y=0$，真实损失约为 1000；把预测概率裁剪至 $1-10^{-15}$ 后，损失却只有约 34.54。裁剪会把极端错误预测的损失截平，且裁剪区间外的实际导数不再是后文使用的 $\hat y-y$。稳定 logit 公式保留了目标函数，也让损失与梯度一致。
 
 #### 4.3 梯度：数学之美的巅峰
 
 Sigmoid + 交叉熵组合的梯度有一个惊人简洁的形式。经过数学推导（链式法则 + Sigmoid 导数性质）：
 
 $$
-\frac{\partial J}{\partial z} = \hat{y} - y
+\frac{\partial \ell}{\partial z} = \hat{y} - y
 $$
 
-这被称为"黄金组合"——损失对原始得分 $z$ 的梯度就等于预测误差！利用链式法则传播到参数：
+这里的 $\ell$ 是**单样本损失**：由 $\ell=\operatorname{softplus}(z)-yz$ 对 $z$ 求导即得 $\sigma(z)-y$。对平均损失 $J=\frac1n\sum_i\ell_i$，则 $\partial J/\partial z_i=(\hat y_i-y_i)/n$，不能漏掉 $1/n$。利用链式法则传播到参数：
 
 $$
 \frac{\partial J}{\partial w} = \frac{1}{n} X^T (\hat{y} - y)
@@ -174,12 +176,13 @@ def _compute_gradients(self, X, y):
     return dw, db
 ```
 
-`X.T @ errors` 是矩阵乘法：$X^T_{(d \times n)} \cdot \text{errors}_{(n)}$，每行是将所有样本的误差按对应特征加权求和。这个梯度形式与线性回归 + MSE 的梯度**完全一致**——唯一的区别在于 $\hat{y}$ 的计算方式不同（逻辑回归中多了 Sigmoid）。
+`X.T @ errors` 是矩阵乘法：$X^T_{(d \times n)} \cdot \text{errors}_{(n)}$，每行是将所有样本的误差按对应特征加权求和。它与线性回归使用 $\frac{1}{2n}\sum_i(\hat y_i-y_i)^2$ 时的梯度形式一致；若 MSE 定义为 $\frac1n\sum_i(\hat y_i-y_i)^2$，则梯度多一个因子 2。逻辑回归的 $\hat y$ 还包含 Sigmoid。
 
 #### 4.4 训练循环
 
 ```python
 def fit(self, X, y, verbose=True):
+    n_samples, n_features = X.shape
     self.w = np.random.randn(n_features) * 0.01
     self.b = 0.0
     for epoch in range(self.max_epochs):
@@ -189,13 +192,15 @@ def fit(self, X, y, verbose=True):
         self.b -= self.learning_rate * db
 ```
 
-与线性回归的训练循环结构完全相同——这揭示了机器学习的一个统一框架：
+这是只展示核心步骤的节选；完整源码还记录更新前损失、检查收敛，并在结束时重算最终参数的损失。与线性回归的训练循环结构相同——这揭示了机器学习的一个统一框架：
 1. **前向传播**：计算 $\hat{y} = f_\theta(x)$
 2. **计算损失**：$J(\hat{y}, y)$
 3. **反向传播**：求 $\nabla_\theta J$
 4. **更新参数**：$\theta \leftarrow \theta - \eta \nabla_\theta J$
 
 不同模型只是换用了不同的 $f_\theta$ 和 $J$，但四步循环的结构不变。
+
+完整 Iris 演示固定随机种子 42，并使用学习率 0.04。原来的 0.5 会让未标准化特征上的 Softmax 训练振荡；步长上界与推导见[正文实战案例](./index.md)。损失曲线记录每轮更新前的值，末尾打印值则重新评价最终参数，两者并非同一个时刻。
 
 ### 第5步：多分类 Softmax 回归
 
@@ -216,17 +221,27 @@ $$
 
 ```python
 def _compute_loss(self, X, y):
-    proba = self._predict_proba(X)          # (n, K)
-    proba = np.clip(proba, eps, 1 - eps)
-    loss = -(1.0 / n) * np.sum(np.log(proba[np.arange(n), y]))
-    return loss
+    z = X @ self.W + self.b
+    z_stable = z - np.max(z, axis=1, keepdims=True)
+    log_normalizer = np.log(np.sum(np.exp(z_stable), axis=1))
+    return np.mean(log_normalizer - z_stable[np.arange(len(y)), y])
 ```
 
-`proba[np.arange(n), y]` 是高级索引（fancy indexing）：对每个样本 $i$，取第 $i$ 行、第 $y_i$ 列的概率值——即模型对该样本正确类别的预测概率。
+对每行令 $m_i=\max_k z_{ik}$、$s_{ik}=z_{ik}-m_i$，则
+
+$$
+-\log p_{i,y_i}=\log\sum_k e^{s_{ik}}-s_{i,y_i}.
+$$
+
+每行至少有一个 $s_{ik}=0$，所以指数和至少为 1，且每项不超过 1。直接计算 log-softmax 损失避免了先 Softmax 下溢为 0、再取对数或裁剪的错误。比如 logits 为 $[1000,-1000]$、真类为 1 时，损失约为 2000，而不是裁剪后的约 34.54。`z_stable[np.arange(len(y)), y]` 为每个样本选出真类得分。
+
+本例要求有限且可表示的 logits，标签是连续的整数 $0,\ldots,K-1$；若使用字符串或不连续标签，应先编码。稳定变换不能修复输入已包含 NaN/无穷值，或极端数值相减本身溢出的情况。
 
 **One-hot 编码**在梯度计算中扮演关键角色：
 
 ```python
+n = len(y)
+proba = self._predict_proba(X)
 y_onehot = np.zeros((n, self.n_classes))
 y_onehot[np.arange(n), y] = 1
 errors = proba - y_onehot
@@ -272,7 +287,7 @@ errors = proba - y_onehot
 | Sigmoid | $\sigma(z) = \frac{1}{1+e^{-z}}$ | `sigmoid()` | 实数→(0,1)概率映射 |
 | Softmax | $\frac{e^{z_k}}{\sum e^{z_j}}$ | `softmax()` | 得分→概率分布 |
 | 交叉熵 (二元) | $-[y\log\hat{y} + (1-y)\log(1-\hat{y})]$ | `_compute_loss()` | 分类问题的标准损失 |
-| 黄金梯度 | $\partial J/\partial z = \hat{y} - y$ | `_compute_gradients()` | Sigmoid导数被约掉 |
+| 黄金梯度 | $\partial \ell/\partial z = \hat{y} - y$ | `_compute_gradients()` | Sigmoid导数被约掉 |
 | 决策边界 | $w^T x + b = 0$ | 可视化 | $\sigma = 0.5$ 的等概率线 |
 | One-hot 编码 | 正确类别=1，其余=0 | `_compute_gradients()` | 多分类梯度的关键 |
 | 混淆矩阵 | TP/TN/FP/FN | `main()` | 分类问题精细化评估 |

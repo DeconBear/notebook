@@ -33,7 +33,7 @@ cd docs/applied/nlp/transformer/code && python nanogpt.py --gpu      # GPU
 cd docs/applied/nlp/transformer/code && python nanogpt.py --generate # load & generate
 ```
 
-There is **no test suite** and no linter configured. "Testing" a code change means running the relevant `demo.py` / `exercise.py` and confirming the output/figures look right. Verifying a docs change means `npm run build` (and ideally `npm run dev` to eyeball the page).
+Targeted regression tests live under `tests/`; run `python -m unittest discover -s tests -v` with NumPy, SciPy, Matplotlib, Pillow and scikit-learn installed. These cover selected numerical invariants and tutorial regressions, not every chapter. No linter is configured. Also run the relevant `demo.py` / `exercise.py` and confirm the output/figures look right. Verifying a docs change means `npm run build` (and ideally `npm run dev` to eyeball the page).
 
 Deploy is automatic via `.github/workflows/deploy.yml` on push to `master`/`main` (GitHub Pages, `cancel-in-progress` concurrency).
 
@@ -93,7 +93,7 @@ Group folders (`docs/ml/`, `docs/nn-decision/`, `docs/applied/`, `docs/algorithm
 **Exceptions:**
 - `docs/applied/cv/vit/` has **no** `exercise.py` / `code-exercise.md` — only `vit_demo.py` and `code-demo.md`.
 - `docs/applied/nlp/transformer/` has extra `nanogpt.py` and `nanogpt.md`.
-- `docs/applied/systems/multimodal/images/samples/` ships real JPG samples for the CLIP demo.
+- `docs/applied/systems/multimodal/images/samples/` currently contains placeholder JPGs, not verified real photos. The CLIP demo must validate samples and skip failed downloads rather than present placeholders as classification evidence.
 - `docs/programming/cpp/` 的主演示是 `demo.cpp` + `vec2.hpp`；`exercise.py` 用 Python 复述同一套向量运算。
 - `docs/ros2/` lessons have **no** `code/demo.py`. Runnable packages live in `workspaces/ros2-humble/src/` (outside VitePress `srcDir`). See [ROS 2 tutoring](#ros-2-tutoring) below.
 

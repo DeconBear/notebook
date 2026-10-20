@@ -648,7 +648,9 @@ def train_dqn(
             total_reward += reward
 
             # ---- 存储经验并训练 ----
-            agent.step(state, action, reward, next_state, done)
+            # 时间上限只结束采样；DQN 的自举仅在真实终止时清零。
+            terminal = terminated if GYM_NEW else done
+            agent.step(state, action, reward, next_state, terminal)
 
             state = next_state                                   # 状态转移
 

@@ -37,6 +37,8 @@ def expm_herm(m, t):
 
 
 def trotter(n_steps, t=T):
+    if isinstance(n_steps, (bool, np.bool_)) or not isinstance(n_steps, (int, np.integer)) or n_steps <= 0:
+        raise ValueError("n_steps 必须是正整数。")
     dt = t / n_steps
     u = np.eye(4, dtype=complex)
     ua, ub = expm_herm(A, dt), expm_herm(B, dt)

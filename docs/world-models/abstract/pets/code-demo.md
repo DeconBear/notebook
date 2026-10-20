@@ -11,7 +11,7 @@ title: "PETS — demo.py"
 <a href="/notebook/code/world-models/abstract/pets/demo.py" target="_blank" download>Download demo.py</a>
 
 > [!WARNING]
-> 静态审查后的图片状态：CEM 候选动作边界已修正，`pets_cem_mpc.png` 尚未重新生成；完整脚本运行时应同时刷新 `pets_pendulum.png`。 本次未执行脚本或验证新输出。
+> 静态审查后的图片状态：CEM 候选动作边界以及倒立摆规划/环境奖励一致性已修正，旧图尚未重新生成。小型 CPU 回归核对了逐步奖励和动作代价；完整脚本运行时应同时刷新 `pets_cem_mpc.png` 与 `pets_pendulum.png`，不能据旧图断言新策略表现。
 
 ## 运行方式
 
@@ -123,14 +123,16 @@ return np.array([np.cos(self.theta), np.sin(self.theta), self.omega], ...)
 
 $\theta$ 在 $\pm\pi$ 处跳变，$(\cos,\sin)$ 在圆上连续。与 Dreamer/LeWM 同一套物理，方便对照三条路径。
 
-`pendulum_reward` **只从观测算**（规划时没有真 $\theta$）：
+`pendulum_reward(states, actions)` **从下一步观测与当前动作算**（规划不读取环境隐藏状态）：
 
 ```python
-cos_t, omega = states[:, 0], states[:, 2]
-return cos_t * np.exp(-0.05 * omega ** 2) - 0.05 * (1.0 - cos_t)
+theta = np.arctan2(states[:, 1], states[:, 0])
+omega = states[:, 2]
+actions = np.clip(np.asarray(actions).reshape(-1), -1.0, 1.0)
+return np.exp(-8.0 * theta ** 2) * np.exp(-0.05 * omega ** 2) - 0.01 * actions ** 2
 ```
 
-`cosθ=1` 直立。CEM 在模型想象的状态上累加这个函数，不调用 `env.step` 的指数奖励——两边形状类似即可，不必逐项相等。
+`atan2(sinθ, cosθ)` 恢复 $[-\pi,\pi]$ 内的主值角，因此观测已经足够计算环境的指数奖励。`env.step` 和 CEM 共用此函数，奖励按更新后的状态与本拍动作计算。规划必须优化同一个任务：仅仅让替代奖励“形状相似”并不保证动作排序相同；漏掉动作代价，还会让模型预测同样直立时的大动作与零动作并列。
 
 `reset(swing_up=False)` 从直立附近出发：本 demo 做**稳住**，不做从最低点摆起。
 
@@ -148,7 +150,7 @@ next_s[:, 1] /= nrm
 
 一次前向喂 `N×P` 个粒子。`model_idx` 标记每个粒子绑哪个成员。循环 5 个成员，用布尔 mask 只更新属于自己的行——比 Python 里 for 每个粒子调一次岭回归快。
 
-**归一化 $\cos^2+\sin^2$**：线性残差会把点推离单位圆，不拉回来后续 `cos` 奖励失真。`1e-8` 防除零。
+**归一化 $\cos^2+\sin^2$**：线性残差会把点推离单位圆，不拉回来后续状态和动力学输入失真。`1e-8` 防除零。
 
 ---
 
@@ -163,7 +165,7 @@ flat_a = np.repeat(acts[:, t], P)         # 同一动作复制给 P 个粒子
 - **`np.tile(state, (N,P,1))`**：`state` 是 `(3,)`，结果 `(N, P, 3)`。
 - **`np.repeat(acts[:, t], P)`**：动作序列第 $t$ 拍，每个样本重复 P 次，对齐 flatten 后的粒子。
 
-`returns += pendulum_reward(ns).reshape(N, P).mean(axis=1)`：先对粒子平均（TS 估期望），再累加 horizon。返回 `mean[0]`：只执行第一拍。
+`returns += pendulum_reward(ns, flat_a).reshape(N, P).mean(axis=1)`：先对粒子平均（TS 估期望），再累加 horizon。返回 `mean[0]`：只执行第一拍。
 
 ---
 
