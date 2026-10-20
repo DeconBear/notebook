@@ -203,11 +203,19 @@ PETS 在 HalfCheetah 等 MuJoCo 任务上用远少于 PPO / SAC 的交互达到�
 
 与课上实验同一套物理：**θ = 0 为竖直向上**，观测 $s=[\cos\theta,\sin\theta,\omega]$，动作 $u\in[-1,1]$ 缩放成力矩。任务是在直立附近稳住（不是从底部摆起）。每个成员在论文里是输出 $(\mu_{\Delta s},\sigma_{\Delta s})$ 的概率 MLP。本章闭环为了在 CPU 数分钟内跑通，改成**岭回归 bootstrap 集成**（仍然是 PE：成员分歧 = epistemic，残差方差 = aleatoric），规划仍是 TS∞ + CEM。完整神经网络版本见课上 `pets_core.py`。
 
+规划与执行共用阶段奖励
+
+$$
+r(s_{t+1},a_t)=\exp(-8\theta_{t+1}^2)\exp(-0.05\omega_{t+1}^2)-0.01\,\mathrm{clip}(a_t,-1,1)^2.
+$$
+
+这里 $\theta=\operatorname{atan2}(\sin\theta,\cos\theta)$，不需要访问环境内部角度。CEM 对每颗粒子的下一状态使用同一函数，并保留动作成本；只优化另一个“形状相似”的余弦奖励，不能保证最大化环境实际回报。
+
 这对应论文在「状态可观测的机器人」上的用法，也是后面 Dreamer / LeWM 共用的对照环境：同一物理、三种决策（CEM-MPC / 想象 Actor-Critic / 潜空间目标嵌入 CEM）。
 
 ![PETS 倒立摆：trial 回报与终局 |θ|](./images/pets_pendulum.png)
 
-> 运行 `code/demo.py` 后生成。左：各 trial 回合回报（约 50 表示全程接近直立）；右：终局 $|θ|$，本实现可收到约 $0.02\,\mathrm{rad}$。不是论文 HalfCheetah 的 8× 样本效率数字。
+> 运行 `code/demo.py` 后生成。左：各 trial 回合回报（约 50 表示全程接近直立）；右：终局 $|θ|$。规划奖励已与环境统一，旧图待重跑，具体回报与终局角度以重新运行结果为准。不是论文 HalfCheetah 的 8× 样本效率数字。
 
 ---
 

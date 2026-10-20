@@ -284,7 +284,7 @@ def make_toy_molecule():
     构造一个玩具「乙醇」风格小分子：
       原子：C-C-O + H 们（简化，只放 6 个节点）
       节点特征：原子类型 one-hot（C/O/H）+ 度数
-      标签：每个原子的「局部环境分数」= 邻居原子序数之和（玩具监督信号）
+      标签：每个原子的「局部环境分数」= 邻居原子序数的均值（玩具监督信号）
     """
     # 节点：0:C, 1:C, 2:O, 3:H, 4:H, 5:H
     atom_type = np.array([0, 0, 1, 2, 2, 2])  # 0=C, 1=O, 2=H
@@ -301,10 +301,10 @@ def make_toy_molecule():
     degree = np.zeros((n, 1))
     for s, d in edges:
         degree[s] += 1
-    degree = degree / 2.0  # 因为双向边，度数算了两次
+    # 每条有向边只给源节点计数：反向边给另一个节点计数，不能再除以 2。
     features = np.concatenate([onehot, degree], axis=1).astype(np.float32)
 
-    # 玩具标签：邻居原子类型编号之和
+    # 玩具标签：邻居原子序数的均值
     Z = {0: 6, 1: 8, 2: 1}  # C=6, O=8, H=1
     adj = edges_to_adj_list(n, edges)
     labels = np.zeros((n, 1), dtype=np.float32)

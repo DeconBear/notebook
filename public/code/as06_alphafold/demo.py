@@ -381,7 +381,10 @@ def reconstruct_structure(
             velocity = momentum * velocity - lr * grad          # 带动量的梯度下降
             coords = coords + velocity
 
-        final_loss = (weight[iu] * (err[iu]) ** 2).sum()
+        # 最后一轮已更新 coords，重算残差后再为该候选结构评分。
+        final_dist = np.linalg.norm(coords[:, None, :] - coords[None, :, :], axis=-1)
+        final_err = final_dist - target_dist
+        final_loss = (weight[iu] * (final_err[iu]) ** 2).sum()
         print(f"    [结构重建] 第 {restart+1}/{n_restarts} 次重启, "
               f"最终加权距离残差损失 = {final_loss:.2f}")
         if final_loss < best_loss:

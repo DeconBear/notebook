@@ -103,7 +103,7 @@ def cosine_distance(X_test, X_train):
     return 1.0 - cos_sim
 
 
-def mahalanobis_distance(X_test, X_train):
+def mahalanobis_distance(X_test, X_train, covariance=None):
     """
     计算马氏距离矩阵。
 
@@ -117,7 +117,12 @@ def mahalanobis_distance(X_test, X_train):
     """
     n_train = X_train.shape[0]
     # 无偏协方差估计
-    Sigma = np.cov(X_train.T)
+    if covariance is None:
+        if len(X_train) < 2:
+            raise ValueError('估计协方差至少需要两个训练样本，或显式传入 covariance。')
+        Sigma = np.atleast_2d(np.cov(X_train.T))
+    else:
+        Sigma = np.atleast_2d(np.asarray(covariance, dtype=float))
     # 用伪逆代替逆（接近奇异时仍能给出解）
     Sigma_inv = np.linalg.pinv(Sigma)
 
@@ -126,7 +131,7 @@ def mahalanobis_distance(X_test, X_train):
     for i in range(m):
         diff = X_test[i] - X_train  # (n, d)
         # batch: diff @ Sigma_inv @ diff.T -> 取对角线
-        distances[i] = np.sqrt(np.sum((diff @ Sigma_inv) * diff, axis=1))
+        distances[i] = np.sqrt(np.maximum(np.sum((diff @ Sigma_inv) * diff, axis=1), 0.0))
     return distances
 
 
@@ -173,6 +178,8 @@ class KNNClassifier:
         """
         self.X_train = np.asarray(X, dtype=np.float64)
         self.y_train = np.asarray(y)
+        if not isinstance(self.k, (int, np.integer)) or not 1 <= self.k <= len(self.X_train):
+            raise ValueError('k 必须是 1 到训练样本数之间的整数。')
         return self
 
     def predict(self, X_test):
@@ -292,7 +299,7 @@ def plot_distance_comparison():
     n = 300
     # 有相关性的数据
     mean = [0, 0]
-    cov = [[2.0, 1.5], [1.5, 1.0]]  # 正相关的协方差矩阵
+    cov = [[2.0, 1.2], [1.2, 1.0]]  # 正定：行列式 2 - 1.2**2 > 0
     data = np.random.multivariate_normal(mean, cov, n)
 
     center = np.array([0.0, 0.0])
@@ -309,13 +316,20 @@ def plot_distance_comparison():
 
     for ax, metric, title in zip(axes.flat, metrics, titles):
         dist_func = METRIC_FUNCTIONS[metric]
-        distances = dist_func(grid, center.reshape(1, -1)).reshape(Xg.shape)
+        # 余弦距离需要非零参考向量；马氏距离的协方差来自数据云。
+        reference = np.array([1.0, 0.0]) if metric == 'cosine' else center
+        if metric == 'mahalanobis':
+            distances = mahalanobis_distance(
+                grid, reference.reshape(1, -1), covariance=np.cov(data.T)
+            ).reshape(Xg.shape)
+        else:
+            distances = dist_func(grid, reference.reshape(1, -1)).reshape(Xg.shape)
 
         # 绘制等距线
         levels = np.linspace(distances.min(), distances.max(), 15)
         ax.contour(Xg, Yg, distances, levels=levels, cmap='viridis', alpha=0.7)
         # 标注中心点
-        ax.scatter([center[0]], [center[1]], c='red', s=120, marker='*',
+        ax.scatter([reference[0]], [reference[1]], c='red', s=120, marker='*',
                    edgecolors='darkred', zorder=5, label='Reference Point')
         # 绘制数据散点
         ax.scatter(data[:, 0], data[:, 1], alpha=0.15, s=10, c='gray')
@@ -414,7 +428,8 @@ def plot_curse_of_dimensionality():
         points = np.random.uniform(0, 1, (n_points, d))
         # 计算任意两个点之间的距离（随机采样对来近似）
         idx1 = np.random.choice(n_points, size=min(500, n_points), replace=False)
-        idx2 = np.random.choice(n_points, size=min(500, n_points), replace=False)
+        # 非零偏移保证每一对是两个不同点，避免自配对把最小距离变成零。
+        idx2 = (idx1 + np.random.randint(1, n_points, size=len(idx1))) % n_points
 
         diffs = points[idx1] - points[idx2]
         dists = np.sqrt(np.sum(diffs ** 2, axis=1))
@@ -497,12 +512,13 @@ def plot_sklearn_comparison():
         n_samples=300, n_features=2, n_redundant=0, n_clusters_per_class=1,
         random_state=42
     )
-    X = StandardScaler().fit_transform(X)
-
-    # 训练集/测试集划分
+    # 训练集/测试集划分：先划分，再仅用训练集拟合标准化参数
     n_train = 200
     X_train, X_test = X[:n_train], X[n_train:]
     y_train, y_test = y[:n_train], y[n_train:]
+    scaler = StandardScaler().fit(X_train)
+    X_train = scaler.transform(X_train)
+    X_test = scaler.transform(X_test)
 
     k_values = [1, 3, 5, 7, 9, 11, 13, 15]
     custom_acc = []

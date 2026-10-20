@@ -714,7 +714,8 @@ def imagine_train_pendulum_ac(
         critic_loss.backward()
         critic_opt.step()
 
-        # 再想象一次，让 Actor 最大化 V_λ（世界模型参数不进 actor_opt）
+        # 再想象一次，让 Actor 最大化 V_λ；保留 V 对潜状态的梯度。
+        # world/critic 参数不进 actor_opt，但不能 detach 价值输出。
         with torch.no_grad():
             z = world.encode(start_obs[idx])
         rewards, values = [], []
@@ -726,10 +727,10 @@ def imagine_train_pendulum_ac(
             rewards.append(r)
             values.append(critic(zs[-1]))
             zs.append(z)
-        bootstrap = critic(zs[-1]).detach()
+        bootstrap = critic(zs[-1])
         values_t = torch.stack(values)
         v_lam = _pendulum_v_lambda(
-            list(torch.stack(rewards)), list(values_t.detach()), bootstrap, gamma, lam,
+            list(torch.stack(rewards)), list(values_t), bootstrap, gamma, lam,
         )
         v_lam = torch.clamp(v_lam, -15.0, 15.0)
         actor_loss = -v_lam.mean()

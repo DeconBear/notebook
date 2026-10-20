@@ -135,8 +135,11 @@ class Dinic:
 
     def add_edge(self, u, v, cap):
         """添加有向边，同时自动添加反向边（容量 0）"""
-        # 正向边
-        self.adj[u].append([v, cap, len(self.adj[v])])
+        if cap < 0:
+            raise ValueError("容量不能为负")
+        # 自环的反向边将位于同一列表的下一个槽位。
+        reverse_index = len(self.adj[v]) + (1 if u == v else 0)
+        self.adj[u].append([v, cap, reverse_index])
         # 反向边
         self.adj[v].append([u, 0, len(self.adj[u]) - 1])
 
@@ -172,6 +175,8 @@ class Dinic:
 
     def max_flow(self, s, t):
         """计算从 s 到 t 的最大流"""
+        if s == t:
+            raise ValueError("源点和汇点必须不同")
         flow = 0
         INF_FLOW = 10**18
         while self._bfs(s, t):

@@ -256,9 +256,9 @@ def normal_equation_solution(X: np.ndarray, y: np.ndarray):
     # 第一列是特征 x，第二列是全 1（用于计算偏置）
     X_aug = np.column_stack([X, np.ones(n)])
 
-    # 使用正规方程求解: θ = (X^T X)^(-1) X^T y
-    # @ 是 Python 3.5+ 的矩阵乘法运算符，等价于 np.matmul()
-    theta = np.linalg.inv(X_aug.T @ X_aug) @ X_aug.T @ y
+    # 满列秩时等价于正规方程解；lstsq 避免显式求逆和形成 X^T X。
+    # 秩亏时返回最小范数最小二乘解（例如所有 x 相同）。
+    theta = np.linalg.lstsq(X_aug, y, rcond=None)[0]
 
     w = theta[0]  # 权重（斜率）
     b = theta[1]  # 偏置（截距）

@@ -49,7 +49,7 @@ $H$ 是 $2^n\times 2^n$ 的厄米矩阵（$n$ 个自旋）。精确对角化只�
 若 $H=A+B$ 且 $[A,B]\neq 0$，则
 
 $$
-e^{-i(A+B)t} \approx \big(e^{-iA t/n}e^{-iB t/n}\big)^n
+e^{-i(A+B)t} \approx \big(e^{-iB t/n}e^{-iA t/n}\big)^n
 $$
 
 $n$ 越大，一阶公式的误差大致 $O(t^2/n)$。更高阶 Suzuki 公式能再压误差，但门更多。
@@ -83,9 +83,9 @@ $I\otimes X$ 类似，在另一因子上翻。$A=J\,ZZ$ 只含相互作用，本
 
 更直接地，令近似归一化态 $|\tilde\psi\rangle=a|\psi\rangle+|\epsilon_\perp\rangle$，其中 $\langle\psi|\epsilon_\perp\rangle=0$。归一化给出 $|a|^2+\|\epsilon_\perp\|^2=1$，所以
 
-$
+$$
 1-|\langle\psi|\tilde\psi\rangle|^2=\|\epsilon_\perp\|^2.
-$
+$$
 
 若态误差的正交分量为 $O(1/n)$，失真度就是 $O(1/n^2)$。纯粹的全局相位误差不会降低保真度。因而在小误差区，步数加倍通常使图中失真度约缩小到四分之一，而不是二分之一；这不保证步数很小时也严格满足该比例。
 
@@ -99,7 +99,7 @@ $$
 e^{X}e^{Y}=e^{X+Y+\frac12[X,Y]+\cdots}.
 $$
 
-令 $X=-iA\,\mathrm{d}t$、$Y=-iB\,\mathrm{d}t$，则一步的生成元是 $-i(A+B)\mathrm{d}t$ 再加上 $\tfrac12[X,Y]=O((\mathrm{d}t)^2)$ 的对易修正。$n=t/\mathrm{d}t$ 步累积：每步 $O((\mathrm{d}t)^2)$，共 $O(t^2/n)$（在 $\|[A,B]\|$ 有界、时间不太长时）。这就是「多切几刀更接近 $e^{-iHt}$」。二阶 Suzuki（对称 Trotter）把对易项再消一阶，误差 $O(t^3/n^2)$，门数大约 1.5 倍。
+为与代码先 $A$ 后 $B$ 的顺序一致，令 $X=-iB\,\mathrm{d}t$、$Y=-iA\,\mathrm{d}t$，则一步的生成元是 $-i(A+B)\mathrm{d}t$ 再加上 $\tfrac12[X,Y]=O((\mathrm{d}t)^2)$ 的对易修正。$n=t/\mathrm{d}t$ 步累积：每步 $O((\mathrm{d}t)^2)$，共 $O(t^2/n)$（在 $\|[A,B]\|$ 有界、时间不太长时）。这就是「多切几刀更接近 $e^{-iHt}$」。二阶 Suzuki（对称 Trotter）把对易项再消一阶，误差 $O(t^3/n^2)$，每步形式为 $e^{-iA\Delta t/2}e^{-iB\Delta t}e^{-iA\Delta t/2}$。孤立一步有三个指数因子而一阶有两个，但相邻步骤的 $A$ 半步可合并，$n$ 步只有 $2n+1$ 个因子（不是固定 1.5 倍）；实际门数还取决于各因子的门分解与编译。
 
 NISQ 上 $n$ 不能无限加：每一步门都有噪声，切太细会先被退相干吃掉。实验要在 Trotter 误差和硬件误差之间折中。VQE 绕开长时间演化，改成浅线路猜基态能量，但会撞上 [QML](/quantum/qml/) 章的贫瘠高原。
 

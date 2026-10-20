@@ -155,9 +155,9 @@ class AdamWOptimizer:
             m_hat = self.m[param_id] / (1 - self.beta1 ** self.t)
             v_hat = self.v[param_id] / (1 - self.beta2 ** self.t)
 
-            # AdamW 更新：先做 Adam 自适应更新，再独立应用权重衰减
+            # AdamW：衰减基于旧参数 θ_t，再减去自适应更新，避免多余交叉项
+            param *= 1.0 - self.lr * self.weight_decay             # 独立权重衰减
             param -= self.lr * m_hat / (np.sqrt(v_hat) + self.eps)  # Adam 部分
-            param -= self.lr * self.weight_decay * param           # 独立权重衰减
 
 
 class SGDMomentumOptimizer:
@@ -272,7 +272,7 @@ class MLP:
             caches: 前向传播缓存
 
         返回:
-            grads: 梯度字典 {dW{l}, db{l}}
+            grads: 梯度字典 {W{l}, b{l}}，键名与参数字典一致
         """
         m = Y.shape[1]
         grads = {}
@@ -286,8 +286,8 @@ class MLP:
             A_prev = cache["A_prev"]
 
             # 权重梯度
-            grads[f"dW{l}"] = (1.0 / m) * (dZ @ A_prev.T)
-            grads[f"db{l}"] = (1.0 / m) * np.sum(dZ, axis=1, keepdims=True)
+            grads[f"W{l}"] = (1.0 / m) * (dZ @ A_prev.T)
+            grads[f"b{l}"] = (1.0 / m) * np.sum(dZ, axis=1, keepdims=True)
 
             # 如果不是第一层，继续递推
             if l > 1:
@@ -575,18 +575,18 @@ def train_one_epoch(
         grad_norm = compute_gradient_norm(grads)
         grad_norms.append(grad_norm)
 
-        # ---- 参数更新 ----
-        optimizer.step(model.params, grads)
-
-        # ---- 学习率调度 ----
+        # ---- 先设置本次更新的学习率（本调度器不是 PyTorch scheduler） ----
         if scheduler is not None:
             scheduler.step()
 
-        total_loss += loss
-        total_acc += acc
+        # ---- 参数更新 ----
+        optimizer.step(model.params, grads)
+
+        total_loss += loss * len(Y_batch_labels)
+        total_acc += acc * len(Y_batch_labels)
         n_batches += 1
 
-    return total_loss / n_batches, total_acc / n_batches, grad_norms
+    return total_loss / m, total_acc / m, grad_norms
 
 
 def evaluate(model: MLP, X: np.ndarray, Y_labels: np.ndarray,
@@ -620,11 +620,11 @@ def evaluate(model: MLP, X: np.ndarray, Y_labels: np.ndarray,
         loss = -np.mean(np.log(correct_probs))
         acc = np.mean(np.argmax(probs, axis=0) == Y_batch_labels)
 
-        total_loss += loss
-        total_acc += acc
+        total_loss += loss * len(Y_batch_labels)
+        total_acc += acc * len(Y_batch_labels)
         n_batches += 1
 
-    return total_loss / n_batches, total_acc / n_batches
+    return total_loss / m, total_acc / m
 
 
 # ============================================================================
@@ -693,7 +693,7 @@ def compare_without_bias_correction(
     """
     对比有/无偏差修正的 Adam 在训练初期的表现。
 
-    偏差修正让早期步长更大、收敛更快。
+    偏差修正消除零初始化引入的矩估计偏差；不保证更快收敛。
     """
     print("\n" + "=" * 70)
     print("【偏差修正对比实验】")

@@ -379,5 +379,5 @@ if __name__ == "__main__":
     print("  Momentum → 加惯性，方向更平滑")
     print("  RMSProp → 自适应步长，每个参数有自己的学习率")
     print("  Adam → Momentum + RMSProp，集两者之长")
-    print("  NAG → 比 Momentum 更进一步：先"看一步"再调整方向")
+    print("  NAG → 比 Momentum 更进一步：先沿动量方向看一步，再计算梯度")
     print("=" * 60)

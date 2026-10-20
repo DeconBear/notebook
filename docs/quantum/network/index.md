@@ -18,13 +18,13 @@ order: 30
 Bell 态 $|\Phi^+\rangle=(|00\rangle+|11\rangle)/\sqrt{2}$ 的性质：
 
 - 单独看 Alice 的比特，测量 0/1 各一半（局域随机）；
-- 一旦 Alice 得到 0，Bob 再测一定是 0（完美关联）。
+- 若双方都测计算基，Alice 得到 0 时，Bob 再测一定是 0（同基完美关联）。
 
 这种关联**不能**用事先约定的经典随机数完全伪造到任意测量基。网络工程师关心的是：如何让相距很远的两方**稳定地持有**这样一对。
 
 光纤会丢光子、会引入噪声，直接「扔一个纠缠光子对过去」距离有限。于是需要中继、存储、交换。
 
-**保姆级：相关 ≠ 能通信。** Alice 测量她那一半，得到随机比特，Bob 那边同时「确定了」，但 Alice 若不打电话，Bob 不知道该看哪一次结果、也不知道自己该不该做 $X$ 门。传态和 QKD 都还要一条经典信道。纠缠提供的是**非经典相关**，不是超光速传文件。
+**保姆级：相关 ≠ 能通信。** Alice 测量她那一半，得到随机比特。若按她的结果分组，可以描述 Bob 的条件态；但未获知该结果时，Bob 的局域密度矩阵仍为 $I/2$，可观测统计完全没有改变。传态和 QKD 都还要一条经典信道。纠缠提供的是**非经典相关**，不是超光速传文件。
 
 ---
 
@@ -45,9 +45,9 @@ Alice 手里的 $|\psi\rangle$ 在测量后被毁掉——不可克隆在这里�
 
 ![传态保真度](./images/teleport_fidelity.png)
 
-> **结果图待更新**：本次修正了 `code/demo.py` 中未知态与 Bell 对的张量积顺序；此处保留的图片尚未用修正后的代码重新生成，不能作为修复后的数值验证。请重新运行脚本，并检查各输入态与测量分支的保真度。
+> **数值核验**：此图已由修正后的脚本在 CPU 上重新生成。回归测试另行逐一验证四个 Alice 测量分支，包含计算基态、复相位态及随机态；每个分支概率为 $1/4$，修正后保真度为 $1$（浮点误差范围内）。
 
-demo：Haar 随机单比特纯态 $40$ 次，种子 `42`。无噪声模拟下平均保真度应贴着 $1$（终端打印 `平均传态保真度`）。纵轴从 $0.7$ 起，是为了让偶发数值抖动看得见，不是说理论只有 $0.7$。
+demo：Haar 随机单比特纯态 $40$ 次，种子 `42`。无噪声模拟下平均保真度应贴着 $1$（终端打印 `平均传态保真度`）。纵轴显示 $[0.7,1.05]$，用于突出理想值附近的位置；$10^{-15}$ 量级的浮点抖动在该尺度不可见，也不代表物理噪声。
 
 ::: details 逐步推导：Bell 测量之后，Bob 用 $X$/$Z$ 怎样收回未知态（点击展开）
 
@@ -65,7 +65,13 @@ Alice 对 $(0,1)$ 做 CNOT 再对 $0$ 做 $H$，再测计算基得到 $m_0,m_1$�
 
 （与 demo `if m1: X; if m0: Z` 一致。）保真度 $F=|\langle\psi|\psi_{\mathrm{Bob}}\rangle|^2$ 在无噪声时应为 $1$。不可克隆：Alice 测量后第 $0$ 比特已坍缩，她不再持有 $|\psi\rangle$。
 
-经典通信必须等 Alice 的两个比特到达，Bob 才能修正——所以不超光速。预分发纠缠可以提前做；线上延迟只剩经典两比特。
+未获知测量结果时，要对四个分支求平均，而不能任选其中一个条件态：
+
+$$
+\rho_B=\frac14\left(\rho+X\rho X+Z\rho Z+(XZ)\rho(XZ)^\dagger\right)=\frac I2,\qquad \rho=|\psi\rangle\langle\psi|.
+$$
+
+这与输入态无关。经典通信必须等 Alice 的两个比特到达，Bob 才能选择修正——所以不超光速。预分发纠缠可以提前做；线上延迟只剩经典两比特。
 
 :::
 
@@ -142,3 +148,4 @@ demo 里两段 50% 翻转（Eve vs Alice，Bob vs Eve）就是在模拟这两层
 1. Bennett et al., *Teleporting an unknown quantum state…* PRL (1993).
 2. Briegel, Dür, Cirac, Zoller, *Quantum Repeaters* PRL (1998).
 3. Bennett & Brassard, BB84 (1984); Scarani et al., *The security of practical quantum key distribution* RMP (2009).
+4. [IBM Quantum Learning：Quantum teleportation](https://quantum.cloud.ibm.com/learning/en/courses/basics-of-quantum-information/entanglement-in-action/quantum-teleportation)。

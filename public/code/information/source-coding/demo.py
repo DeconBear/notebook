@@ -26,26 +26,28 @@ def entropy_bits(probs):
 
 
 def huffman_codes(probs):
-    """返回 symbol -> '01...'。堆元素 (p, tie, node)，叶子 node 是符号字符串。"""
+    """返回 symbol -> '01...'；叶子和内部节点均使用独立的整数 ID。"""
     if len(probs) == 1:
         return {next(iter(probs)): '0'}
     heap = []
+    leaf_ids = {}
     for i, (s, p) in enumerate(probs.items()):
-        heapq.heappush(heap, (p, i, s))
+        leaf_ids[s] = i
+        heapq.heappush(heap, (p, i, i))
     parent = {}
     nid = len(probs)
     while len(heap) > 1:
         p1, _, n1 = heapq.heappop(heap)
         p2, _, n2 = heapq.heappop(heap)
         nid += 1
-        node = f'#{nid}'
+        node = nid
         parent[n1] = (node, '0')
         parent[n2] = (node, '1')
         heapq.heappush(heap, (p1 + p2, nid, node))
     codes = {}
     for s in probs:
         bits = []
-        cur = s
+        cur = leaf_ids[s]
         while cur in parent:
             par, b = parent[cur]
             bits.append(b)

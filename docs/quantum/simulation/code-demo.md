@@ -17,7 +17,7 @@ cd docs/quantum/simulation/code
 python demo.py
 ```
 
-CPU、NumPy。两自旋横场 Ising，比精确 $e^{-iHT}$ 与一阶 Trotter。一张图 `trotter_error.png`（对数轴：步数↑，失真度↓）。希尔伯特空间只有 4 维，对角化是精确答案不是近似。
+CPU、NumPy。两自旋横场 Ising，比精确 $e^{-iHT}$ 与一阶 Trotter。一张图 `trotter_error.png`（对数轴：步数↑，失真度↓）。希尔伯特空间只有 4 维，这里用对角化计算该有限维模型的参考解，只剩浮点舍入误差，不含 Trotter 劈裂误差。
 
 ## 代码逐段详解
 
@@ -69,6 +69,7 @@ $$
 
 ```python
 def trotter(n_steps, t=T):
+    # 实际函数首先检查 n_steps 是正整数。
     dt = t / n_steps
     u = np.eye(4, dtype=complex)
     ua, ub = expm_herm(A, dt), expm_herm(B, dt)

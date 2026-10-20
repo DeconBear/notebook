@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 ===============================================================================
-wm04_muzero/code/demo.py — MuZero 直觉：隐式模型 + 极简 MCTS
+wm04_muzero/code/demo.py — MuZero 直觉：隐式模型框图 + 一步后继比较
 ===============================================================================
 在 1D 捕猎游戏上演示三个头：表示 h、动力学 g、预测 f（策略/价值/奖励）。
-完整 MuZero 很重；此处只展示损失结构与一次搜索改进。
+完整 MuZero 很重；此处只画模块框图并比较两种等价的一步决策，不实现 MCTS 或训练。
 ===============================================================================
 """
 import os
@@ -26,7 +26,7 @@ def draw_muzero():
     ax.set_xlim(0, 10)
     ax.set_ylim(0, 4)
     ax.set_title('MuZero: Representation / Dynamics / Prediction', fontsize=13)
-    boxes = [(0.5, 'h: obs→latent'), (3.5, 'g: latent,action→next'), (6.5, 'f: policy,value,reward')]
+    boxes = [(0.5, 'h: obs→latent'), (3.5, 'g: state,action→state,reward'), (6.5, 'f: policy,value')]
     for x, t in boxes:
         ax.add_patch(FancyBboxPatch((x, 1.3), 2.5, 1.5, boxstyle='round,pad=0.04',
                                     facecolor='#EAF7EA', edgecolor='#27AE60', lw=1.5))
@@ -68,7 +68,7 @@ def tiny_mcts_vs_greedy():
     fig, ax = plt.subplots(figsize=(5.5, 3.5))
     ax.bar(names, vals, color=['#95A5A6', '#27AE60'])
     ax.set_ylabel('Avg return')
-    ax.set_title('MuZero intuition: search improves over naive greedy')
+    ax.set_title('Toy example: greedy and one-step search tie')
     path = os.path.join(_IMAGES_DIR, 'muzero_search_compare.png')
     fig.tight_layout()
     fig.savefig(path, dpi=120)

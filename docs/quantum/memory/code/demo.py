@@ -2,14 +2,14 @@
 """
 === 量子存储 ===
 1) T1：激发态 |1> 的布居指数衰减
-2) T2：赤道态的相干（非对角元）衰减更快
+2) T2：赤道态的总相干（非对角元）衰减，本例 T2 < T1
 3) 写-存-读：等待越久，读出保真度越低
 运行: python demo.py
 """
 import os
 import numpy as np
 import matplotlib
-matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'DejaVu Sans']
+matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'Noto Sans CJK JP', 'DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
 import matplotlib.pyplot as plt
 
@@ -24,9 +24,16 @@ T2 = 0.4  # 总相干时间，包含能量弛豫和纯退相位
 TPHI = 1.0 / (1.0 / T2 - 1.0 / (2.0 * T1))
 
 
+def _check_times(t, tau):
+    """正时间常数允许无穷大，表示该噪声关闭；等待时间必须有限非负。"""
+    if not np.isfinite(t) or t < 0 or np.isnan(tau) or tau <= 0:
+        raise ValueError("等待时间须有限非负，衰减时间须为正（可取 np.inf）。")
+
+
 def amp_damping(rho, t, t1=T1):
     """振幅阻尼信道作用在 2x2 密度矩阵上。"""
-    p = 1.0 - np.exp(-t / t1)
+    _check_times(t, t1)
+    p = -np.expm1(-t / t1)
     e0 = np.array([[1, 0], [0, np.sqrt(1 - p)]], dtype=complex)
     e1 = np.array([[0, np.sqrt(p)], [0, 0]], dtype=complex)
     return e0 @ rho @ e0.conj().T + e1 @ rho @ e1.conj().T
@@ -34,7 +41,8 @@ def amp_damping(rho, t, t1=T1):
 
 def dephase(rho, t, t_phi=TPHI):
     """纯退相位：非对角元乘 e^{-t/Tphi}；Tphi 不等于总 T2。"""
-    out = rho.copy()
+    _check_times(t, t_phi)
+    out = np.array(rho, dtype=complex, copy=True)
     out[0, 1] *= np.exp(-t / t_phi)
     out[1, 0] *= np.exp(-t / t_phi)
     return out
